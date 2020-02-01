@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">My WebView</string>
-    <string name="website_url">http://www.html5rocks.com/</string>
-    <string name="urlhost_endswith">html5rocks.com</string>
+    <string name="website_url">http://beta.html5test.com/</string>
+    <string name="urlhost_endswith">html5test.com</string>
 </resources>
