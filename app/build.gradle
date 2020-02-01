@@ -1,12 +1,6 @@
 apply plugin: 'com.android.application'
 
 android {
-    signingConfigs {
-        release {
-            storeFile file('C:\\Users\\brumdall\\.android\\mikespub.jks')
-            keyAlias = 'upload'
-        }
-    }
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
     defaultConfig {
