@@ -12,11 +12,15 @@ public class MyAppWebViewClient extends WebViewClient {
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         final Uri uri = Uri.parse(url);
-        String myHostEnds = view.getContext().getResources().getString(R.string.urlhost_endswith);
         // if(Uri.parse(url).getHost().endsWith("html5rocks.com")) {
         final String host = uri.getHost();
-        if(host != null && host.endsWith(myHostEnds)) {
-            return false;
+        if (host != null) {
+            String[] myHostEndsArr = view.getContext().getResources().getStringArray(R.array.urlhost_endswith);
+            for (String s : myHostEndsArr) {
+                if (host.endsWith(s)) {
+                    return false;
+                }
+            }
         }
 
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);

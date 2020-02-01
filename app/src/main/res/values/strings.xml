@@ -2,5 +2,7 @@
     <string name="app_name">My WebView</string>
     <string name="website_url">file:///android_asset/web/index.html</string>
     <string name="orig_website_url">http://beta.html5test.com/</string>
-    <string name="urlhost_endswith">html5test.com</string>
+    <string-array name="urlhost_endswith">
+        <item>html5test.com</item>
+    </string-array>
 </resources>
