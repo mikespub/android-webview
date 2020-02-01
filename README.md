@@ -13,3 +13,7 @@ Experiment with Android WebView based on various tutorials:
 Use Android Studio to import Git repository
 
 Adapt [web assets](app/src/main/assets/web/) and [strings.xml](app/src/main/res/values/strings.xml) for allowed websites and hosts...
+
+## Testing
+
+Check [latest release](https://github.com/mikespub/android-webview/releases) for app-release.apk
