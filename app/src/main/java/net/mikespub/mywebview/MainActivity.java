@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+// See also Chrome Custom Tabs https://developer.chrome.com/multidevice/android/customtabs
+// and Android Browser Helper https://github.com/GoogleChrome/android-browser-helper
 public class MainActivity extends AppCompatActivity {
 
     // https://developer.chrome.com/multidevice/webview/gettingstarted
