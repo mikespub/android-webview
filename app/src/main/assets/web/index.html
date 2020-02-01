@@ -10,13 +10,33 @@
     -->
 </head>
 <body onload="gotoSite()">
-    <p>
-        Loading <a href="http://beta.html5test.com/">HTML5 Test</a>...
-    </p>
+    <h1>My WebView</h1>
+    <label for="website">Website:</label>
+    <input list="website_list" id="website">
+    <datalist id="website_list">
+        <option value="http://beta.html5test.com/">HTML5 Test</option>
+        <option value="http://192.168.2.127/bbs/">BicBucStriim</option>
+        <option value="http://192.168.2.127/cops/">Books OPDS</option>
+    </datalist>
+    <button onclick="updateValue()">Go</button>
+    <ul>
+        <li><a href="http://beta.html5test.com/">HTML5 Test</a></li>
+        <li><a href="http://192.168.2.127/bbs/">BicBucStriim</a></li>
+        <li><a href="http://192.168.2.127/cops/">Books OPDS</a></li>
+    </ul>
     <script>
     function gotoSite() {
-        window.location.assign("http://beta.html5test.com/");
+        // window.location.assign("http://192.168.2.127/cops/");
         // window.location.replace("http://beta.html5test.com/");
+    }
+    const input = document.getElementById('website');
+    input.addEventListener('change', updateValue);
+    function updateValue(e) {
+        // var url = e.target.value;
+        var url = input.value;
+        if (url.startsWith("https://") || url.startsWith("http://")) {
+            window.location.assign(url);
+        }
     }
     </script>
 </body>

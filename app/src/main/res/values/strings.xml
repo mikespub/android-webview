@@ -4,5 +4,6 @@
     <string name="orig_website_url">http://beta.html5test.com/</string>
     <string-array name="urlhost_endswith">
         <item>html5test.com</item>
+        <item>192.168.2.127</item>
     </string-array>
 </resources>
