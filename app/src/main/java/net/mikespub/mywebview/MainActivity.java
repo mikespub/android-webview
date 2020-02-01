@@ -21,10 +21,13 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setJavaScriptEnabled(true);
         // See https://ukacademe.com/MobileApplication/AndroidGUI/Android_WebView
         // webSettings.setBuiltInZoomControls(true);
+        WebView.setWebContentsDebuggingEnabled(true);
         // Stop local links and redirects from opening in browser instead of WebView
         myWebView.setWebViewClient(new MyAppWebViewClient());
+        String myUrl = getString(R.string.website_url);
         // myWebView.loadUrl("http://beta.html5test.com/");
-        myWebView.loadUrl("http://www.html5rocks.com/");
+        // myWebView.loadUrl("http://www.html5rocks.com/");
+        myWebView.loadUrl(myUrl);
     }
 
     // Note: this is different from https://developer.android.com/guide/webapps/webview#java
