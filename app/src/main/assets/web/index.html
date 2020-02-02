@@ -11,13 +11,21 @@
 </head>
 <body onload="gotoSite()">
     <h1>My WebView</h1>
+    <label for="website">Website:</label>
+    <!-- https://www.jotform.com/blog/html5-datalists-what-you-need-to-know-78024/
     <datalist id="website_list">
+    If other, please specify:
+    </datalist>
+    <input type="text" list="website_list" name="website" id="website">
+    -->
+    <select name="website" id="website">
+        <option value="">If other, please specify:</option>
         <option value="http://beta.html5test.com/">HTML5 Test</option>
         <option value="http://192.168.2.127/bbs/">BicBucStriim</option>
         <option value="http://192.168.2.127/cops/">Books OPDS</option>
-    </datalist>
-    <label for="website">Website:</label>
-    <input list="website_list" id="website">
+    </select><br>
+    <label for="other">Other:</label>
+    <input type="text" name="other" id="other" value="http://192.168.2.127/">
     <button onclick="updateValue()">Go</button>
     <ul>
         <li><a href="http://beta.html5test.com/">HTML5 Test</a></li>
@@ -31,9 +39,14 @@
     }
     const input = document.getElementById('website');
     input.addEventListener('change', updateValue);
+    const other = document.getElementById('other');
+    other.addEventListener('change', updateValue);
     function updateValue(e) {
         // var url = e.target.value;
         var url = input.value;
+        if (url == "") {
+            url = other.value;
+        }
         if (url.startsWith("https://") || url.startsWith("http://")) {
             window.location.assign(url);
         }
