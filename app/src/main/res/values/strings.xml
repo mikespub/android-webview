@@ -6,4 +6,10 @@
         <item>html5test.com</item>
         <item>192.168.2.127</item>
     </string-array>
+    <string-array name="urlpath_not_endswith">
+        <item>.epub</item>
+    </string-array>
+    <string-array name="urlquery_not_contains">
+        <item>type=epub</item>
+    </string-array>
 </resources>
