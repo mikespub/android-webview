@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 
 // See https://stackoverflow.com/questions/22011200/creating-hashmap-from-a-json-string/51121461#51121461
-public class MyJsonUtility {
+class MyJsonUtility {
 
-    public static Map<String, Object> jsonToMap(Object json) throws JSONException {
+    static Map<String, Object> jsonToMap(Object json) throws JSONException {
 
         if(json instanceof JSONObject)
             return _jsonToMap_((JSONObject)json) ;
@@ -58,7 +58,7 @@ public class MyJsonUtility {
     }
 
 
-    public static List<Object> toList(JSONArray array) throws JSONException {
+    private static List<Object> toList(JSONArray array) throws JSONException {
         List<Object> list = new ArrayList<>();
         for(int i = 0; i < array.length(); i++) {
             Object value = array.get(i);

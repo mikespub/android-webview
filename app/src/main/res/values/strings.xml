@@ -1,6 +1,14 @@
 <resources>
     <string name="app_name">My WebView</string>
     <string name="website_url">https://appassets.androidplatform.net/assets/web/index.html</string>
+    <string-array name="url_match">
+        <item>host|endsWith|html5test.com</item>
+        <item>host|equals|192.168.2.127</item>
+    </string-array>
+    <string-array name="url_skip">
+        <item>path|endsWith|.epub</item>
+        <item>query|contains|type=epub</item>
+    </string-array>
     <string name="file_website_url">file:///android_asset/web/index.html</string>
     <string name="orig_website_url">http://beta.html5test.com/</string>
     <string-array name="urlhost_endswith">
