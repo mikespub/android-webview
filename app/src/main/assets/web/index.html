@@ -3,13 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- No complains about missing favicon.ico from https requests. -->
+    <link rel="icon" href="data:,">
     <title>My WebView</title>
     <!--
     <link rel="stylesheet" href="style.css">
     <script src="script.js"></script>
     -->
+    <script type="text/javascript">
+        // https://www.w3schools.com/jsref/met_select_add.asp
+        function addSiteOption(sel, url, title)
+        {
+            // create new option element
+            var opt = document.createElement('option');
+            // create text node to add to option element (opt)
+            // opt.appendChild( document.createTextNode(title) );
+            // set text property of opt
+            opt.text = title;
+            // set value property of opt
+            opt.value = url;
+            // add opt to end of select box (sel)
+            sel.add(opt);
+        }
+
+        function addSiteLi(frag, url, title)
+        {
+            var li = document.createElement('li');
+            li.innerHTML = '<a href="' + url + '">' + title + '</a>';
+            frag.appendChild(li);
+        }
+
+        function addCompareLi(frag, compare)
+        {
+            var li = document.createElement('li');
+            li.innerHTML = compare[0] + "." + compare[1] + '("' + compare[2] + '")';
+            frag.appendChild(li);
+        }
+
+        function addSiteList(sites) {
+            // get reference to select element
+            var select = document.getElementById("website");
+            // https://devdocs.io/dom/document/createdocumentfragment
+            var fragment = document.createDocumentFragment();
+            sites.forEach(function(site) {
+                addSiteOption(select, site["url"], site["title"]);
+                addSiteLi(fragment, site["url"], site["title"]);
+            });
+            // get reference to ul element
+            var weblist = document.getElementById("sitelist");
+            weblist.appendChild(fragment);
+        }
+
+        function addMatchList(matches) {
+            // https://devdocs.io/dom/document/createdocumentfragment
+            var fragment = document.createDocumentFragment();
+            matches.forEach(function(match) {
+                addCompareLi(fragment, match);
+            });
+            // get reference to ul element
+            var matchlist = document.getElementById("matchlist");
+            matchlist.appendChild(fragment);
+        }
+
+        function addSkipList(skips) {
+            // https://devdocs.io/dom/document/createdocumentfragment
+            var fragment = document.createDocumentFragment();
+            skips.forEach(function(skip) {
+                addCompareLi(fragment, skip);
+            });
+            // get reference to ul element
+            var skiplist = document.getElementById("skiplist");
+            skiplist.appendChild(fragment);
+        }
+
+    </script>
 </head>
-<body onload="gotoSite()">
+<body onload="loadSites()">
     <h1>My WebView</h1>
     <label for="website">Website:</label>
     <!-- https://www.jotform.com/blog/html5-datalists-what-you-need-to-know-78024/
@@ -20,20 +89,50 @@
     -->
     <select name="website" id="website">
         <option value="">If other, please specify:</option>
+        <!--
         <option value="http://beta.html5test.com/">HTML5 Test</option>
         <option value="http://192.168.2.127/bbs/">BicBucStriim</option>
         <option value="http://192.168.2.127/cops/">Books OPDS</option>
+        -->
     </select><br>
     <label for="other">Other:</label>
     <input type="text" name="other" id="other" value="http://192.168.2.127/">
     <button onclick="updateValue()">Go</button>
-    <ul>
+    <hr>
+    <h2>Configuration</h2>
+    Site List:
+    <ul id="sitelist">
+        <!--
         <li><a href="http://beta.html5test.com/">HTML5 Test</a></li>
         <li><a href="http://192.168.2.127/bbs/">BicBucStriim</a></li>
         <li><a href="http://192.168.2.127/cops/">Books OPDS</a></li>
+        -->
+    </ul>
+    Match List:
+    <ul id="matchlist">
+    </ul>
+    Skip List:
+    <ul id="skiplist">
     </ul>
     <script>
-    function gotoSite() {
+    function loadSites() {
+        // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+        fetch('settings.json')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then((myJson) => {
+            var settings = myJson;
+            addSiteList(settings["sites"]);
+            addMatchList(settings["match"]);
+            addSkipList(settings["skip"]);
+        })
+        .catch((error) => {
+            console.error('There has been a problem with your fetch operation:', error);
+        });
         // window.location.assign("http://192.168.2.127/cops/");
         // window.location.replace("http://beta.html5test.com/");
     }

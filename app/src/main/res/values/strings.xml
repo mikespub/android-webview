@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">My WebView</string>
-    <string name="website_url">file:///android_asset/web/index.html</string>
+    <string name="website_url">https://appassets.androidplatform.net/assets/web/index.html</string>
+    <string name="file_website_url">file:///android_asset/web/index.html</string>
     <string name="orig_website_url">http://beta.html5test.com/</string>
     <string-array name="urlhost_endswith">
         <item>html5test.com</item>

@@ -1,10 +1,10 @@
 package net.mikespub.mywebview;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 // See also Chrome Custom Tabs https://developer.chrome.com/multidevice/android/customtabs
 // and Android Browser Helper https://github.com/GoogleChrome/android-browser-helper
@@ -25,10 +25,9 @@ public class MainActivity extends AppCompatActivity {
         // webSettings.setBuiltInZoomControls(true);
         WebView.setWebContentsDebuggingEnabled(true);
         // Stop local links and redirects from opening in browser instead of WebView
-        myWebView.setWebViewClient(new MyAppWebViewClient());
+        myWebView.setWebViewClient(new MyAppWebViewClient(this));
         String myUrl = getString(R.string.website_url);
         // myWebView.loadUrl("http://beta.html5test.com/");
-        // myWebView.loadUrl("http://www.html5rocks.com/");
         myWebView.loadUrl(myUrl);
     }
 
