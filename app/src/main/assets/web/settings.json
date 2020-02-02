@@ -1,0 +1,24 @@
+{
+  "sites": [
+    {
+      "url": "http://beta.html5test.com/",
+      "title": "HTML5 Test"
+    },
+    {
+      "url": "http://192.168.2.127/bbs/",
+      "title": "BicBucStriim"
+    },
+    {
+      "url": "http://192.168.2.127/cops/",
+      "title": "Books OPDS"
+    }
+  ],
+  "match": [
+    ["host", "endsWith", "html5test.com"],
+    ["host", "equals", "192.168.2.127"]
+  ],
+  "skip": [
+    ["path", "endsWith", ".epub"],
+    ["query", "contains", "type=epub"]
+  ]
+}
