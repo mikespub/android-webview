@@ -114,6 +114,8 @@
     Skip List:
     <ul id="skiplist">
     </ul>
+    <p>Source: <span id="source">assets</span></p>
+    <p>Timestamp: <span id="timestamp">Loading...</span></p>
     <script>
     function loadSites() {
         // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
@@ -129,6 +131,12 @@
             addSiteList(settings["sites"]);
             addMatchList(settings["match"]);
             addSkipList(settings["skip"]);
+            var other = document.getElementById("other");
+            other.value = settings["other"];
+            var source = document.getElementById("source");
+            source.innerHTML = settings["source"];
+            var timestamp = document.getElementById("timestamp");
+            timestamp.innerHTML = settings["timestamp"];
         })
         .catch((error) => {
             console.error('There has been a problem with your fetch operation:', error);

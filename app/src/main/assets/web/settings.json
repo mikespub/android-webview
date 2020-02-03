@@ -13,6 +13,7 @@
       "title": "Books OPDS"
     }
   ],
+  "other": "http://192.168.2.127/",
   "match": [
     ["host", "endsWith", "html5test.com"],
     ["host", "equals", "192.168.2.127"]
@@ -20,5 +21,7 @@
   "skip": [
     ["path", "endsWith", ".epub"],
     ["query", "contains", "type=epub"]
-  ]
+  ],
+  "source": "assets",
+  "timestamp": "2020-02-02T14:01+0000"
 }

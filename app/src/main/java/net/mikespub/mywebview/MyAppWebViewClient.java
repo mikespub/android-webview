@@ -1,6 +1,8 @@
 package net.mikespub.mywebview;
 
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.net.Uri;
 import android.util.Log;
@@ -14,17 +16,25 @@ import androidx.webkit.WebViewAssetLoader;
 import org.json.JSONException;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 class MyAppWebViewClient extends WebViewClient {
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
@@ -35,16 +45,38 @@ class MyAppWebViewClient extends WebViewClient {
 
     MyAppWebViewClient(AppCompatActivity activity) {
         this.activity = activity;
+        long lastUpdated = this.checkAssetFiles();
         //this.loadStringConfig();
-        this.loadJsonConfig();
+        this.loadJsonConfig(lastUpdated);
     }
 
-    private void loadJsonConfig() {
+    private void loadJsonConfig(long lastUpdated) {
         String filename = "web/settings.json";
         String content = this.getJsonSettings(filename);
         try {
-            HashMap<String, Object> hashMap = new HashMap<>(MyJsonUtility.jsonToMap(content)) ;
+            HashMap<String, Object> hashMap = new HashMap<>(MyJsonUtility.jsonToMap(content));
             Log.d("Settings", hashMap.toString());
+            // https://stackoverflow.com/questions/13515168/android-time-in-iso-8601
+            // works with Instant
+            // Instant instant = Instant.now();
+            // String timestamp = (String) instant.format(DateTimeFormatter.ISO_INSTANT);
+            //ZonedDateTime zdt = ZonedDateTime.now();
+            //String timestamp = zdt.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
+            // https://stackoverflow.com/questions/3914404/how-to-get-current-moment-in-iso-8601-format-with-date-hour-and-minute
+            TimeZone tz = TimeZone.getTimeZone("UTC");
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ"); // Quoted "Z" to indicate UTC, no timezone offset
+            df.setTimeZone(tz);
+            if (!hashMap.containsKey("timestamp")) {
+                String timestamp = df.format(new Date());
+                Log.d("Timestamp New", timestamp);
+                // String timestamp = Instant.now().toString();
+                hashMap.put("timestamp", timestamp);
+            } else if (lastUpdated > 0) {
+                String timestamp = df.format(new Date(lastUpdated));
+                Log.d("Timestamp Old", timestamp);
+                // String timestamp = Instant.now().toString();
+                hashMap.put("timestamp", timestamp);
+            }
             // create array of arrays once for comparison
             ArrayList<Object> matchArray = (ArrayList<Object>) hashMap.get("match");
             this.myMatchCompare = new String[matchArray.size()][3];
@@ -90,6 +122,66 @@ class MyAppWebViewClient extends WebViewClient {
             this.mySkipCompare[j] = mySkipArr[j].split("\\|");
         }
         Log.d("Settings", Arrays.deepToString(this.mySkipCompare));
+    }
+
+    private long checkAssetFiles() {
+        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/web
+        File extwebdir = new File(this.activity.getExternalFilesDir(null), "web");
+        Log.d("External Web Dir", extwebdir.getAbsolutePath());
+        // https://stackoverflow.com/questions/5248094/is-it-possible-to-get-last-modified-date-from-an-assets-file - using shared preferences in the end
+        // See also https://stackoverflow.com/questions/37953002/mess-with-the-shared-preferences-of-android-which-function-to-use/37953072 for preferences
+        long lastUpdated = 0;
+        if (!extwebdir.exists()) {
+            extwebdir.mkdirs();
+            Log.d("External Web Dir", Boolean.toString(extwebdir.exists()));
+        } else {
+            try {
+                PackageManager pm = this.activity.getPackageManager();
+                PackageInfo appInfo = pm.getPackageInfo(this.activity.getPackageName(), 0);
+                lastUpdated = appInfo.lastUpdateTime;
+                Log.d("Package", String.valueOf(lastUpdated));
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.e("Package", e.toString());
+            }
+        }
+        copyAssetFiles(extwebdir, lastUpdated);
+        return lastUpdated;
+    }
+
+    // https://stackoverflow.com/questions/4447477/how-to-copy-files-from-assets-folder-to-sdcard
+    private void copyAssetFiles(File extwebdir, long lastUpdated) {
+        AssetManager manager = this.activity.getAssets();
+        String[] files;
+        try {
+            files = manager.list("web");
+            Log.d("Web Files", Arrays.toString(files));
+        } catch (IOException e) {
+            Log.e("Web Files", e.toString());
+            return;
+        }
+        for (String f: files) {
+            File extfile = new File(extwebdir, f);
+            if (!extfile.exists() || lastUpdated > extfile.lastModified()) {
+                Log.d("Web File Missing", extfile.getAbsolutePath());
+                try (InputStream in = manager.open("web/" + f); OutputStream out = new FileOutputStream(extfile)) {
+                    copyFile(in, out);
+                } catch (IOException e) {
+                    Log.e("Web File", e.toString());
+                    break;
+                }
+                // NOOP
+                // NOOP
+                Log.d("Web File Copied", extfile.getAbsolutePath());
+            }
+        }
+    }
+
+    private void copyFile(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024];
+        int read;
+        while((read = in.read(buffer)) != -1){
+            out.write(buffer, 0, read);
+        }
     }
 
     private String getJsonSettings(String filename) {
@@ -248,6 +340,26 @@ class MyAppWebViewClient extends WebViewClient {
                     .build();
             }
             final Uri uri = Uri.parse(url);
+            String path = uri.getPath();
+            Log.d("WebResource", path);
+            // ByteArrayInputStream str = new ByteArrayInputStream(message.getBytes());
+            // return new WebResourceResponse("text/plain", "utf-8", str);
+            // InputStream localStream = assetMgr.open(path);
+            // return new WebResourceResponse((url.contains(".js") ? "text/javascript" : "text/css"), "UTF-8", localStream);
+            if (path.equals("/assets/web/settings.json")) {
+                // TODO: return WebResourceResponse
+                File extwebfile = new File(this.activity.getExternalFilesDir(null), "web/settings.json");
+                if (extwebfile.exists()) {
+                    try {
+                        InputStream targetStream = new FileInputStream(extwebfile);
+                        Log.d("WebResource External", Boolean.toString(extwebfile.exists()));
+                        return new WebResourceResponse("application/json", "UTF-8", targetStream);
+                    } catch (Exception e) {
+                        Log.e("WebResource", e.toString());
+                    }
+                }
+                Log.d("WebResource Assets", Boolean.toString(extwebfile.exists()));
+            }
             return this.assetLoader.shouldInterceptRequest(uri);
         }
         return null;

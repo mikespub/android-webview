@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 // and Android Browser Helper https://github.com/GoogleChrome/android-browser-helper
 public class MainActivity extends AppCompatActivity {
 
+    // TODO: SavedStateViewModel see https://github.com/googlecodelabs/android-lifecycles/blob/master/app/src/main/java/com/example/android/lifecycles/step6_solution/SavedStateActivity.java
+
     // https://developer.chrome.com/multidevice/webview/gettingstarted
     private WebView myWebView;
 
@@ -17,6 +19,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // /data/user/0/net.mikespub.mywebview/files
+        // File filesdir = getFilesDir();
+        // Log.d("Internal Files Dir", filesdir.getAbsolutePath());
+        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/Documents
+        // File extdocsdir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        // Log.d("External Docs Dir", extdocsdir.getAbsolutePath());
+        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files
+        // File extfilesdir = getExternalFilesDir(null);
+        // Log.d("External Files Dir", extfilesdir.getAbsolutePath());
         myWebView = findViewById(R.id.activity_main_webview);
         // Enable Javascript
         WebSettings webSettings = myWebView.getSettings();

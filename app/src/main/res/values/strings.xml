@@ -9,16 +9,4 @@
         <item>path|endsWith|.epub</item>
         <item>query|contains|type=epub</item>
     </string-array>
-    <string name="file_website_url">file:///android_asset/web/index.html</string>
-    <string name="orig_website_url">http://beta.html5test.com/</string>
-    <string-array name="urlhost_endswith">
-        <item>html5test.com</item>
-        <item>192.168.2.127</item>
-    </string-array>
-    <string-array name="urlpath_not_endswith">
-        <item>.epub</item>
-    </string-array>
-    <string-array name="urlquery_not_contains">
-        <item>type=epub</item>
-    </string-array>
 </resources>
