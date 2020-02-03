@@ -233,6 +233,10 @@ class MyAppWebViewClient extends WebViewClient {
     @SuppressWarnings("deprecation")
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        Log.d("Web Override", url);
+        if(url.startsWith("https://appassets.androidplatform.net/")) {
+            return false;
+        }
         final Uri uri = Uri.parse(url);
         // if(Uri.parse(url).getHost().endsWith("html5rocks.com")) {
         //final String host = uri.getHost();
@@ -332,6 +336,7 @@ class MyAppWebViewClient extends WebViewClient {
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+        Log.d("Web Intercept", url);
         if(url.startsWith("https://appassets.androidplatform.net/")) {
             if (this.assetLoader == null) {
                 this.assetLoader = new WebViewAssetLoader.Builder()
