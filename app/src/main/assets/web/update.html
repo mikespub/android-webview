@@ -216,9 +216,13 @@ input[type=submit] {
             var other = document.getElementById("other");
             other.value = settings["other"];
             var source = document.getElementById("source");
-            source.value = settings["source"];
+            if (source) {
+                source.value = settings["source"];
+            }
             var timestamp = document.getElementById("timestamp");
-            timestamp.value = settings["timestamp"];
+            if (timestamp) {
+                timestamp.value = settings["timestamp"];
+            }
         })
         .catch((error) => {
             console.error('There has been a problem with your fetch operation:', error);
