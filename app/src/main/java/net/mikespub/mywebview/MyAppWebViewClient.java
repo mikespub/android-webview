@@ -144,7 +144,7 @@ class MyAppWebViewClient extends WebViewClient {
             //    String[] check = s.split("\\|");
             for (String[] check: this.mySkipCompare) {
                 value = pieces.get(check[0]);
-                Log.i("WebView Skip", "Value " + compare[0] + ": " + value);
+                Log.i("WebView Skip", "Value " + check[0] + ": " + value);
                 result = this.compare(value, check[1], check[2]);
                 if (result) {
                     isSkip = true;
@@ -235,7 +235,6 @@ class MyAppWebViewClient extends WebViewClient {
             // InputStream localStream = assetMgr.open(path);
             // return new WebResourceResponse((url.contains(".js") ? "text/javascript" : "text/css"), "UTF-8", localStream);
             if (path.equals("/assets/web/settings.json")) {
-                // TODO: return WebResourceResponse
                 File extwebfile = new File(this.activity.getExternalFilesDir(null), "web/settings.json");
                 if (extwebfile.exists()) {
                     try {
@@ -253,6 +252,7 @@ class MyAppWebViewClient extends WebViewClient {
                 // String query = uri.getQuery();
                 HashMap<String, Object> hashMap = this.mySavedStateModel.parseQuery(this.activity, uri);
                 String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
+                loadSettings();
                 String message = "<!DOCTYPE html>\n" +
                         "<html lang=\"en\">\n" +
                         "<head>\n" +

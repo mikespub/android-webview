@@ -13,6 +13,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -165,6 +166,24 @@ class MySettingsRepository {
     }
 
     private String getJsonSettings(String filename) {
+        File extwebfile = new File(this.activity.getExternalFilesDir(null), filename);
+        if (extwebfile.exists()) {
+            try {
+                Writer writer = new StringWriter();
+                try (InputStream input = new FileInputStream(extwebfile)) {
+                    char[] buffer = new char[2048];
+                    Reader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
+                    int n;
+                    while ((n = reader.read(buffer)) != -1) {
+                        writer.write(buffer, 0, n);
+                    }
+                }
+                return writer.toString();
+            } catch (IOException e) {
+                Log.e("getJsonSettings", e.toString());
+            }
+            return null;
+        }
         AssetManager manager = this.activity.getAssets();
         try {
             Writer writer = new StringWriter();
