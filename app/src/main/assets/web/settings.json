@@ -23,5 +23,5 @@
     ["query", "contains", "type=epub"]
   ],
   "source": "assets",
-  "timestamp": "2020-02-02T14:01+0000"
+  "timestamp": "2020-02-02T14:01:00Z"
 }

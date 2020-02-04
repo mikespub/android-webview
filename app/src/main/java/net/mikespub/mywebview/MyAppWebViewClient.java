@@ -14,8 +14,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewAssetLoader;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -34,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TimeZone;
 
 class MyAppWebViewClient extends WebViewClient {
@@ -50,29 +54,40 @@ class MyAppWebViewClient extends WebViewClient {
         this.loadJsonConfig(lastUpdated);
     }
 
+    private String getTimestamp(long lastUpdated) {
+        // https://stackoverflow.com/questions/13515168/android-time-in-iso-8601
+        // works with Instant
+        // Instant instant = Instant.now();
+        // String timestamp = (String) instant.format(DateTimeFormatter.ISO_INSTANT);
+        //ZonedDateTime zdt = ZonedDateTime.now();
+        //String timestamp = zdt.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
+        // https://stackoverflow.com/questions/3914404/how-to-get-current-moment-in-iso-8601-format-with-date-hour-and-minute
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+        df.setTimeZone(tz);
+        String timestamp;
+        if (lastUpdated > 0) {
+            timestamp = df.format(new Date(lastUpdated));
+        } else {
+            timestamp = df.format(new Date());
+
+        }
+        // String timestamp = Instant.now().toString();
+        return timestamp;
+    }
+
     private void loadJsonConfig(long lastUpdated) {
         String filename = "web/settings.json";
         String content = this.getJsonSettings(filename);
         try {
             HashMap<String, Object> hashMap = new HashMap<>(MyJsonUtility.jsonToMap(content));
             Log.d("Settings", hashMap.toString());
-            // https://stackoverflow.com/questions/13515168/android-time-in-iso-8601
-            // works with Instant
-            // Instant instant = Instant.now();
-            // String timestamp = (String) instant.format(DateTimeFormatter.ISO_INSTANT);
-            //ZonedDateTime zdt = ZonedDateTime.now();
-            //String timestamp = zdt.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
-            // https://stackoverflow.com/questions/3914404/how-to-get-current-moment-in-iso-8601-format-with-date-hour-and-minute
-            TimeZone tz = TimeZone.getTimeZone("UTC");
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ"); // Quoted "Z" to indicate UTC, no timezone offset
-            df.setTimeZone(tz);
             if (!hashMap.containsKey("timestamp")) {
-                String timestamp = df.format(new Date());
+                String timestamp = getTimestamp(0);
                 Log.d("Timestamp New", timestamp);
-                // String timestamp = Instant.now().toString();
                 hashMap.put("timestamp", timestamp);
             } else if (lastUpdated > 0) {
-                String timestamp = df.format(new Date(lastUpdated));
+                String timestamp = getTimestamp(lastUpdated);
                 Log.d("Timestamp Old", timestamp);
                 // String timestamp = Instant.now().toString();
                 hashMap.put("timestamp", timestamp);
@@ -125,6 +140,15 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     private long checkAssetFiles() {
+        // /data/user/0/net.mikespub.mywebview/files
+        // File filesdir = getFilesDir();
+        // Log.d("Internal Files Dir", filesdir.getAbsolutePath());
+        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/Documents
+        // File extdocsdir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        // Log.d("External Docs Dir", extdocsdir.getAbsolutePath());
+        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files
+        // File extfilesdir = getExternalFilesDir(null);
+        // Log.d("External Files Dir", extfilesdir.getAbsolutePath());
         // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/web
         File extwebdir = new File(this.activity.getExternalFilesDir(null), "web");
         Log.d("External Web Dir", extwebdir.getAbsolutePath());
@@ -364,6 +388,104 @@ class MyAppWebViewClient extends WebViewClient {
                     }
                 }
                 Log.d("WebResource Assets", Boolean.toString(extwebfile.exists()));
+            }
+            // Note: we could also have used the Javascript interface, but then this might be available for all sites
+            if (path.equals("/assets/web/fake_post.jsp")) {
+                String query = uri.getQuery();
+                List<String> titles = uri.getQueryParameters("title[]");
+                List<String> urls = uri.getQueryParameters("url[]");
+                List<String> match0 = uri.getQueryParameters("match0[]");
+                List<String> match1 = uri.getQueryParameters("match1[]");
+                List<String> match2 = uri.getQueryParameters("match2[]");
+                List<String> skip0 = uri.getQueryParameters("skip0[]");
+                List<String> skip1 = uri.getQueryParameters("skip1[]");
+                List<String> skip2 = uri.getQueryParameters("skip2[]");
+                String other = uri.getQueryParameter("other");
+                HashMap<String, Object> hashMap = new HashMap<>();
+                List<HashMap<String, String>> sites = new ArrayList<>();
+                for (int i = 0; i < titles.size(); i++) {
+                    if (titles.get(i).equals("") || urls.get(i).equals("")) {
+                        continue;
+                    }
+                    HashMap<String, String> site = new HashMap<>();
+                    site.put("url", urls.get(i));
+                    // Warning: Prior to Jelly Bean, this decoded the '+' character as '+' rather than ' '.
+                    site.put("title", titles.get(i).replace("+", " "));
+                    sites.add(site);
+                }
+                hashMap.put("sites", sites);
+                hashMap.put("other", other);
+                List<List<String>> matches = new ArrayList<>();
+                for (int i = 0; i < match0.size(); i++) {
+                    if (match0.get(i).equals("") || match1.get(i).equals("") || match2.get(i).equals("")) {
+                        continue;
+                    }
+                    List<String> match = new ArrayList<>();
+                    match.add(match0.get(i));
+                    match.add(match1.get(i));
+                    match.add(match2.get(i));
+                    matches.add(match);
+                }
+                hashMap.put("match", matches);
+                List<List<String>> skips = new ArrayList<>();
+                for (int i = 0; i < skip0.size(); i++) {
+                    if (skip0.get(i).equals("") || skip1.get(i).equals("") || skip2.get(i).equals("")) {
+                        continue;
+                    }
+                    List<String> skip = new ArrayList<>();
+                    skip.add(skip0.get(i));
+                    skip.add(skip1.get(i));
+                    skip.add(skip2.get(i));
+                    skips.add(skip);
+                }
+                hashMap.put("skip", skips);
+                hashMap.put("source", "updated via webview");
+                hashMap.put("timestamp", getTimestamp(0));
+                Log.d("Web Settings", hashMap.toString());
+                JSONObject jsonObject=new JSONObject(hashMap);
+                String jsonString = "";
+                // https://stackoverflow.com/questions/16563579/jsonobject-tostring-how-not-to-escape-slashes
+                try {
+                    jsonString = jsonObject.toString(2).replace("\\","");
+                    Log.d("Web Settings", jsonString);
+                    File extwebfile = new File(this.activity.getExternalFilesDir(null), "web/settings.json");
+                    // https://stackoverflow.com/questions/11371154/outputstreamwriter-vs-filewriter/11371322
+                    try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(extwebfile), StandardCharsets.UTF_8)) {
+                        osw.write(jsonString);
+                    } catch (IOException e) {
+                        Log.e("Web Settings", e.toString());
+                    }
+                } catch (JSONException e) {
+                    Log.e("Web Settings", e.toString());
+                }
+                String message = "<!DOCTYPE html>\n" +
+                        "<html lang=\"en\">\n" +
+                        "<head>\n" +
+                        "    <meta charset=\"UTF-8\">\n" +
+                        "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
+                        "    <!-- No complains about missing favicon.ico from https requests. -->\n" +
+                        "    <link rel=\"icon\" href=\"data:,\">\n" +
+                        "    <title>Update Settings</title>\n" +
+                        "</head>\n" +
+                        "<body>\n" +
+                        "    <h1><a href=\"index.html\">My WebView</a></h1>\n" +
+                        "    <h2><a href=\"update.html\">Update Settings</a></h2>\n";
+                /*
+                message += "<p>Query: '" + query + "'</p>";
+                message += "<p>Titles: " + Arrays.toString(titles.toArray()) + "</p>";
+                message += "<p>Urls: " + Arrays.toString(urls.toArray()) + "</p>";
+                message += "<p>Match0: " + Arrays.toString(match0.toArray()) + "</p>";
+                message += "<p>Match1: " + Arrays.toString(match1.toArray()) + "</p>";
+                message += "<p>Match2: " + Arrays.toString(match2.toArray()) + "</p>";
+                message += "<p>Skip0: " + Arrays.toString(skip0.toArray()) + "</p>";
+                message += "<p>Skip1: " + Arrays.toString(skip1.toArray()) + "</p>";
+                message += "<p>Skip2: " + Arrays.toString(skip2.toArray()) + "</p>";
+                message += "<p>Other: " + other + "</p>";
+                 */
+                message += "<pre>" + jsonString + "</pre>";
+                message += "</body></html>";
+                ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+                return new WebResourceResponse("text/html", "UTF-8", targetStream);
             }
             return this.assetLoader.shouldInterceptRequest(uri);
         }

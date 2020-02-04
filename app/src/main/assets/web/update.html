@@ -164,13 +164,18 @@ input[type=submit] {
     </script>
 </head>
 <body onload="loadSites()">
-    <h1>My WebView</h1>
+    <h1><a href="index.html">My WebView</a></h1>
     <h2>Update Settings</h2>
     <!-- we need to use GET here, webview doesn't get POST data -->
-    <form action="/settings/update" method="GET">
+    <form action="fake_post.jsp" method="GET">
         <fieldset id="sitelist">
             <legend><label for="title_1">Websites</label></legend>
             <!-- input id="title_1" type="text" name="title[]" value="" -->
+        </fieldset>
+
+        <fieldset>
+            <legend><label for="other">Other</label></legend>
+            <input id="other" class="single" type="text" name="other" value="">
         </fieldset>
 
         <fieldset id="matchlist">
@@ -183,10 +188,6 @@ input[type=submit] {
             <!-- input id="skip0_1" type="text" name="skip0[]" value="" -->
         </fieldset>
 
-        <fieldset>
-            <legend><label for="other">Other</label></legend>
-            <input id="other" class="single" type="text" name="other" value="">
-        </fieldset>
         <!--
         <label for="source">Source</label>
         <input id="source" type="text" name="source" value="">
@@ -195,7 +196,7 @@ input[type=submit] {
         <input id="timestamp" type="text" name="timestamp" value="">
         -->
         <input type="hidden" name="csrf" value="">
-        <input id="submit" type="submit" value="Update Settings?">
+        <input id="submit" type="submit" value="Update Settings">
     </form>
     <script>
     function loadSites() {

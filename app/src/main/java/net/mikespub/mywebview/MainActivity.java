@@ -19,15 +19,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // /data/user/0/net.mikespub.mywebview/files
-        // File filesdir = getFilesDir();
-        // Log.d("Internal Files Dir", filesdir.getAbsolutePath());
-        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/Documents
-        // File extdocsdir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
-        // Log.d("External Docs Dir", extdocsdir.getAbsolutePath());
-        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files
-        // File extfilesdir = getExternalFilesDir(null);
-        // Log.d("External Files Dir", extfilesdir.getAbsolutePath());
         myWebView = findViewById(R.id.activity_main_webview);
         // Enable Javascript
         WebSettings webSettings = myWebView.getSettings();
@@ -37,8 +28,8 @@ public class MainActivity extends AppCompatActivity {
         WebView.setWebContentsDebuggingEnabled(true);
         // Stop local links and redirects from opening in browser instead of WebView
         myWebView.setWebViewClient(new MyAppWebViewClient(this));
-        String myUrl = getString(R.string.website_url);
         // myWebView.loadUrl("http://beta.html5test.com/");
+        String myUrl = getString(R.string.website_url);
         myWebView.loadUrl(myUrl);
     }
 
