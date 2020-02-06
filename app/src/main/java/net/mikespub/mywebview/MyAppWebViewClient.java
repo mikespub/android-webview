@@ -6,6 +6,7 @@ import android.util.Log;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import androidx.webkit.WebViewAssetLoader;
 
@@ -36,6 +37,10 @@ class MyAppWebViewClient extends WebViewClient {
         loadSettings();
     }
 
+    Boolean hasDebuggingEnabled() {
+        return (Boolean) mySavedStateModel.getValue("remote_debug");
+    }
+
     Boolean hasConsoleLog() {
         return (Boolean) mySavedStateModel.getValue("console_log");
     }
@@ -46,6 +51,10 @@ class MyAppWebViewClient extends WebViewClient {
 
     Boolean hasContextMenu() {
         return (Boolean) mySavedStateModel.getValue("context_menu");
+    }
+
+    Boolean hasNotMatching() {
+        return (Boolean) mySavedStateModel.getValue("not_matching");
     }
 
     private void loadSettings() {
@@ -142,6 +151,8 @@ class MyAppWebViewClient extends WebViewClient {
         pieces.put("path", uri.getPath());
         pieces.put("query", uri.getQuery());
         pieces.put("url", uri.toString());
+        boolean isMatch = false;
+        boolean isSkip = false;
         // https://stackoverflow.com/questions/160970/how-do-i-invoke-a-java-method-when-given-the-method-name-as-a-string
         //for (String m: this.myMatchArr) {
         //    String[] compare = m.split("\\|");
@@ -152,7 +163,8 @@ class MyAppWebViewClient extends WebViewClient {
             if (!result) {
                 continue;
             }
-            boolean isSkip = false;
+            isMatch = true;
+            isSkip = false;
             //for (String s: this.mySkipArr) {
             //    String[] check = s.split("\\|");
             for (String[] check: this.mySkipCompare) {
@@ -164,54 +176,36 @@ class MyAppWebViewClient extends WebViewClient {
                     break;
                 }
             }
-            if (isSkip) {
-                continue;
-            }
-            return false;
-        }
-        /*
-        if (host != null) {
-            String[] myHostEndsArr = this.activity.getResources().getStringArray(R.array.urlhost_endswith);
-            for (String s : myHostEndsArr) {
-                if (!host.endsWith(s)) {
-                    continue;
-                }
-                // skip epub files - TODO: save in media directory https://developer.android.com/training/data-storage/app-specific#media ?
-                // if (!path.endsWith(".epub") && (query == null || !query.contains("type=epub"))) {
-                //     return false;
-                // }
-                boolean isMatch = false;
-                if (path != null) {
-                    String[] myPathNotEndsArr = this.activity.getResources().getStringArray(R.array.urlpath_not_endswith);
-                    for (String t : myPathNotEndsArr) {
-                        if (path.endsWith(t)) {
-                            isMatch = true;
-                            break;
-                        }
-                    }
-                    if (isMatch) {
-                        continue;
-                    }
-                }
-                if (query != null) {
-                    String[] myQueryNotContainsArr = this.activity.getResources().getStringArray(R.array.urlquery_not_contains);
-                    for (String q : myQueryNotContainsArr) {
-                        if (query.contains(q)) {
-                            isMatch = true;
-                            break;
-                        }
-                    }
-                    if (isMatch) {
-                        continue;
-                    }
-                }
+            if (!isSkip) {
                 return false;
             }
         }
-         */
+        // skip epub files - TODO: save in media directory https://developer.android.com/training/data-storage/app-specific#media ?
+        if (isMatch && isSkip) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            // Create intent to show chooser
+            String title = uri.toString() + "\n\nOpen with";
+            Intent chooser = Intent.createChooser(intent, title);
+            view.getContext().startActivity(chooser);
+            return true;
+        }
 
-        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        view.getContext().startActivity(intent);
+        // TODO: make this configurable for non-matching urls
+        if (hasNotMatching()) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            // Create intent to show chooser
+            String title = uri.toString() + "\n\nOpen with";
+            Intent chooser = Intent.createChooser(intent, title);
+            view.getContext().startActivity(chooser);
+        } else {
+            String message = uri.toString() + "\n\nLink not matching. You can allow opening via regular browser in Advanced Options.";
+            Toast toast = Toast.makeText(
+                    view.getContext().getApplicationContext(),
+                    message,
+                    Toast.LENGTH_LONG);
+            toast.show();
+
+        }
         return true;
     }
 

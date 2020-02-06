@@ -22,9 +22,11 @@
     ["path", "endsWith", ".epub"],
     ["query", "contains", "type=epub"]
   ],
+  "remote_debug": true,
   "console_log": false,
   "js_interface": false,
   "context_menu": false,
+  "not_matching": false,
   "source": "assets",
   "timestamp": "2020-02-02T14:01:00Z"
 }

@@ -46,12 +46,16 @@ public class MySavedStateModel extends ViewModel {
         hashMap.put("match", match);
         List<List<String>> skip = (ArrayList) getValue("skip");
         hashMap.put("skip", skip);
+        Boolean remote_debug = (Boolean) getValue("remote_debug");
+        hashMap.put("remote_debug", remote_debug);
         Boolean console_log = (Boolean) getValue("console_log");
         hashMap.put("console_log", console_log);
         Boolean js_interface = (Boolean) getValue("js_interface");
         hashMap.put("js_interface", js_interface);
         Boolean context_menu = (Boolean) getValue("context_menu");
         hashMap.put("context_menu", context_menu);
+        Boolean not_matching = (Boolean) getValue("not_matching");
+        hashMap.put("not_matching", not_matching);
         return hashMap;
     }
 
@@ -66,9 +70,11 @@ public class MySavedStateModel extends ViewModel {
         setValue("match", hashMap.get("match"));
         setValue("skip", hashMap.get("skip"));
         setValue("source", hashMap.get("source"));
+        setValue("remote_debug", hashMap.get("remote_debug"));
         setValue("console_log", hashMap.get("console_log"));
         setValue("js_interface", hashMap.get("js_interface"));
         setValue("context_menu", hashMap.get("context_menu"));
+        setValue("not_matching", hashMap.get("not_matching"));
         setValue("timestamp", hashMap.get("timestamp"));
     }
 

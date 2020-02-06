@@ -223,10 +223,12 @@ input[type=submit] {
         </fieldset>
 
         <fieldset id="options">
-            <legend>Advanced Options (requires restart)</legend>
+            <legend>Advanced Options (requires app restart)</legend>
+            <input id="remote_debug" type="checkbox" name="remote_debug" value="true"> <label for="remote_debug">Enable debugging of web contents</label><br>
             <input id="console_log" type="checkbox" name="console_log" value="true"> <label for="console_log">Show console log messages</label><br>
             <input id="js_interface" type="checkbox" name="js_interface" value="true"> <label for="js_interface">Javascript Interface for local assets</label><br>
-            <input id="context_menu" type="checkbox" name="context_menu" value="true"> <label for="context_menu">Context Menu for links &amp; images</label>
+            <input id="context_menu" type="checkbox" name="context_menu" value="true"> <label for="context_menu">Context Menu for links and images</label><br>
+            <input id="not_matching" type="checkbox" name="not_matching" value="true"> <label for="not_matching">Open non-matching links via browser</label>
         </fieldset>
 
         <!--
@@ -260,6 +262,10 @@ input[type=submit] {
             if (source) {
                 source.value = settings["source"];
             }
+            var remote_debug = document.getElementById("remote_debug");
+            if (remote_debug && settings["remote_debug"]) {
+                remote_debug.checked = true;
+            }
             var console_log = document.getElementById("console_log");
             if (console_log && settings["console_log"]) {
                 console_log.checked = true;
@@ -271,6 +277,10 @@ input[type=submit] {
             var context_menu = document.getElementById("context_menu");
             if (context_menu && settings["context_menu"]) {
                 context_menu.checked = true;
+            }
+            var not_matching = document.getElementById("not_matching");
+            if (not_matching && settings["not_matching"]) {
+                not_matching.checked = true;
             }
             var timestamp = document.getElementById("timestamp");
             if (timestamp) {

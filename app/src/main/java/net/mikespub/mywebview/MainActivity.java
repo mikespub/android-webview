@@ -1,5 +1,7 @@
 package net.mikespub.mywebview;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -41,9 +43,11 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setJavaScriptEnabled(true);
         // See https://ukacademe.com/MobileApplication/AndroidGUI/Android_WebView
         // webSettings.setBuiltInZoomControls(true);
-        WebView.setWebContentsDebuggingEnabled(true);
         // Stop local links and redirects from opening in browser instead of WebView
         MyAppWebViewClient myWebViewClient = new MyAppWebViewClient(this);
+        if (myWebViewClient.hasDebuggingEnabled()) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
         myWebView.setWebViewClient(myWebViewClient);
         // Add Javascript interface
         if (myWebViewClient.hasJavascriptInterface()) {
@@ -70,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         }
         // Support context menu for links and images in WebView
         // WebViewClient myWebViewClient = myWebView.getWebViewClient();
+        //registerForContextMenu(myWebView);
         if (myWebViewClient.hasContextMenu()) {
             //Log.d("WebView", Boolean.toString(myWebView.isLongClickable()));
             myWebView.setLongClickable(true);
@@ -78,22 +83,53 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public boolean onLongClick(View v) {
-                    Log.d("WebView", v.toString());
                     WebView.HitTestResult hitTestResult = myWebView.getHitTestResult();
                     if (hitTestResult == null) {
                         return false;
                     }
-                    if (hitTestResult.getType() == WebView.HitTestResult.IMAGE_TYPE
-                            || hitTestResult.getType() == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
-                        Log.d("WebView", "image");
-                        //showDownDialog(hitTestResult.getExtra());
-                        //} else if (!mIsShowTitle) {
-                        //    //showActionSheet();
-                    } else if (hitTestResult.getType() == WebView.HitTestResult.SRC_ANCHOR_TYPE) {
-                        Log.d("WebView", "link");
-                    } else {
-                        Log.d("WebView", "not interesting");
+                    int getType = hitTestResult.getType();
+                    String extra = hitTestResult.getExtra();
+                    if (extra == null || extra.equals("")) {
                         return false;
+                    }
+                    Uri uri = Uri.parse(extra);
+                    Intent intent;
+                    Intent chooser;
+                    switch (getType) {
+                        case WebView.HitTestResult.IMAGE_TYPE:
+                            Log.d("WebView", "image");
+                            //showDownDialog(hitTestResult.getExtra());
+                            intent = new Intent(Intent.ACTION_VIEW, uri);
+                            //myWebView.getContext().startActivity(intent);
+                            chooser = Intent.createChooser(intent, null);
+                            myWebView.getContext().startActivity(chooser);
+                            return true;
+                        case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE:
+                            Log.d("WebView", "image anchor");
+                            intent = new Intent(Intent.ACTION_VIEW, uri);
+                            //myWebView.getContext().startActivity(intent);
+                            chooser = Intent.createChooser(intent, null);
+                            myWebView.getContext().startActivity(chooser);
+                            return true;
+                        case WebView.HitTestResult.SRC_ANCHOR_TYPE:
+                            Log.d("WebView", "anchor");
+                            //intent = new Intent(Intent.ACTION_SEND, uri);
+                            // See also https://github.com/codepath/android_guides/wiki/Sharing-Content-with-Intents
+                            //intent = new Intent(Intent.ACTION_SEND);
+                            //intent.putExtra(Intent.EXTRA_TEXT, uri.toString());
+                            //intent.putExtra(Intent.EXTRA_TITLE, "Send Me");
+                            //intent.setType("text/plain");
+                            intent = new Intent(Intent.ACTION_VIEW, uri);
+                            // Create intent to show chooser
+                            String title = uri.toString() + "\n\nOpen with";
+                            chooser = Intent.createChooser(intent, title);
+                            //chooser = Intent.createChooser(intent, null);
+                            //chooser.putExtra(Intent.EXTRA_TITLE, uri.toString() + "\n\nOpen with");
+                            myWebView.getContext().startActivity(chooser);
+                            return true;
+                        default:
+                            Log.d("WebView", "other " + getType);
+                            break;
                     }
 
                     Log.d("WebView", "Type:" + hitTestResult.getType() + ";Extra:" + hitTestResult.getExtra());

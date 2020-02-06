@@ -211,9 +211,11 @@ class MySettingsRepository {
         List<String> skip1 = uri.getQueryParameters("skip1[]");
         List<String> skip2 = uri.getQueryParameters("skip2[]");
         String other = uri.getQueryParameter("other");
+        String remote_debug = uri.getQueryParameter("remote_debug");
         String console_log = uri.getQueryParameter("console_log");
         String js_interface = uri.getQueryParameter("js_interface");
         String context_menu = uri.getQueryParameter("context_menu");
+        String not_matching = uri.getQueryParameter("not_matching");
         HashMap<String, Object> hashMap = new HashMap<>();
         List<HashMap<String, String>> sites = new ArrayList<>();
         for (int i = 0; i < titles.size(); i++) {
@@ -252,6 +254,11 @@ class MySettingsRepository {
             skips.add(skip);
         }
         hashMap.put("skip", skips);
+        if (remote_debug != null && remote_debug.equals("true")) {
+            hashMap.put("remote_debug", true);
+        } else {
+            hashMap.put("remote_debug", false);
+        }
         if (console_log != null && console_log.equals("true")) {
             hashMap.put("console_log", true);
         } else {
@@ -266,6 +273,11 @@ class MySettingsRepository {
             hashMap.put("context_menu", true);
         } else {
             hashMap.put("context_menu", false);
+        }
+        if (not_matching != null && not_matching.equals("true")) {
+            hashMap.put("not_matching", true);
+        } else {
+            hashMap.put("not_matching", false);
         }
         hashMap.put("source", "updated via webview");
         hashMap.put("timestamp", getTimestamp(0));
