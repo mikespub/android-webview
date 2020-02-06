@@ -37,8 +37,6 @@ import java.util.TimeZone;
 class MySettingsRepository {
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
     private final AppCompatActivity activity;
-    private String[][] myMatchCompare;
-    private String[][] mySkipCompare;
 
     MySettingsRepository(AppCompatActivity activity) {
         this.activity = activity;
@@ -213,6 +211,9 @@ class MySettingsRepository {
         List<String> skip1 = uri.getQueryParameters("skip1[]");
         List<String> skip2 = uri.getQueryParameters("skip2[]");
         String other = uri.getQueryParameter("other");
+        String console_log = uri.getQueryParameter("console_log");
+        String js_interface = uri.getQueryParameter("js_interface");
+        String context_menu = uri.getQueryParameter("context_menu");
         HashMap<String, Object> hashMap = new HashMap<>();
         List<HashMap<String, String>> sites = new ArrayList<>();
         for (int i = 0; i < titles.size(); i++) {
@@ -251,6 +252,21 @@ class MySettingsRepository {
             skips.add(skip);
         }
         hashMap.put("skip", skips);
+        if (console_log != null && console_log.equals("true")) {
+            hashMap.put("console_log", true);
+        } else {
+            hashMap.put("console_log", false);
+        }
+        if (js_interface != null && js_interface.equals("true")) {
+            hashMap.put("js_interface", true);
+        } else {
+            hashMap.put("js_interface", false);
+        }
+        if (context_menu != null && context_menu.equals("true")) {
+            hashMap.put("context_menu", true);
+        } else {
+            hashMap.put("context_menu", false);
+        }
         hashMap.put("source", "updated via webview");
         hashMap.put("timestamp", getTimestamp(0));
         return hashMap;

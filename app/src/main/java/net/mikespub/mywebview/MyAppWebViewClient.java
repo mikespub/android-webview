@@ -26,7 +26,7 @@ class MyAppWebViewClient extends WebViewClient {
     private String[][] mySkipCompare;
     // SavedStateViewModel see https://github.com/googlecodelabs/android-lifecycles/blob/master/app/src/main/java/com/example/android/lifecycles/step6_solution/SavedStateActivity.java
     // or with AndroidViewModel see https://github.com/husaynhakeem/Androidx-SavedState-Playground/blob/master/app/src/main/java/com/husaynhakeem/savedstateplayground/AndroidViewModelWithSavedState.kt
-    private MySavedStateModel mySavedStateModel;
+    private final MySavedStateModel mySavedStateModel;
 
     MyAppWebViewClient(MainActivity activity) {
         this.activity = activity;
@@ -34,6 +34,18 @@ class MyAppWebViewClient extends WebViewClient {
         // https://stackoverflow.com/questions/57838759/how-android-jetpack-savedstateviewmodelfactory-works
         this.mySavedStateModel = activity.getSavedStateModel();
         loadSettings();
+    }
+
+    Boolean hasConsoleLog() {
+        return (Boolean) mySavedStateModel.getValue("console_log");
+    }
+
+    Boolean hasJavascriptInterface() {
+        return (Boolean) mySavedStateModel.getValue("js_interface");
+    }
+
+    Boolean hasContextMenu() {
+        return (Boolean) mySavedStateModel.getValue("context_menu");
     }
 
     private void loadSettings() {
@@ -129,6 +141,7 @@ class MyAppWebViewClient extends WebViewClient {
         pieces.put("host", uri.getHost());
         pieces.put("path", uri.getPath());
         pieces.put("query", uri.getQuery());
+        pieces.put("url", uri.toString());
         // https://stackoverflow.com/questions/160970/how-do-i-invoke-a-java-method-when-given-the-method-name-as-a-string
         //for (String m: this.myMatchArr) {
         //    String[] compare = m.split("\\|");
@@ -220,67 +233,67 @@ class MyAppWebViewClient extends WebViewClient {
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
         Log.d("Web Intercept", url);
-        if(url.startsWith("https://appassets.androidplatform.net/")) {
-            if (this.assetLoader == null) {
-                this.assetLoader = new WebViewAssetLoader.Builder()
-                    .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this.activity))
-                    //.addPathHandler("/res/", new WebViewAssetLoader.ResourcesPathHandler(this.activity))
-                    .build();
-            }
-            final Uri uri = Uri.parse(url);
-            String path = uri.getPath();
-            Log.d("WebResource", path);
-            // ByteArrayInputStream str = new ByteArrayInputStream(message.getBytes());
-            // return new WebResourceResponse("text/plain", "utf-8", str);
-            // InputStream localStream = assetMgr.open(path);
-            // return new WebResourceResponse((url.contains(".js") ? "text/javascript" : "text/css"), "UTF-8", localStream);
-            if (path.equals("/assets/web/settings.json")) {
-                File extwebfile = new File(this.activity.getExternalFilesDir(null), "web/settings.json");
-                if (extwebfile.exists()) {
-                    try {
-                        InputStream targetStream = new FileInputStream(extwebfile);
-                        Log.d("WebResource External", Boolean.toString(extwebfile.exists()));
-                        return new WebResourceResponse("application/json", "UTF-8", targetStream);
-                    } catch (Exception e) {
-                        Log.e("WebResource", e.toString());
-                    }
-                }
-                Log.d("WebResource Assets", Boolean.toString(extwebfile.exists()));
-            }
-            // Note: we could also have used the Javascript interface, but then this might be available for all sites
-            if (path.equals("/assets/web/fake_post.jsp")) {
-                // String query = uri.getQuery();
-                HashMap<String, Object> hashMap = this.mySavedStateModel.parseQuery(this.activity, uri);
-                String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
-                loadSettings();
-                String message = "<!DOCTYPE html>\n" +
-                        "<html lang=\"en\">\n" +
-                        "<head>\n" +
-                        "    <meta charset=\"UTF-8\">\n" +
-                        "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
-                        "    <!-- No complains about missing favicon.ico from https requests. -->\n" +
-                        "    <link rel=\"icon\" href=\"data:,\">\n" +
-                        "    <title>Update Settings</title>\n" +
-                        "</head>\n" +
-                        "<body>\n" +
-                        "    <h1><a href=\"index.html\">My WebView</a></h1>\n" +
-                        "    <h2><a href=\"update.html\">Update Settings</a></h2>\n";
-                message += "<pre>" + jsonString + "</pre>";
-                /*
-                message += "<script>\n" +
-                        "    if(typeof androidAppProxy !== \"undefined\"){\n" +
-                        "        androidAppProxy.showMessage(\"Settings Updated\");\n" +
-                        "    } else {\n" +
-                        "        alert(\"Running outside Android app\");\n" +
-                        "    }\n" +
-                        "</script>\n";
-                 */
-                message += "</body></html>";
-                ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
-                return new WebResourceResponse("text/html", "UTF-8", targetStream);
-            }
-            return this.assetLoader.shouldInterceptRequest(uri);
+        if(!url.startsWith("https://appassets.androidplatform.net/")) {
+            return null;
         }
-        return null;
+        if (this.assetLoader == null) {
+            this.assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this.activity))
+                //.addPathHandler("/res/", new WebViewAssetLoader.ResourcesPathHandler(this.activity))
+                .build();
+        }
+        final Uri uri = Uri.parse(url);
+        String path = uri.getPath();
+        Log.d("WebResource", path);
+        // ByteArrayInputStream str = new ByteArrayInputStream(message.getBytes());
+        // return new WebResourceResponse("text/plain", "utf-8", str);
+        // InputStream localStream = assetMgr.open(path);
+        // return new WebResourceResponse((url.contains(".js") ? "text/javascript" : "text/css"), "UTF-8", localStream);
+        if (path.equals("/assets/web/settings.json")) {
+            File extwebfile = new File(this.activity.getExternalFilesDir(null), "web/settings.json");
+            if (extwebfile.exists()) {
+                try {
+                    InputStream targetStream = new FileInputStream(extwebfile);
+                    Log.d("WebResource External", Boolean.toString(extwebfile.exists()));
+                    return new WebResourceResponse("application/json", "UTF-8", targetStream);
+                } catch (Exception e) {
+                    Log.e("WebResource", e.toString());
+                }
+            }
+            Log.d("WebResource Assets", Boolean.toString(extwebfile.exists()));
+        }
+        // Note: we could also have used the Javascript interface, but then this might be available for all sites
+        if (path.equals("/assets/web/fake_post.jsp")) {
+            // String query = uri.getQuery();
+            HashMap<String, Object> hashMap = this.mySavedStateModel.parseQuery(this.activity, uri);
+            String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
+            loadSettings();
+            String message = "<!DOCTYPE html>\n" +
+                    "<html lang=\"en\">\n" +
+                    "<head>\n" +
+                    "    <meta charset=\"UTF-8\">\n" +
+                    "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
+                    "    <!-- No complains about missing favicon.ico from https requests. -->\n" +
+                    "    <link rel=\"icon\" href=\"data:,\">\n" +
+                    "    <title>Update Settings</title>\n" +
+                    "</head>\n" +
+                    "<body>\n" +
+                    "    <h1><a href=\"index.html\">My WebView</a></h1>\n" +
+                    "    <h2><a href=\"update.html\">Update Settings</a></h2>\n";
+            message += "<pre>" + jsonString + "</pre>";
+            /*
+            message += "<script>\n" +
+                    "    if(typeof androidAppProxy !== \"undefined\"){\n" +
+                    "        androidAppProxy.showMessage(\"Settings Updated\");\n" +
+                    "    } else {\n" +
+                    "        alert(\"Running outside Android app\");\n" +
+                    "    }\n" +
+                    "</script>\n";
+             */
+            message += "</body></html>";
+            ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+            return new WebResourceResponse("text/html", "UTF-8", targetStream);
+        }
+        return this.assetLoader.shouldInterceptRequest(uri);
     }
 }

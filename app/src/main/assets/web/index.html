@@ -10,76 +10,158 @@
     <link rel="stylesheet" href="style.css">
     <script src="script.js"></script>
     -->
+	<style>
+		/* Sidebar menu see https://www.w3schools.com/howto/howto_js_sidenav.asp */
+		/* and/or https://codepen.io/plavookac/pen/qomrMw without javascript */
+
+		/* The side navigation menu */
+		.sidenav {
+		  height: 100%; /* 100% Full-height */
+		  width: 0; /* 0 width - change this with JavaScript */
+		  position: fixed; /* Stay in place */
+		  z-index: 1; /* Stay on top */
+		  top: 0; /* Stay at the top */
+		  left: 0;
+		  background-color: #111; /* Black*/
+		  overflow-x: hidden; /* Disable horizontal scroll */
+		  padding-top: 60px; /* Place content 60px from the top */
+		  transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
+		}
+
+		/* The navigation menu links */
+		.sidenav a {
+		  padding: 8px 8px 8px 32px;
+		  text-decoration: none;
+		  //font-size: 25px;
+		  color: #818181;
+		  display: block;
+		  transition: 0.3s;
+		}
+
+		/* When you mouse over the navigation links, change their color */
+		.sidenav a:hover {
+		  color: #f1f1f1;
+		}
+
+		/* Position and style the close button (top right corner) */
+		.sidenav .closebtn {
+		  position: absolute;
+		  top: 0;
+		  right: 25px;
+		  font-size: 30px;
+		  margin-left: 50px;
+		}
+
+		/* Style page content - use this if you want to push the page content to the right when you open the side navigation */
+		#main {
+		  transition: margin-left .5s;
+		  //padding: 20px;
+		}
+
+		/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+		@media screen and (max-height: 450px) {
+		  .sidenav {padding-top: 15px;}
+		  //.sidenav a {font-size: 18px;}
+		}
+	</style>
+
     <script type="text/javascript">
-        // https://www.w3schools.com/jsref/met_select_add.asp
-        function addSiteOption(sel, url, title)
-        {
-            // create new option element
-            var opt = document.createElement('option');
-            // create text node to add to option element (opt)
-            // opt.appendChild( document.createTextNode(title) );
-            // set text property of opt
-            opt.text = title;
-            // set value property of opt
-            opt.value = url;
-            // add opt to end of select box (sel)
-            sel.add(opt);
-        }
+		// Sidebar menu see https://www.w3schools.com/howto/howto_js_sidenav.asp
+		// and/or https://codepen.io/plavookac/pen/qomrMw without javascript
+		// Optional: https://www.cssscript.com/mobile-friendly-swipe-menu-vanilla-javascript-touch-side-swipe/
 
-        function addSiteLi(frag, url, title)
-        {
-            var li = document.createElement('li');
-            li.innerHTML = '<a href="' + url + '">' + title + '</a>';
-            frag.appendChild(li);
-        }
+		/* Set the width of the side navigation to 250px and the left margin of the page content to 250px and add a black background color to body */
+		function openNav() {
+		  document.getElementById("mySidenav").style.width = "250px";
+		  //document.getElementById("main").style.marginLeft = "250px";
+		  document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
+		}
 
-        function addCompareLi(frag, compare)
-        {
-            var li = document.createElement('li');
-            li.innerHTML = compare[0] + "." + compare[1] + '("' + compare[2] + '")';
-            frag.appendChild(li);
-        }
+		/* Set the width of the side navigation to 0 and the left margin of the page content to 0, and the background color of body to white */
+		function closeNav() {
+		  document.getElementById("mySidenav").style.width = "0";
+		  //document.getElementById("main").style.marginLeft = "0";
+		  document.body.style.backgroundColor = "white";
+		}
 
-        function addSiteList(sites) {
-            // get reference to select element
-            var select = document.getElementById("website");
-            // https://devdocs.io/dom/document/createdocumentfragment
-            var fragment = document.createDocumentFragment();
-            sites.forEach(function(site) {
-                addSiteOption(select, site["url"], site["title"]);
-                addSiteLi(fragment, site["url"], site["title"]);
-            });
-            // get reference to ul element
-            var weblist = document.getElementById("sitelist");
-            weblist.appendChild(fragment);
-        }
+		// https://www.w3schools.com/jsref/met_select_add.asp
+		function addSiteOption(sel, url, title)
+		{
+			// create new option element
+			var opt = document.createElement('option');
+			// create text node to add to option element (opt)
+			// opt.appendChild( document.createTextNode(title) );
+			// set text property of opt
+			opt.text = title;
+			// set value property of opt
+			opt.value = url;
+			// add opt to end of select box (sel)
+			sel.add(opt);
+		}
 
-        function addMatchList(matches) {
-            // https://devdocs.io/dom/document/createdocumentfragment
-            var fragment = document.createDocumentFragment();
-            matches.forEach(function(match) {
-                addCompareLi(fragment, match);
-            });
-            // get reference to ul element
-            var matchlist = document.getElementById("matchlist");
-            matchlist.appendChild(fragment);
-        }
+		function addSiteLi(frag, url, title)
+		{
+			var li = document.createElement('li');
+			li.innerHTML = '<a href="' + url + '">' + title + '</a>';
+			frag.appendChild(li);
+		}
 
-        function addSkipList(skips) {
-            // https://devdocs.io/dom/document/createdocumentfragment
-            var fragment = document.createDocumentFragment();
-            skips.forEach(function(skip) {
-                addCompareLi(fragment, skip);
-            });
-            // get reference to ul element
-            var skiplist = document.getElementById("skiplist");
-            skiplist.appendChild(fragment);
-        }
+		function addCompareLi(frag, compare)
+		{
+			var li = document.createElement('li');
+			li.innerHTML = compare[0] + "." + compare[1] + '("' + compare[2] + '")';
+			frag.appendChild(li);
+		}
 
+		function addSiteList(sites) {
+			// get reference to select element
+			var select = document.getElementById("website");
+			// https://devdocs.io/dom/document/createdocumentfragment
+			var fragment = document.createDocumentFragment();
+			sites.forEach(function(site) {
+				addSiteOption(select, site["url"], site["title"]);
+				addSiteLi(fragment, site["url"], site["title"]);
+			});
+			// get reference to ul element
+			var weblist = document.getElementById("sitelist");
+			weblist.appendChild(fragment);
+		}
+
+		function addMatchList(matches) {
+			// https://devdocs.io/dom/document/createdocumentfragment
+			var fragment = document.createDocumentFragment();
+			matches.forEach(function(match) {
+				addCompareLi(fragment, match);
+			});
+			// get reference to ul element
+			var matchlist = document.getElementById("matchlist");
+			matchlist.appendChild(fragment);
+		}
+
+		function addSkipList(skips) {
+			// https://devdocs.io/dom/document/createdocumentfragment
+			var fragment = document.createDocumentFragment();
+			skips.forEach(function(skip) {
+				addCompareLi(fragment, skip);
+			});
+			// get reference to ul element
+			var skiplist = document.getElementById("skiplist");
+			skiplist.appendChild(fragment);
+		}
     </script>
 </head>
 <body onload="loadSites()">
-    <h1>My WebView</h1>
+    <!--
+	<div id="mySidenav" class="sidenav">
+		<a href="javascript:void(0)" class="closebtn" onclick="closeNav()">X</a>
+		<a href="#">About</a>
+		<a href="#">Services</a>
+		<a href="#">Clients</a>
+		<a href="#">Contact</a>
+	</div>
+	-->
+	<div id="main">
+    <h1><!-- span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776; </span --> My WebView</h1>
     <label for="website">Website:</label>
     <!-- https://www.jotform.com/blog/html5-datalists-what-you-need-to-know-78024/
     <datalist id="website_list">
@@ -91,7 +173,7 @@
         <option value="">If other, please specify:</option>
     </select><br>
     <label for="other">Other:</label>
-    <input type="text" name="other" id="other" value="http://192.168.2.127/">
+    <input type="url" name="other" id="other" value="http://192.168.2.127/" placeholder="https://www.google.com/">
     <button onclick="updateValue()">Go</button>
     <hr>
     <h2><a href="update.html">Update Settings</a></h2>
@@ -106,6 +188,8 @@
     </ul>
     <p>Source: <span id="source">assets</span></p>
     <p>Timestamp: <span id="timestamp">Loading...</span></p>
+	</div>
+	
     <script>
     function loadSites() {
         // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
@@ -148,13 +232,11 @@
             window.location.assign(url);
         }
     }
-    /*
     if(typeof androidAppProxy !== "undefined"){
-        androidAppProxy.showMessage("Message from JavaScript");
+        androidAppProxy.showMessage("Android JavaScript Interface is available");
     } else {
-        alert("Running outside Android app");
+        console.log("Android Javascript Interface is not enabled");
     }
-     */
     </script>
 </body>
 </html>

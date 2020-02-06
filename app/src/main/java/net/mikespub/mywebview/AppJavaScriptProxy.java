@@ -1,6 +1,7 @@
 package net.mikespub.mywebview;
 
 import android.app.Activity;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -8,8 +9,8 @@ import android.widget.Toast;
 // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
 class AppJavaScriptProxy {
 
-    private Activity activity;
-    private WebView  webView;
+    private final Activity activity;
+    private final WebView  webView;
 
     public AppJavaScriptProxy(Activity activity, WebView webview) {
 
@@ -20,20 +21,21 @@ class AppJavaScriptProxy {
     @JavascriptInterface
     public void showMessage(final String message) {
 
-        final Activity theActivity = this.activity;
-        final WebView theWebView = this.webView;
+        final Activity myActivity = this.activity;
+        final WebView myWebView = this.webView;
 
         // https://developer.android.com/guide/webapps/migrating#Threads
         this.activity.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                if(!theWebView.getUrl().startsWith("https://appassets.androidplatform.net/")){
+                if(!myWebView.getUrl().startsWith("https://appassets.androidplatform.net/")){
+                    Log.d("WebView", "Javascript Interface for " + myWebView.getUrl());
                     return;
                 }
 
                 Toast toast = Toast.makeText(
-                        theActivity.getApplicationContext(),
+                        myActivity.getApplicationContext(),
                         message,
                         Toast.LENGTH_SHORT);
 

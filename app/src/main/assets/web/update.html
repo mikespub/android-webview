@@ -12,7 +12,7 @@
     -->
     <style>
 /* Style inputs */
-  input[type=text], select {
+  input[type=text], input[type=url], select {
   width: 100%;
   padding: 4px 4px;
   margin: 2px 0;
@@ -23,12 +23,12 @@
 }
 
 /* Style inputs */
-  input[class=title], select {
+  input[class=title] {
   width: 40%;
 }
 
 /* Style inputs */
-  input[class=url], select {
+  input[class=url] {
   width: 60%;
 }
 
@@ -59,13 +59,15 @@ input[type=submit] {
             input.setAttribute("id", "title_" + idx);
             input.setAttribute("name", "title[]");
             input.setAttribute("value", title);
+            input.setAttribute("placeholder", "Google Search");
             frag.appendChild(input);
             var input = document.createElement('input');
-            input.setAttribute("type", "text");
+            input.setAttribute("type", "url");
             input.setAttribute("class", "url");
             input.setAttribute("id", "url_" + idx);
             input.setAttribute("name", "url[]");
             input.setAttribute("value", url);
+            input.setAttribute("placeholder", "https://www.google.com/");
             frag.appendChild(input);
         }
 
@@ -91,6 +93,10 @@ input[type=submit] {
             input.setAttribute("id", "match0_" + idx);
             input.setAttribute("name", "match0[]");
             input.setAttribute("value", match[0]);
+            //input.setAttribute("list", "what_list");
+            //input.setAttribute("pattern", "(host|path|query|url)");
+            input.setAttribute("title", "Use host, path, query or url");
+            input.setAttribute("placeholder", "host");
             frag.appendChild(input);
             var input = document.createElement('input');
             input.setAttribute("type", "text");
@@ -98,6 +104,10 @@ input[type=submit] {
             input.setAttribute("id", "match1_" + idx);
             input.setAttribute("name", "match1[]");
             input.setAttribute("value", match[1]);
+            //input.setAttribute("list", "how_list");
+            //input.setAttribute("pattern", "(contains|endsWith|equals|startsWith)");
+            input.setAttribute("title", "Use contains, endsWith, equals or startsWith");
+            input.setAttribute("placeholder", "equals");
             frag.appendChild(input);
             var input = document.createElement('input');
             input.setAttribute("type", "text");
@@ -105,6 +115,7 @@ input[type=submit] {
             input.setAttribute("id", "match2_" + idx);
             input.setAttribute("name", "match2[]");
             input.setAttribute("value", match[2]);
+            input.setAttribute("placeholder", "www.google.com");
             frag.appendChild(input);
         }
 
@@ -130,6 +141,10 @@ input[type=submit] {
             input.setAttribute("id", "skip0_" + idx);
             input.setAttribute("name", "skip0[]");
             input.setAttribute("value", skip[0]);
+            //input.setAttribute("list", "what_list");
+            //input.setAttribute("pattern", "(host|path|query|url)");
+            input.setAttribute("title", "Use host, path, query or url");
+            input.setAttribute("placeholder", "path");
             frag.appendChild(input);
             var input = document.createElement('input');
             input.setAttribute("type", "text");
@@ -137,6 +152,10 @@ input[type=submit] {
             input.setAttribute("id", "skip1_" + idx);
             input.setAttribute("name", "skip1[]");
             input.setAttribute("value", skip[1]);
+            //input.setAttribute("list", "how_list");
+            //input.setAttribute("pattern", "(contains|endsWith|equals|startsWith)");
+            input.setAttribute("title", "Use contains, endsWith, equals or startsWith");
+            input.setAttribute("placeholder", "endsWith");
             frag.appendChild(input);
             var input = document.createElement('input');
             input.setAttribute("type", "text");
@@ -174,10 +193,25 @@ input[type=submit] {
         </fieldset>
 
         <fieldset>
-            <legend><label for="other">Other</label></legend>
-            <input id="other" class="single" type="text" name="other" value="">
+            <legend><label for="other">Other URL</label></legend>
+            <input id="other" class="single" type="url" name="other" value="" placeholder="https://www.google.com/">
         </fieldset>
-
+        <!--
+        <datalist id="what_list">
+            <item>host</item>
+            <item>path</item>
+            <item>query</item>
+            <item>url</item>
+        </datalist>
+        -->
+        <!--
+        <datalist id="how_list">
+            <item>contains</item>
+            <item>endsWith</item>
+            <item>equals</item>
+            <item>startsWith</item>
+        </datalist>
+        -->
         <fieldset id="matchlist">
             <legend><label for="match0_1">Matches</label></legend>
             <!-- input id="match0_1" type="text" name="match0[]" value="" -->
@@ -186,6 +220,13 @@ input[type=submit] {
         <fieldset id="skiplist">
             <legend><label for="skip0_1">Skips</label></legend>
             <!-- input id="skip0_1" type="text" name="skip0[]" value="" -->
+        </fieldset>
+
+        <fieldset id="options">
+            <legend>Advanced Options (requires restart)</legend>
+            <input id="console_log" type="checkbox" name="console_log" value="true"> <label for="console_log">Show console log messages</label><br>
+            <input id="js_interface" type="checkbox" name="js_interface" value="true"> <label for="js_interface">Javascript Interface for local assets</label><br>
+            <input id="context_menu" type="checkbox" name="context_menu" value="true"> <label for="context_menu">Context Menu for links &amp; images</label>
         </fieldset>
 
         <!--
@@ -218,6 +259,18 @@ input[type=submit] {
             var source = document.getElementById("source");
             if (source) {
                 source.value = settings["source"];
+            }
+            var console_log = document.getElementById("console_log");
+            if (console_log && settings["console_log"]) {
+                console_log.checked = true;
+            }
+            var js_interface = document.getElementById("js_interface");
+            if (js_interface && settings["js_interface"]) {
+                js_interface.checked = true;
+            }
+            var context_menu = document.getElementById("context_menu");
+            if (context_menu && settings["context_menu"]) {
+                context_menu.checked = true;
             }
             var timestamp = document.getElementById("timestamp");
             if (timestamp) {

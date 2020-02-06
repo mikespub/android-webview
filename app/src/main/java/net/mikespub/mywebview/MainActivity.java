@@ -2,8 +2,12 @@ package net.mikespub.mywebview;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.webkit.ConsoleMessage;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,9 +43,65 @@ public class MainActivity extends AppCompatActivity {
         // webSettings.setBuiltInZoomControls(true);
         WebView.setWebContentsDebuggingEnabled(true);
         // Stop local links and redirects from opening in browser instead of WebView
-        myWebView.setWebViewClient(new MyAppWebViewClient(this));
+        MyAppWebViewClient myWebViewClient = new MyAppWebViewClient(this);
+        myWebView.setWebViewClient(myWebViewClient);
         // Add Javascript interface
-        // myWebView.addJavascriptInterface(new AppJavaScriptProxy(this, myWebView), "androidAppProxy");
+        if (myWebViewClient.hasJavascriptInterface()) {
+            myWebView.addJavascriptInterface(new AppJavaScriptProxy(this, myWebView), "androidAppProxy");
+            Log.d("WebView", "Enable Javascript interface");
+        }
+        // Show console log messages - see https://developer.android.com/guide/webapps/debugging
+        if (myWebViewClient.hasConsoleLog()) {
+            final MainActivity myActivity = this;
+            myWebView.setWebChromeClient(new WebChromeClient() {
+                public boolean onConsoleMessage(ConsoleMessage cm) {
+                    String message = cm.messageLevel() + " " + cm.message() + " -- From line "
+                            + cm.lineNumber() + " of "
+                            + cm.sourceId();
+                    Log.d("WebView", message);
+                    Toast toast = Toast.makeText(
+                            myActivity.getApplicationContext(),
+                            cm.message(),
+                            Toast.LENGTH_SHORT);
+                    toast.show();
+                    return true;
+                }
+            });
+        }
+        // Support context menu for links and images in WebView
+        // WebViewClient myWebViewClient = myWebView.getWebViewClient();
+        if (myWebViewClient.hasContextMenu()) {
+            //Log.d("WebView", Boolean.toString(myWebView.isLongClickable()));
+            myWebView.setLongClickable(true);
+            // See https://github.com/AriesHoo/FastLib/blob/dev/app/src/main/java/com/aries/library/fast/demo/module/WebViewActivity.java
+            myWebView.setOnLongClickListener(new View.OnLongClickListener() {
+
+                @Override
+                public boolean onLongClick(View v) {
+                    Log.d("WebView", v.toString());
+                    WebView.HitTestResult hitTestResult = myWebView.getHitTestResult();
+                    if (hitTestResult == null) {
+                        return false;
+                    }
+                    if (hitTestResult.getType() == WebView.HitTestResult.IMAGE_TYPE
+                            || hitTestResult.getType() == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
+                        Log.d("WebView", "image");
+                        //showDownDialog(hitTestResult.getExtra());
+                        //} else if (!mIsShowTitle) {
+                        //    //showActionSheet();
+                    } else if (hitTestResult.getType() == WebView.HitTestResult.SRC_ANCHOR_TYPE) {
+                        Log.d("WebView", "link");
+                    } else {
+                        Log.d("WebView", "not interesting");
+                        return false;
+                    }
+
+                    Log.d("WebView", "Type:" + hitTestResult.getType() + ";Extra:" + hitTestResult.getExtra());
+                    //return true;
+                    return false;
+                }
+            });
+        }
         // https://stackoverflow.com/questions/36987144/preventing-webview-reload-on-rotate-android-studio/46849736#46849736
         if (savedInstanceState == null) {
             // myWebView.loadUrl("http://beta.html5test.com/");
