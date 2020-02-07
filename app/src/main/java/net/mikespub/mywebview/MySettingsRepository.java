@@ -11,9 +11,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +35,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 class MySettingsRepository {
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
@@ -94,6 +98,7 @@ class MySettingsRepository {
         return hashMap;
     }
 
+    // TODO: update assets from trusted site
     private long checkAssetFiles() {
         // /data/user/0/net.mikespub.mywebview/files
         // File filesdir = getFilesDir();
@@ -111,7 +116,10 @@ class MySettingsRepository {
         // See also https://stackoverflow.com/questions/37953002/mess-with-the-shared-preferences-of-android-which-function-to-use/37953072 for preferences
         long lastUpdated = 0;
         if (!extwebdir.exists()) {
-            extwebdir.mkdirs();
+            if (!extwebdir.mkdirs()) {
+                Log.d("External Web Dir", Boolean.toString(extwebdir.exists()));
+                return lastUpdated;
+            }
             Log.d("External Web Dir", Boolean.toString(extwebdir.exists()));
         } else {
             try {
@@ -160,6 +168,34 @@ class MySettingsRepository {
         int read;
         while((read = in.read(buffer)) != -1){
             out.write(buffer, 0, read);
+        }
+    }
+
+    // See https://stackoverflow.com/questions/3382996/how-to-unzip-files-programmatically-in-android
+    public static void unzipFile(File zipFile, File targetDirectory) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(
+                new BufferedInputStream(new FileInputStream(zipFile)))) {
+            ZipEntry ze;
+            int count;
+            byte[] buffer = new byte[8192];
+            while ((ze = zis.getNextEntry()) != null) {
+                File file = new File(targetDirectory, ze.getName());
+                File dir = ze.isDirectory() ? file : file.getParentFile();
+                if (!dir.isDirectory() && !dir.mkdirs())
+                    throw new FileNotFoundException("Failed to ensure directory: " +
+                            dir.getAbsolutePath());
+                if (ze.isDirectory())
+                    continue;
+                try (FileOutputStream fout = new FileOutputStream(file)) {
+                    while ((count = zis.read(buffer)) != -1)
+                        fout.write(buffer, 0, count);
+                }
+                /* if time should be restored as well
+                long time = ze.getTime();
+                if (time > 0)
+                    file.setLastModified(time);
+                */
+            }
         }
     }
 
@@ -216,6 +252,7 @@ class MySettingsRepository {
         String js_interface = uri.getQueryParameter("js_interface");
         String context_menu = uri.getQueryParameter("context_menu");
         String not_matching = uri.getQueryParameter("not_matching");
+        String update_zip = uri.getQueryParameter("update_zip");
         HashMap<String, Object> hashMap = new HashMap<>();
         List<HashMap<String, String>> sites = new ArrayList<>();
         for (int i = 0; i < titles.size(); i++) {
@@ -279,6 +316,7 @@ class MySettingsRepository {
         } else {
             hashMap.put("not_matching", false);
         }
+        hashMap.put("update_zip", update_zip);
         hashMap.put("source", "updated via webview");
         hashMap.put("timestamp", getTimestamp(0));
         return hashMap;
@@ -292,7 +330,7 @@ class MySettingsRepository {
         // https://stackoverflow.com/questions/16563579/jsonobject-tostring-how-not-to-escape-slashes
         try {
             jsonString = jsonObject.toString(2).replace("\\","");
-            Log.d("Web Settings", jsonString);
+            //Log.d("Web Settings", jsonString);
             File extwebfile = new File(this.activity.getExternalFilesDir(null), "web/settings.json");
             // https://stackoverflow.com/questions/11371154/outputstreamwriter-vs-filewriter/11371322
             try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(extwebfile), StandardCharsets.UTF_8)) {

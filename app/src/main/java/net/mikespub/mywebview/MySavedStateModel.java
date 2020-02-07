@@ -35,27 +35,9 @@ public class MySavedStateModel extends ViewModel {
             MySettingsRepository repo = new MySettingsRepository(activity);
             hashMap = repo.loadJsonSettings();
             setValuesFromMap(hashMap);
-            return hashMap;
+        } else {
+            getMapFromValues(hashMap);
         }
-        hashMap.put("source", source);
-        List<HashMap<String, String>> sites = (ArrayList) getValue("sites");
-        hashMap.put("sites", sites);
-        String other = (String) getValue("other");
-        hashMap.put("other", other);
-        List<List<String>> match = (ArrayList) getValue("match");
-        hashMap.put("match", match);
-        List<List<String>> skip = (ArrayList) getValue("skip");
-        hashMap.put("skip", skip);
-        Boolean remote_debug = (Boolean) getValue("remote_debug");
-        hashMap.put("remote_debug", remote_debug);
-        Boolean console_log = (Boolean) getValue("console_log");
-        hashMap.put("console_log", console_log);
-        Boolean js_interface = (Boolean) getValue("js_interface");
-        hashMap.put("js_interface", js_interface);
-        Boolean context_menu = (Boolean) getValue("context_menu");
-        hashMap.put("context_menu", context_menu);
-        Boolean not_matching = (Boolean) getValue("not_matching");
-        hashMap.put("not_matching", not_matching);
         return hashMap;
     }
 
@@ -75,7 +57,33 @@ public class MySavedStateModel extends ViewModel {
         setValue("js_interface", hashMap.get("js_interface"));
         setValue("context_menu", hashMap.get("context_menu"));
         setValue("not_matching", hashMap.get("not_matching"));
+        setValue("update_zip", hashMap.get("update_zip"));
         setValue("timestamp", hashMap.get("timestamp"));
+    }
+
+    private void getMapFromValues(HashMap<String, Object> hashMap) {
+        String source = (String) getValue("source");
+        hashMap.put("source", source);
+        List<HashMap<String, String>> sites = (ArrayList) getValue("sites");
+        hashMap.put("sites", sites);
+        String other = (String) getValue("other");
+        hashMap.put("other", other);
+        List<List<String>> match = (ArrayList) getValue("match");
+        hashMap.put("match", match);
+        List<List<String>> skip = (ArrayList) getValue("skip");
+        hashMap.put("skip", skip);
+        Boolean remote_debug = (Boolean) getValue("remote_debug");
+        hashMap.put("remote_debug", remote_debug);
+        Boolean console_log = (Boolean) getValue("console_log");
+        hashMap.put("console_log", console_log);
+        Boolean js_interface = (Boolean) getValue("js_interface");
+        hashMap.put("js_interface", js_interface);
+        Boolean context_menu = (Boolean) getValue("context_menu");
+        hashMap.put("context_menu", context_menu);
+        Boolean not_matching = (Boolean) getValue("not_matching");
+        hashMap.put("not_matching", not_matching);
+        String update_zip = (String) getValue("update_zip");
+        hashMap.put("update_zip", update_zip);
     }
 
     String setSettings(AppCompatActivity activity, HashMap<String, Object> hashMap) {
@@ -84,4 +92,5 @@ public class MySavedStateModel extends ViewModel {
         //setValue("timestamp", repo.getTimestamp(0));
         return repo.saveJsonSettings(hashMap);
     }
+
 }

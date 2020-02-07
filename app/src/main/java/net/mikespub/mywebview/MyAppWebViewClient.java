@@ -1,8 +1,13 @@
 package net.mikespub.mywebview;
 
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.util.Log;
+import android.webkit.URLUtil;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -28,6 +33,42 @@ class MyAppWebViewClient extends WebViewClient {
     // SavedStateViewModel see https://github.com/googlecodelabs/android-lifecycles/blob/master/app/src/main/java/com/example/android/lifecycles/step6_solution/SavedStateActivity.java
     // or with AndroidViewModel see https://github.com/husaynhakeem/Androidx-SavedState-Playground/blob/master/app/src/main/java/com/husaynhakeem/savedstateplayground/AndroidViewModelWithSavedState.kt
     private final MySavedStateModel mySavedStateModel;
+    // https://androidclarified.com/android-downloadmanager-example/
+    private DownloadManager mDownloadManager;
+    private long mDownloadId = -1;
+    private BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //Fetching the download id received with the broadcast
+            long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+            //Checking if the received broadcast is for our enqueued download by matching download id
+            if (id > -1 && mDownloadId == id && mDownloadManager != null) {
+                // unzip
+                Log.d("Web Update", "Receive: " + mDownloadId);
+                /*
+                // query download status
+                Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
+                if (cursor.moveToFirst()) {
+                    int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                    if(status == DownloadManager.STATUS_SUCCESSFUL){
+
+                        // download is successful
+                        String uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                        File file = new File(Uri.parse(uri).getPath());
+                    }
+                    else {
+                        // download is assumed cancelled
+                    }
+                }
+                else {
+                    // download is assumed cancelled
+                }
+                 */
+                Uri uri = mDownloadManager.getUriForDownloadedFile(mDownloadId);
+                Log.d("Web Update", "Uri: " + uri);
+            }
+        }
+    };
 
     MyAppWebViewClient(MainActivity activity) {
         this.activity = activity;
@@ -35,6 +76,8 @@ class MyAppWebViewClient extends WebViewClient {
         // https://stackoverflow.com/questions/57838759/how-android-jetpack-savedstateviewmodelfactory-works
         this.mySavedStateModel = activity.getSavedStateModel();
         loadSettings();
+        Log.d("Web Create", "register receiver");
+        activity.registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
     }
 
     Boolean hasDebuggingEnabled() {
@@ -55,6 +98,10 @@ class MyAppWebViewClient extends WebViewClient {
 
     Boolean hasNotMatching() {
         return (Boolean) mySavedStateModel.getValue("not_matching");
+    }
+
+    String hasUpdateZip() {
+        return (String) mySavedStateModel.getValue("update_zip");
     }
 
     private void loadSettings() {
@@ -190,7 +237,6 @@ class MyAppWebViewClient extends WebViewClient {
             return true;
         }
 
-        // TODO: make this configurable for non-matching urls
         if (hasNotMatching()) {
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             // Create intent to show chooser
@@ -262,6 +308,30 @@ class MyAppWebViewClient extends WebViewClient {
             HashMap<String, Object> hashMap = this.mySavedStateModel.parseQuery(this.activity, uri);
             String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
             loadSettings();
+            String update_zip = hasUpdateZip();
+            mDownloadId = -1;
+            if (update_zip != null && update_zip.startsWith("http")) {
+                // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
+                Uri update_uri = Uri.parse(update_zip);
+                if (update_uri != null && URLUtil.isNetworkUrl(update_uri.toString())) {
+                    String update_name = URLUtil.guessFileName(update_uri.toString(), null, null);
+                    File update_file = new File(this.activity.getExternalFilesDir(null), update_name);
+                    if (update_file.exists()) {
+                        Log.d("Web Update", update_file.getAbsolutePath() + " exists");
+                    } else {
+                        Log.d("Web Update", update_file.getAbsolutePath() + " does not exist");
+                        DownloadManager.Request request = new DownloadManager.Request(update_uri);
+                        request.setDestinationInExternalFilesDir(this.activity, null, update_name);
+                        try {
+                            mDownloadManager = (DownloadManager) this.activity.getSystemService(Context.DOWNLOAD_SERVICE);
+                            mDownloadId = mDownloadManager.enqueue(request);
+                            Log.d("Web Update", "Enqueue: " + mDownloadId);
+                        } catch (Exception e) {
+                            Log.e("Web Update", e.toString());
+                        }
+                    }
+                }
+            }
             String message = "<!DOCTYPE html>\n" +
                     "<html lang=\"en\">\n" +
                     "<head>\n" +

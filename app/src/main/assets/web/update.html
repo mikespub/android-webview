@@ -231,6 +231,11 @@ input[type=submit] {
             <input id="not_matching" type="checkbox" name="not_matching" value="true"> <label for="not_matching">Open non-matching links via browser</label>
         </fieldset>
 
+        <fieldset id="update">
+            <legend><label for="update_zip">Update Assets from trusted site</label></legend>
+            <input id="update_zip" type="url" name="update_zip" value="" placeholder="https://github.com/mikespub/android-webview/raw/master/app/release/updates/assets.zip">
+        </fieldset>
+
         <!--
         <label for="source">Source</label>
         <input id="source" type="text" name="source" value="">
@@ -281,6 +286,10 @@ input[type=submit] {
             var not_matching = document.getElementById("not_matching");
             if (not_matching && settings["not_matching"]) {
                 not_matching.checked = true;
+            }
+            var update_zip = document.getElementById("update_zip");
+            if (update_zip) {
+                update_zip.value = settings["update_zip"];
             }
             var timestamp = document.getElementById("timestamp");
             if (timestamp) {

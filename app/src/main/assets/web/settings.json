@@ -27,6 +27,7 @@
   "js_interface": false,
   "context_menu": false,
   "not_matching": false,
+  "update_zip": "",
   "source": "assets",
   "timestamp": "2020-02-02T14:01:00Z"
 }
