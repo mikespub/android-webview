@@ -1,7 +1,10 @@
 package net.mikespub.mywebview;
 
+import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -26,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
     // https://developer.chrome.com/multidevice/webview/gettingstarted
     private WebView myWebView;
+    BroadcastReceiver onDownloadComplete;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setJavaScriptEnabled(true);
         // See https://ukacademe.com/MobileApplication/AndroidGUI/Android_WebView
         // webSettings.setBuiltInZoomControls(true);
+        // Some other options - https://github.com/codepath/android_guides/wiki/Working-with-the-WebView
+        // webSettings.setUseWideViewPort(true);
+        // webSettings.setLoadWithOverviewMode(true);
+        // myWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        // myWebView.setScrollbarFadingEnabled(false);
         // Stop local links and redirects from opening in browser instead of WebView
         MyAppWebViewClient myWebViewClient = new MyAppWebViewClient(this);
         if (myWebViewClient.hasDebuggingEnabled()) {
@@ -171,6 +180,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // https://stackoverflow.com/questions/41025200/android-view-inflateexception-error-inflating-class-android-webkit-webview
+    @Override
+    public void applyOverrideConfiguration(final Configuration overrideConfiguration) {
+        if (Build.VERSION.SDK_INT >= 21 && Build.VERSION.SDK_INT < 25) {
+            overrideConfiguration.uiMode &= ~Configuration.UI_MODE_NIGHT_MASK;
+        }
+        super.applyOverrideConfiguration(overrideConfiguration);
+    }
+
     // https://stackoverflow.com/questions/39086084/save-webview-state-on-screen-rotation
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
@@ -191,5 +209,18 @@ public class MainActivity extends AppCompatActivity {
         //Bundle bundle = savedInstanceState.getBundle("webViewState");
         //Log.d("Web Restore", bundle.toString());
         // myWebView.restoreState(bundle);
+    }
+
+    void stopReceiver() {
+        if (onDownloadComplete != null) {
+            Log.d("Web Create", "unregister receiver");
+            unregisterReceiver(onDownloadComplete);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopReceiver();
     }
 }

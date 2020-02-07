@@ -98,7 +98,6 @@ class MySettingsRepository {
         return hashMap;
     }
 
-    // TODO: update assets from trusted site
     private long checkAssetFiles() {
         // /data/user/0/net.mikespub.mywebview/files
         // File filesdir = getFilesDir();
@@ -164,7 +163,7 @@ class MySettingsRepository {
     }
 
     private void copyFile(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[8192];
         int read;
         while((read = in.read(buffer)) != -1){
             out.write(buffer, 0, read);
@@ -173,28 +172,47 @@ class MySettingsRepository {
 
     // See https://stackoverflow.com/questions/3382996/how-to-unzip-files-programmatically-in-android
     public static void unzipFile(File zipFile, File targetDirectory) throws IOException {
+        try (FileInputStream inputStream = new FileInputStream(zipFile)) {
+            unzipStream(inputStream, targetDirectory);
+        }
+    }
+
+    static void unzipStream(InputStream inputStream, File targetDirectory) throws IOException {
         try (ZipInputStream zis = new ZipInputStream(
-                new BufferedInputStream(new FileInputStream(zipFile)))) {
+                new BufferedInputStream(inputStream))) {
             ZipEntry ze;
             int count;
             byte[] buffer = new byte[8192];
             while ((ze = zis.getNextEntry()) != null) {
-                File file = new File(targetDirectory, ze.getName());
+                // don't overwrite local settings
+                String name = ze.getName();
+                if (name.equals("web/settings.json")) {
+                    Log.d("Web Update Unzip", name + " skip settings.json");
+                    continue;
+                }
+                File file = new File(targetDirectory, name);
                 File dir = ze.isDirectory() ? file : file.getParentFile();
                 if (!dir.isDirectory() && !dir.mkdirs())
                     throw new FileNotFoundException("Failed to ensure directory: " +
                             dir.getAbsolutePath());
-                if (ze.isDirectory())
+                if (ze.isDirectory()) {
+                    Log.d("Web Update Unzip", name + " skip directory");
                     continue;
+                }
+                long time = ze.getTime();
+                if (file.exists() && (time > 0) && (time < file.lastModified())) {
+                    Log.d("Web Update Unzip", name + " skip newer file");
+                    continue;
+                }
+                Log.d("Web Update Unzip", name + " update");
                 try (FileOutputStream fout = new FileOutputStream(file)) {
                     while ((count = zis.read(buffer)) != -1)
                         fout.write(buffer, 0, count);
                 }
-                /* if time should be restored as well
-                long time = ze.getTime();
-                if (time > 0)
+                /* if time should be restored as well */
+                if (time > 0) {
                     file.setLastModified(time);
-                */
+                }
             }
         }
     }

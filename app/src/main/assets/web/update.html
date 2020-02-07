@@ -48,6 +48,13 @@ input[type=submit] {
   border-radius: 4px;
   cursor: pointer;
 }
+
+@media screen and (min-width: 600px) {
+  #main {
+    max-width: 600px;
+    margin: auto;
+  }
+}
     </style>
     <script type="text/javascript">
         // https://www.w3schools.com/jsref/met_select_add.asp
@@ -183,6 +190,7 @@ input[type=submit] {
     </script>
 </head>
 <body onload="loadSites()">
+<div id="main">
     <h1><a href="index.html">My WebView</a></h1>
     <h2>Update Settings</h2>
     <!-- we need to use GET here, webview doesn't get POST data -->
@@ -301,5 +309,6 @@ input[type=submit] {
         });
     }
     </script>
+</div>
 </body>
 </html>
