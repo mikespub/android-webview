@@ -19,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProvider;
 
+import java.util.Map;
+
 // See also Chrome Custom Tabs https://developer.chrome.com/multidevice/android/customtabs
 // and Android Browser Helper https://github.com/GoogleChrome/android-browser-helper
 public class MainActivity extends AppCompatActivity {
@@ -50,12 +52,37 @@ public class MainActivity extends AppCompatActivity {
         // Some other options - https://github.com/codepath/android_guides/wiki/Working-with-the-WebView
         // webSettings.setUseWideViewPort(true);
         // webSettings.setLoadWithOverviewMode(true);
+        Map<String, Object> defaultSettings = MyReflectUtility.getValues(webSettings);
+        Log.d("WebView", "WebSettings: " + defaultSettings.toString());
+        /*
+        try {
+            //JSONObject jsonObject = MyJsonUtility.mapToJson(defaultSettings);
+            //JSONObject jsonObject = (JSONObject) MyJsonUtility.toJson(defaultSettings);
+            //String jsonString = jsonObject.toString(2).replace("\\","");
+            String jsonString = MyJsonUtility.toJsonString(defaultSettings);
+            Log.d("WebView", jsonString);
+        } catch (Exception e) {
+            Log.e("WebView", e.toString());
+        }
+         */
         // myWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         // myWebView.setScrollbarFadingEnabled(false);
+        //MyReflectUtility.showObject(myWebView);
         // Stop local links and redirects from opening in browser instead of WebView
         MyAppWebViewClient myWebViewClient = new MyAppWebViewClient(this);
+        //MyReflectUtility.showObject(myWebViewClient);
         if (myWebViewClient.hasDebuggingEnabled()) {
             WebView.setWebContentsDebuggingEnabled(true);
+        }
+        Map<String, Object> customWebSettings = myWebViewClient.getWebSettings();
+        if (customWebSettings != null) {
+            for (String key: customWebSettings.keySet()) {
+                if (!defaultSettings.containsKey(key)) {
+                    Log.d("WebView", "Unknown WebSettings key " + key);
+                    continue;
+                }
+                Log.d("WebView", "WebSettings key " + key);
+            }
         }
         myWebView.setWebViewClient(myWebViewClient);
         // Add Javascript interface

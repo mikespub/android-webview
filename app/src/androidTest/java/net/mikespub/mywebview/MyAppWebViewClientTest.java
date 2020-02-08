@@ -25,7 +25,7 @@ public class MyAppWebViewClientTest {
     }
 
     @Test
-    public void hasUpdateZip() {
+    public void getUpdateZip() {
     }
 
     @Test

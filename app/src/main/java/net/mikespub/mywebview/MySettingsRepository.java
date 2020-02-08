@@ -1,8 +1,5 @@
 package net.mikespub.mywebview;
 
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.net.Uri;
 import android.util.Log;
 
@@ -11,34 +8,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 class MySettingsRepository {
+    private static final String TAG = "Settings";
+    static final String fileName = "web/settings.json";
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
     private final AppCompatActivity activity;
 
@@ -47,9 +29,9 @@ class MySettingsRepository {
     }
 
     HashMap<String, Object> loadJsonSettings() {
-        long lastUpdated = this.checkAssetFiles();
-        //this.loadStringConfig();
-        return this.loadJsonConfig(lastUpdated);
+        long lastUpdated = MyAssetUtility.checkAssetFiles(activity);
+        //loadStringConfig();
+        return loadJsonConfig(lastUpdated);
     }
 
     private String getTimestamp(long lastUpdated) {
@@ -75,181 +57,33 @@ class MySettingsRepository {
     }
 
     private HashMap<String, Object> loadJsonConfig(long lastUpdated) {
-        String filename = "web/settings.json";
-        String content = this.getJsonSettings(filename);
+        String content = getJsonSettings();
         HashMap<String, Object> hashMap = null;
         try {
             hashMap = new HashMap<>(MyJsonUtility.jsonToMap(content));
-            Log.d("Settings", hashMap.toString());
+            Log.d(TAG, hashMap.toString());
             if (!hashMap.containsKey("timestamp")) {
                 String timestamp = getTimestamp(0);
-                Log.d("Timestamp New", timestamp);
+                Log.d(TAG, "Timestamp New: " + timestamp);
                 hashMap.put("timestamp", timestamp);
             } else if (lastUpdated > 0) {
                 String timestamp = getTimestamp(lastUpdated);
-                Log.d("Timestamp Old", timestamp);
+                Log.d(TAG, "Timestamp Old: " + timestamp);
                 // String timestamp = Instant.now().toString();
                 hashMap.put("timestamp", timestamp);
             }
         } catch (JSONException e) {
-            Log.e("Settings", e.toString());
-            //this.loadStringConfig();
+            Log.e(TAG, e.toString());
+            //loadStringConfig();
         }
         return hashMap;
     }
 
-    private long checkAssetFiles() {
-        // /data/user/0/net.mikespub.mywebview/files
-        // File filesdir = getFilesDir();
-        // Log.d("Internal Files Dir", filesdir.getAbsolutePath());
-        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/Documents
-        // File extdocsdir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
-        // Log.d("External Docs Dir", extdocsdir.getAbsolutePath());
-        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files
-        // File extfilesdir = getExternalFilesDir(null);
-        // Log.d("External Files Dir", extfilesdir.getAbsolutePath());
-        // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/web
-        File extwebdir = new File(this.activity.getExternalFilesDir(null), "web");
-        Log.d("External Web Dir", extwebdir.getAbsolutePath());
-        // https://stackoverflow.com/questions/5248094/is-it-possible-to-get-last-modified-date-from-an-assets-file - using shared preferences in the end
-        // See also https://stackoverflow.com/questions/37953002/mess-with-the-shared-preferences-of-android-which-function-to-use/37953072 for preferences
-        long lastUpdated = 0;
-        if (!extwebdir.exists()) {
-            if (!extwebdir.mkdirs()) {
-                Log.d("External Web Dir", Boolean.toString(extwebdir.exists()));
-                return lastUpdated;
-            }
-            Log.d("External Web Dir", Boolean.toString(extwebdir.exists()));
-        } else {
-            try {
-                PackageManager pm = this.activity.getPackageManager();
-                PackageInfo appInfo = pm.getPackageInfo(this.activity.getPackageName(), 0);
-                lastUpdated = appInfo.lastUpdateTime;
-                Log.d("Web Package", String.valueOf(lastUpdated));
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.e("Web Package", e.toString());
-            }
-        }
-        copyAssetFiles(extwebdir, lastUpdated);
-        return lastUpdated;
-    }
-
-    // https://stackoverflow.com/questions/4447477/how-to-copy-files-from-assets-folder-to-sdcard
-    private void copyAssetFiles(File extwebdir, long lastUpdated) {
-        AssetManager manager = this.activity.getAssets();
-        String[] files;
+    private String getJsonSettings() {
         try {
-            files = manager.list("web");
-            Log.d("Web Files", Arrays.toString(files));
+            return MyAssetUtility.getFilenameString(activity, fileName);
         } catch (IOException e) {
-            Log.e("Web Files", e.toString());
-            return;
-        }
-        for (String f: files) {
-            File extfile = new File(extwebdir, f);
-            if (!extfile.exists() || lastUpdated > extfile.lastModified()) {
-                Log.d("Web File Missing", extfile.getAbsolutePath());
-                try (InputStream in = manager.open("web/" + f); OutputStream out = new FileOutputStream(extfile)) {
-                    copyFile(in, out);
-                } catch (IOException e) {
-                    Log.e("Web File", e.toString());
-                    break;
-                }
-                // NOOP
-                // NOOP
-                Log.d("Web File Copied", extfile.getAbsolutePath());
-            }
-        }
-    }
-
-    private void copyFile(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[8192];
-        int read;
-        while((read = in.read(buffer)) != -1){
-            out.write(buffer, 0, read);
-        }
-    }
-
-    // See https://stackoverflow.com/questions/3382996/how-to-unzip-files-programmatically-in-android
-    public static void unzipFile(File zipFile, File targetDirectory) throws IOException {
-        try (FileInputStream inputStream = new FileInputStream(zipFile)) {
-            unzipStream(inputStream, targetDirectory);
-        }
-    }
-
-    static void unzipStream(InputStream inputStream, File targetDirectory) throws IOException {
-        try (ZipInputStream zis = new ZipInputStream(
-                new BufferedInputStream(inputStream))) {
-            ZipEntry ze;
-            int count;
-            byte[] buffer = new byte[8192];
-            while ((ze = zis.getNextEntry()) != null) {
-                // don't overwrite local settings
-                String name = ze.getName();
-                if (name.equals("web/settings.json")) {
-                    Log.d("Web Update Unzip", name + " skip settings.json");
-                    continue;
-                }
-                File file = new File(targetDirectory, name);
-                File dir = ze.isDirectory() ? file : file.getParentFile();
-                if (!dir.isDirectory() && !dir.mkdirs())
-                    throw new FileNotFoundException("Failed to ensure directory: " +
-                            dir.getAbsolutePath());
-                if (ze.isDirectory()) {
-                    Log.d("Web Update Unzip", name + " skip directory");
-                    continue;
-                }
-                long time = ze.getTime();
-                if (file.exists() && (time > 0) && (time < file.lastModified())) {
-                    Log.d("Web Update Unzip", name + " skip newer file");
-                    continue;
-                }
-                Log.d("Web Update Unzip", name + " update");
-                try (FileOutputStream fout = new FileOutputStream(file)) {
-                    while ((count = zis.read(buffer)) != -1)
-                        fout.write(buffer, 0, count);
-                }
-                /* if time should be restored as well */
-                if (time > 0) {
-                    file.setLastModified(time);
-                }
-            }
-        }
-    }
-
-    private String getJsonSettings(String filename) {
-        File extwebfile = new File(this.activity.getExternalFilesDir(null), filename);
-        if (extwebfile.exists()) {
-            try {
-                Writer writer = new StringWriter();
-                try (InputStream input = new FileInputStream(extwebfile)) {
-                    char[] buffer = new char[2048];
-                    Reader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
-                    int n;
-                    while ((n = reader.read(buffer)) != -1) {
-                        writer.write(buffer, 0, n);
-                    }
-                }
-                return writer.toString();
-            } catch (IOException e) {
-                Log.e("getJsonSettings", e.toString());
-            }
-            return null;
-        }
-        AssetManager manager = this.activity.getAssets();
-        try {
-            Writer writer = new StringWriter();
-            try (InputStream input = manager.open(filename)) {
-                char[] buffer = new char[2048];
-                Reader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
-                int n;
-                while ((n = reader.read(buffer)) != -1) {
-                    writer.write(buffer, 0, n);
-                }
-            }
-            return writer.toString();
-        } catch (IOException e) {
-            Log.e("getJsonSettings", e.toString());
+            Log.e(TAG, e.toString());
         }
         return null;
     }
@@ -335,29 +169,23 @@ class MySettingsRepository {
             hashMap.put("not_matching", false);
         }
         hashMap.put("update_zip", update_zip);
-        hashMap.put("source", "updated via webview");
+        hashMap.put("source", "updated via WebView");
         hashMap.put("timestamp", getTimestamp(0));
         return hashMap;
     }
 
     String saveJsonSettings(HashMap<String, Object> hashMap) {
         hashMap.put("timestamp", getTimestamp(0));
-        Log.d("Web Settings", hashMap.toString());
+        Log.d(TAG, hashMap.toString());
         JSONObject jsonObject=new JSONObject(hashMap);
         String jsonString = "";
         // https://stackoverflow.com/questions/16563579/jsonobject-tostring-how-not-to-escape-slashes
         try {
             jsonString = jsonObject.toString(2).replace("\\","");
-            //Log.d("Web Settings", jsonString);
-            File extwebfile = new File(this.activity.getExternalFilesDir(null), "web/settings.json");
-            // https://stackoverflow.com/questions/11371154/outputstreamwriter-vs-filewriter/11371322
-            try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(extwebfile), StandardCharsets.UTF_8)) {
-                osw.write(jsonString);
-            } catch (IOException e) {
-                Log.e("Web Settings", e.toString());
-            }
+            //Log.d(TAG, jsonString);
+            MyAssetUtility.saveFilenameString(activity, fileName, jsonString);
         } catch (JSONException e) {
-            Log.e("Web Settings", e.toString());
+            Log.e(TAG, e.toString());
         }
         return jsonString;
     }

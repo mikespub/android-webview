@@ -12,7 +12,7 @@ class AppJavaScriptProxy {
     private final Activity activity;
     private final WebView  webView;
 
-    public AppJavaScriptProxy(Activity activity, WebView webview) {
+    AppJavaScriptProxy(Activity activity, WebView webview) {
 
         this.activity = activity;
         this.webView  = webview;
@@ -29,7 +29,7 @@ class AppJavaScriptProxy {
 
             @Override
             public void run() {
-                if(!myWebView.getUrl().startsWith("https://appassets.androidplatform.net/")){
+                if(!myWebView.getUrl().startsWith(MyAppWebViewClient.domainUrl)){
                     Log.d("WebView", "Javascript Interface for " + myWebView.getUrl());
                     return;
                 }

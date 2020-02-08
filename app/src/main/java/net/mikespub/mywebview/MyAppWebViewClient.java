@@ -19,13 +19,23 @@ import androidx.webkit.WebViewAssetLoader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 class MyAppWebViewClient extends WebViewClient {
+    static final String domainName;
+    static final String domainUrl;
+
+    static {
+        domainName = "appassets.androidplatform.net";
+        domainUrl = "https://" + domainName + "/";
+    }
+
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
     private final MainActivity activity;
     private WebViewAssetLoader assetLoader;
@@ -56,102 +66,32 @@ class MyAppWebViewClient extends WebViewClient {
                 //Fetching the download id received with the broadcast
                 long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
                 //Checking if the received broadcast is for our enqueued download by matching download id
-                if (id > -1 && mDownloadId == id && mDownloadManager != null) {
-                    Log.d("Web Update", "Receive: " + mDownloadId);
-                /*
+                if ((id <= -1) || (mDownloadId != id) || (mDownloadManager == null)) {
+                    return;
+                }
+                Log.d("Web Update", "Receive: " + mDownloadId);
                 // query download status
-                Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
-                if (cursor.moveToFirst()) {
-                    int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                    if(status == DownloadManager.STATUS_SUCCESSFUL){
-
-                        // download is successful
-                        String uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                        File file = new File(Uri.parse(uri).getPath());
-                    }
-                    else {
-                        // download is assumed cancelled
-                    }
+                //status = MyContentUtility.getDownloadStatus(activity, mDownloadId);
+                Uri uri = mDownloadManager.getUriForDownloadedFile(mDownloadId);
+                // Format: content://downloads/all_downloads/63
+                Log.d("Web Update", "Uri: " + uri);
+                // Note: this could be automatically renamed if the file already exists, e.g. assets-1.zip instead of assets.zip
+                if (uri == null) {
+                    return;
                 }
-                else {
-                    // download is assumed cancelled
-                }
-                 */
-                    Uri uri = mDownloadManager.getUriForDownloadedFile(mDownloadId);
-                    Log.d("Web Update", "Uri: " + uri);
-                    // CHECKME: could be automatically renamed if the file already exists, e.g. assets-1.zip instead of assets.zip
-                    if (uri != null) {
-                    /*
-                    Columns: 0 name: _id type: 1 value: 47
-                    Columns: 1 name: entity type: 0 value: null
-                    Columns: 2 name: _data type: 3 value: /storage/emulated/0/Android/data/net.mikespub.mywebview/files/assets.zip
-                    Columns: 3 name: mimetype type: 3 value: application/zip
-                    Columns: 4 name: visibility type: 1 value: 0
-                    Columns: 5 name: destination type: 1 value: 4
-                    Columns: 6 name: control type: 0 value: null
-                    Columns: 7 name: status type: 1 value: 200
-                    Columns: 8 name: lastmod type: 1 value: 540540424
-                    Columns: 9 name: notificationpackage type: 3 value: net.mikespub.mywebview
-                    Columns: 10 name: notificationclass type: 0 value: null
-                    Columns: 11 name: total_bytes type: 1 value: 6313
-                    Columns: 12 name: current_bytes type: 1 value: 6313
-                    Columns: 13 name: title type: 3 value: assets.zip
-                    Columns: 14 name: description type: 3 value:
-                    Columns: 15 name: uri type: 3 value: https://github.com/mikespub/android-webview/raw/master/app/release/updates/assets.zip
-                    Columns: 16 name: is_visible_in_downloads_ui type: 1 value: 1
-                    Columns: 17 name: hint type: 3 value: file:///storage/emulated/0/Android/data/net.mikespub.mywebview/files/assets.zip
-                    Columns: 18 name: mediaprovider_uri type: 0 value: null
-                    Columns: 19 name: deleted type: 1 value: 0
-                    Columns: 20 name: _display_name type: 3 value: assets.zip
-                    Columns: 21 name: _size type: 1 value: 6313
-                     */
-                    /*
-                    Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
-                    if (cursor.moveToFirst()) {
-                        //String local_uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                        //Log.d("Web Update Local URI", local_uri);
-                        //String[] columns = cursor.getColumnNames();
-                        //Log.d("Web Update Columns", Arrays.toString(columns));
-                        for (int i=0; i < cursor.getColumnCount(); i++) {
-                            switch (cursor.getType(i)) {
-                                case Cursor.FIELD_TYPE_NULL:
-                                    Log.d("Web Update Columns", i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: null");
-                                    break;
-                                case Cursor.FIELD_TYPE_INTEGER:
-                                    Log.d("Web Update Columns", i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getInt(i));
-                                    break;
-                                case Cursor.FIELD_TYPE_FLOAT:
-                                    Log.d("Web Update Columns", i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getFloat(i));
-                                    break;
-                                case Cursor.FIELD_TYPE_STRING:
-                                    Log.d("Web Update Columns", i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getString(i));
-                                    break;
-                                case Cursor.FIELD_TYPE_BLOB:
-                                    Log.d("Web Update Columns", i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getBlob(i).toString());
-                                    break;
-                                default:
-                                    Log.d("Web Update Columns", i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: ?");
-                                    break;
-                            }
-                        }
-                        Log.d("Web Update Extras", cursor.getExtras().toString());
-                    }
-                    cursor.close();
-                     */
-                        // unzip
-                        //Log.d("Web Update", mDownloadFile.getAbsolutePath());
-                        try {
-                            InputStream inputStream = activity.getContentResolver().openInputStream(uri);
-                            File targetDirectory = activity.getExternalFilesDir(null);
-                            MySettingsRepository.unzipStream(inputStream, targetDirectory);
-                            if (inputStream != null)
-                                inputStream.close();
-                            // delete entry in Downloads to avoid multiple duplicates there
-                            activity.getContentResolver().delete(uri,null,null);
-                        } catch (Exception e) {
-                            Log.e("Web Update", e.toString());
-                        }
-                    }
+                //MyContentUtility.showContent(activity, uri);
+                // unzip
+                //Log.d("Web Update", mDownloadFile.getAbsolutePath());
+                try {
+                    InputStream inputStream = activity.getContentResolver().openInputStream(uri);
+                    File targetDirectory = activity.getExternalFilesDir(null);
+                    MyAssetUtility.unzipStream(inputStream, targetDirectory);
+                    if (inputStream != null)
+                        inputStream.close();
+                    // delete entry in Downloads to avoid multiple duplicates there
+                    activity.getContentResolver().delete(uri,null,null);
+                } catch (Exception e) {
+                    Log.e("Web Update", e.toString());
                 }
             }
         };
@@ -179,8 +119,12 @@ class MyAppWebViewClient extends WebViewClient {
         return (Boolean) mySavedStateModel.getValue("not_matching");
     }
 
-    String hasUpdateZip() {
+    String getUpdateZip() {
         return (String) mySavedStateModel.getValue("update_zip");
+    }
+
+    Map<String, Object> getWebSettings() {
+        return (Map<String, Object>) mySavedStateModel.getValue("web_settings");
     }
 
     private void loadSettings() {
@@ -264,7 +208,7 @@ class MyAppWebViewClient extends WebViewClient {
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         Log.d("Web Override", url);
-        if(url.startsWith("https://appassets.androidplatform.net/")) {
+        if(url.startsWith(domainUrl)) {
             return false;
         }
         final Uri uri = Uri.parse(url);
@@ -352,7 +296,7 @@ class MyAppWebViewClient extends WebViewClient {
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
         Log.d("Web Intercept", url);
-        if(!url.startsWith("https://appassets.androidplatform.net/")) {
+        if(!url.startsWith(domainUrl)) {
             return null;
         }
         final Uri uri = Uri.parse(url);
@@ -368,7 +312,7 @@ class MyAppWebViewClient extends WebViewClient {
             HashMap<String, Object> hashMap = this.mySavedStateModel.parseQuery(this.activity, uri);
             String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
             loadSettings();
-            String update_zip = hasUpdateZip();
+            String update_zip = getUpdateZip();
             mDownloadId = -1;
             if (update_zip != null && update_zip.startsWith("http")) {
                 // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
@@ -395,30 +339,8 @@ class MyAppWebViewClient extends WebViewClient {
                     }
                 }
             }
-            String message = "<!DOCTYPE html>\n" +
-                    "<html lang=\"en\">\n" +
-                    "<head>\n" +
-                    "    <meta charset=\"UTF-8\">\n" +
-                    "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
-                    "    <!-- No complains about missing favicon.ico from https requests. -->\n" +
-                    "    <link rel=\"icon\" href=\"data:,\">\n" +
-                    "    <title>Update Settings</title>\n" +
-                    "    <style>\n" +
-                    "    @media screen and (min-width: 600px) {\n" +
-                    "        #main {\n" +
-                    "            max-width: 600px;\n" +
-                    "            margin: auto;\n" +
-                    "        }\n" +
-                    "    }\n" +
-                    "    </style>\n" +
-                    "</head>\n" +
-                    "<body>\n" +
-                    "    <div id=\"main\">\n" +
-                    "    <h1><a href=\"index.html\">My WebView</a></h1>\n" +
-                    "    <h2><a href=\"update.html\">Update Settings</a></h2>\n";
-            message += "    <pre>" + jsonString + "</pre>\n";
             /*
-            message += "<script>\n" +
+            content += "<script>\n" +
                     "    if(typeof androidAppProxy !== \"undefined\"){\n" +
                     "        androidAppProxy.showMessage(\"Settings Updated\");\n" +
                     "    } else {\n" +
@@ -426,31 +348,32 @@ class MyAppWebViewClient extends WebViewClient {
                     "    }\n" +
                     "</script>\n";
              */
-            message += "    </div>\n";
-            message += "</body></html>";
+            Map<String, String> valuesMap = new HashMap<>();
+            valuesMap.put("output", jsonString);
+            String message = getWebPage("web/fake_post.html", valuesMap);
             ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
             return new WebResourceResponse("text/html", "UTF-8", targetStream);
         }
         if (path.startsWith("/assets/web/")) {
-            File extwebfile = new File(this.activity.getExternalFilesDir(null), path.substring("/assets/".length()));
-            if (extwebfile.exists()) {
+            File extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/assets/".length()));
+            if (extWebFile.exists()) {
                 String type;
-                String extension = MimeTypeMap.getFileExtensionFromUrl(extwebfile.getName());
+                String extension = MimeTypeMap.getFileExtensionFromUrl(extWebFile.getName());
                 if (extension != null) {
                     extension = extension.toLowerCase();
                 }
                 MimeTypeMap mime = MimeTypeMap.getSingleton();
                 if (extension != null && mime.hasExtension(extension)) {
                     type = mime.getMimeTypeFromExtension(extension);
-                } else if (extwebfile.getName().endsWith(".json")) {
+                } else if (extWebFile.getName().endsWith(".json")) {
                     type = "application/json";
                 } else {
                     type = "TODO";
                 }
                 if (!type.equals("TODO")) {
                     try {
-                        InputStream targetStream = new FileInputStream(extwebfile);
-                        Log.d("WebResource External", extwebfile + " mimetype: " + type);
+                        InputStream targetStream = new FileInputStream(extWebFile);
+                        Log.d("WebResource External", extWebFile + " mimetype: " + type);
                         if (type.startsWith("image/")) {
                             return new WebResourceResponse(type, null, targetStream);
                         } else {
@@ -460,16 +383,34 @@ class MyAppWebViewClient extends WebViewClient {
                         Log.e("WebResource", e.toString());
                     }
                 }
-                Log.d("WebResource External", extwebfile + " mimetype: " + type);
+                Log.d("WebResource External", extWebFile + " mimetype: " + type);
             }
-            Log.d("WebResource Assets", extwebfile + " exists: " + extwebfile.exists());
+            Log.d("WebResource Assets", extWebFile + " exists: " + extWebFile.exists());
         }
         if (this.assetLoader == null) {
             this.assetLoader = new WebViewAssetLoader.Builder()
+                    //.setDomain(domainName)
                     .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this.activity))
                     //.addPathHandler("/res/", new WebViewAssetLoader.ResourcesPathHandler(this.activity))
                     .build();
         }
         return this.assetLoader.shouldInterceptRequest(uri);
+    }
+
+    String getWebPage(String fileName, Map<String, String> valuesMap) {
+        String template;
+        try {
+            template = MyAssetUtility.getFilenameString(activity, fileName);
+        } catch (IOException e) {
+            template = e.toString();
+        }
+        if (valuesMap == null) {
+            return template;
+        }
+        //StringSubstitutor sub = new StringSubstitutor(valuesMap);
+        for (String key: valuesMap.keySet()) {
+            template = template.replace("${" + key + "}", valuesMap.get(key));
+        }
+        return template;
     }
 }
