@@ -17,7 +17,9 @@ import java.util.Map;
 class MyJsonUtility {
 
     /**
-     * @param json  object to convert to map
+     * Convert JSON string or object to map
+     *
+     * @param json  string or object to convert to map
      * @return      converted map
      * @throws JSONException    trouble converting
      */
@@ -97,6 +99,8 @@ class MyJsonUtility {
     }
 
     /**
+     * Convert object to JSON object or array
+     *
      * @param object    object to convert to JSON
      * @return          converted JSON object
      * @throws JSONException    trouble converting
@@ -114,6 +118,8 @@ class MyJsonUtility {
     }
 
     /**
+     * Convert map to JSON object
+     *
      * @param map   map to convert to JSON object
      * @return      converted JSON object
      * @throws JSONException    trouble converting
@@ -132,6 +138,8 @@ class MyJsonUtility {
     }
 
     /**
+     * Convert list to JSON array
+     *
      * @param list  list to convert to JSON array
      * @return      converted JSON array
      * @throws JSONException    trouble converting
@@ -145,6 +153,8 @@ class MyJsonUtility {
     }
 
     /**
+     * Convert object to JSON string
+     *
      * @param object    object to convert to JSON string
      * @return          converted JSON string
      * @throws JSONException    trouble converting

@@ -19,6 +19,8 @@ class MyContentUtility {
     private static final String TAG = "Content";
 
     /**
+     * Show detail of a content uri via content resolver
+     *
      * @param activity  current Activity context
      * @param uri       content uri to show
      */
@@ -56,6 +58,8 @@ class MyContentUtility {
     }
 
     /**
+     * Show columns for current cursor
+     *
      * @param cursor    current cursor
      */
     static void showCursor(Cursor cursor) {
@@ -89,6 +93,8 @@ class MyContentUtility {
     }
 
     /**
+     * Show app downloads via content provider
+     *
      * @param activity  current Activity context
      */
     static void showMyDownloadFiles(AppCompatActivity activity) {
@@ -108,6 +114,8 @@ class MyContentUtility {
     }
 
     /**
+     * Get external downloads dir for this app
+     *
      * @param activity  current Activity context
      * @return          external downloads directory
      */
@@ -116,6 +124,8 @@ class MyContentUtility {
     }
 
     /**
+     * Show external download files for this app
+     *
      * @param activity  current Activity context
      */
     static void showMyExternalDownloadFiles(AppCompatActivity activity) {
@@ -127,6 +137,8 @@ class MyContentUtility {
     }
 
     /**
+     * Get DownloadManager service
+     *
      * @param activity  current Activity context
      * @return          download manager
      */
@@ -135,6 +147,8 @@ class MyContentUtility {
     }
 
     /**
+     * Get download status for a download id
+     *
      * @param activity      current Activity context
      * @param downloadId    download id
      * @return              current status

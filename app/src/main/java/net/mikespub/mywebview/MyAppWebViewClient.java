@@ -21,14 +21,13 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * WebViewClient Methods + link to settings & downloads
  */
 class MyAppWebViewClient extends WebViewClient {
     static final String domainName;
@@ -111,7 +110,7 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
-     * Get setting
+     * Get setting for remote_debug
      *
      * @return  setting
      */
@@ -120,7 +119,7 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
-     * Get setting
+     * Get setting for console_log
      *
      * @return  setting
      */
@@ -129,7 +128,7 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
-     * Get setting
+     * Get setting for js_interface
      *
      * @return  setting
      */
@@ -138,7 +137,7 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
-     * Get setting
+     * Get setting for context_menu
      *
      * @return  setting
      */
@@ -147,7 +146,7 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
-     * Get setting
+     * Get setting for not_matching
      *
      * @return  setting
      */
@@ -156,7 +155,7 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
-     * Get setting
+     * Get setting for update_zip
      *
      * @return  setting
      */
@@ -262,39 +261,7 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
-     * @param var   variable to compare
-     * @param oper  operator for comparison
-     * @param value value to compare with
-     * @return      comparison
-     */
-    // https://stackoverflow.com/questions/160970/how-do-i-invoke-a-java-method-when-given-the-method-name-as-a-string
-    // TODO: create hashmap of methods?
-    private boolean compare(String var, String oper, String value) {
-        if (var == null) {
-            return false;
-        }
-        // with single parameter, return boolean
-        try {
-            Method method;
-            if (oper.equals("equals")) {
-                method = var.getClass().getMethod(oper, Object.class);
-            } else if (oper.equals("contains")) {
-                method = var.getClass().getMethod(oper, CharSequence.class);
-            } else {
-                method = var.getClass().getMethod(oper, value.getClass());
-            }
-            Log.d("WebView Compare", "Method " + oper + ": " + method);
-            boolean result = (boolean) method.invoke(var, value); // pass arg
-            Log.d("WebView Compare", "Result " + value + ": " + result);
-            return result;
-        } catch (Exception e) {
-            Log.e("WebView Compare", e.toString());
-            return false;
-        }
-    }
-
-    /**
-     * Check if we need to override a particular url and/or create an Intent
+     * Check if we need to override a particular url and/or create an Intent for it
      *
      * @param view  current WebView context
      * @param url   url to check for override
@@ -305,7 +272,7 @@ class MyAppWebViewClient extends WebViewClient {
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         Log.d("Web Override", url);
-        if(url.startsWith(domainUrl)) {
+        if(url.startsWith(domainUrl) || url.startsWith("http://localhost/")) {
             return false;
         }
         final Uri uri = Uri.parse(url);
@@ -326,7 +293,7 @@ class MyAppWebViewClient extends WebViewClient {
         for (String[] compare: this.myMatchCompare) {
             String value = pieces.get(compare[0]);
             Log.d("WebView Match", "Value " + compare[0] + ": " + value);
-            boolean result = this.compare(value, compare[1], compare[2]);
+            boolean result = MyReflectUtility.stringCompare(value, compare[1], compare[2]);
             if (!result) {
                 continue;
             }
@@ -336,8 +303,8 @@ class MyAppWebViewClient extends WebViewClient {
             //    String[] check = s.split("\\|");
             for (String[] check: this.mySkipCompare) {
                 value = pieces.get(check[0]);
-                Log.i("WebView Skip", "Value " + check[0] + ": " + value);
-                result = this.compare(value, check[1], check[2]);
+                Log.d("WebView Skip", "Value " + check[0] + ": " + value);
+                result = MyReflectUtility.stringCompare(value, check[1], check[2]);
                 if (result) {
                     isSkip = true;
                     break;
@@ -399,7 +366,7 @@ class MyAppWebViewClient extends WebViewClient {
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
         Log.d("Web Intercept", url);
-        if(!url.startsWith(domainUrl)) {
+        if(!url.startsWith(domainUrl) && !url.startsWith("http://localhost/")) {
             return null;
         }
         final Uri uri = Uri.parse(url);
@@ -412,7 +379,7 @@ class MyAppWebViewClient extends WebViewClient {
         // Note: we could also have used the Javascript interface, but then this might be available for all sites
         if (path.equals("/assets/web/fake_post.jsp")) {
             // String query = uri.getQuery();
-            HashMap<String, Object> hashMap = this.mySavedStateModel.parseQuery(this.activity, uri);
+            HashMap<String, Object> hashMap = MySettingsRepository.parseQueryParameters(uri);
             // add custom web settings here?
             hashMap.put("web_settings", myCustomWebSettings);
             String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
@@ -454,17 +421,35 @@ class MyAppWebViewClient extends WebViewClient {
         }
         if (path.startsWith("/assets/")) {
             File extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/assets/".length()));
-            if (extWebFile.exists()) {
+            if (path.endsWith("/") && extWebFile.exists() && extWebFile.isDirectory()) {
+                Log.d("WebResource External", extWebFile + " is directory - trying with index.html");
+                path += "index.html";
+                extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/assets/".length()));
+            }
+            if (extWebFile.exists() && !extWebFile.isDirectory()) {
                 String type;
                 String extension = MimeTypeMap.getFileExtensionFromUrl(extWebFile.getName());
                 if (extension != null) {
                     extension = extension.toLowerCase();
                 }
                 MimeTypeMap mime = MimeTypeMap.getSingleton();
+                // https://www.iana.org/assignments/media-types/media-types.xhtml
                 if (extension != null && mime.hasExtension(extension)) {
                     type = mime.getMimeTypeFromExtension(extension);
                 } else if (extWebFile.getName().endsWith(".json")) {
                     type = "application/json";
+                } else if (extWebFile.getName().endsWith(".js")) {
+                    type = "application/javascript";
+                } else if (extWebFile.getName().endsWith(".ttf")) {
+                    //type = "application/x-font-ttf";
+                    type = "font/ttf";
+                } else if (extWebFile.getName().endsWith(".woff")) {
+                    //type = "application/font-woff";
+                    type = "font/woff";
+                } else if (extWebFile.getName().endsWith(".woff2")) {
+                    type = "font/woff2";
+                } else if (extWebFile.getName().endsWith(".svg")) {
+                    type = "image/svg+xml";
                 } else {
                     type = "TODO";
                 }
@@ -472,7 +457,7 @@ class MyAppWebViewClient extends WebViewClient {
                     try {
                         InputStream targetStream = new FileInputStream(extWebFile);
                         Log.d("WebResource External", extWebFile + " mimetype: " + type);
-                        if (type.startsWith("image/")) {
+                        if (type.startsWith("image/") || type.startsWith("font/")) {
                             return new WebResourceResponse(type, null, targetStream);
                         } else {
                             return new WebResourceResponse(type, "UTF-8", targetStream);
@@ -481,7 +466,7 @@ class MyAppWebViewClient extends WebViewClient {
                         Log.e("WebResource", e.toString());
                     }
                 }
-                Log.d("WebResource External", extWebFile + " mimetype: " + type);
+                Log.d("WebResource External", extWebFile.getName() + " extension: " + extension + " mimetype: " + type);
             }
             Log.d("WebResource Assets", extWebFile + " exists: " + extWebFile.exists());
         }

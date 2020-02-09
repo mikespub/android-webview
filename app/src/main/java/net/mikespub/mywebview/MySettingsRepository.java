@@ -6,7 +6,6 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -19,7 +18,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * Repository for Settings from web/settings.json
+ * Repository for Settings from assets file "settings.json"
  */
 class MySettingsRepository {
     private static final String TAG = "Settings";
@@ -46,7 +45,7 @@ class MySettingsRepository {
     }
 
     /**
-     * Get an ISO-8601 formatted datetime string from a timestamp
+     * Get an ISO-8601 formatted datetime string from a timestamp or now
      *
      * @param lastUpdated   last update time of the current package or 0 for current time
      * @return              ISO-8601 formatted datetime string
@@ -115,6 +114,8 @@ class MySettingsRepository {
     }
 
     /**
+     * Parse configuration settings from query uri
+     *
      * @param uri   query uri to parse the configuration settings from
      * @return      configuration settings parsed
      */
@@ -205,17 +206,20 @@ class MySettingsRepository {
     }
 
     /**
+     * Save configuration settings to JSON file
+     *
      * @param hashMap   configuration settings to set
      * @return          json string with the new settings
      */
     String saveJsonSettings(HashMap<String, Object> hashMap) {
         hashMap.put("timestamp", getTimestamp(0));
         Log.d(TAG, hashMap.toString());
-        JSONObject jsonObject = new JSONObject(hashMap);
+        //JSONObject jsonObject = new JSONObject(hashMap);
         String jsonString = "";
         // https://stackoverflow.com/questions/16563579/jsonobject-tostring-how-not-to-escape-slashes
         try {
-            jsonString = jsonObject.toString(2).replace("\\","");
+            //jsonString = jsonObject.toString(2).replace("\\","");
+            jsonString = MyJsonUtility.toJsonString(hashMap);
             //Log.d(TAG, jsonString);
             MyAssetUtility.saveFilenameString(activity, fileName, jsonString);
         } catch (JSONException e) {

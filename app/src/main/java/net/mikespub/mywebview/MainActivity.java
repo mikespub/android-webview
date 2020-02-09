@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * @return  ViewModel with Saved State
+     * @return  ViewModel with Saved State for Settings
      */
     // https://stackoverflow.com/questions/57838759/how-android-jetpack-savedstateviewmodelfactory-works
     public MySavedStateModel getSavedStateModel() {

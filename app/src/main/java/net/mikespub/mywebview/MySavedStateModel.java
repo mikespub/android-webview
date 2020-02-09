@@ -1,6 +1,5 @@
 package net.mikespub.mywebview;
 
-import android.net.Uri;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,7 +18,7 @@ public class MySavedStateModel extends ViewModel {
     private final SavedStateHandle mState;
 
     /**
-     * @param savedStateHandle  saved state handle
+     * @param savedStateHandle  Saved State Handle
      */
     public MySavedStateModel(SavedStateHandle savedStateHandle) {
         mState = savedStateHandle;
@@ -27,6 +26,8 @@ public class MySavedStateModel extends ViewModel {
     }
 
     /**
+     * Get value from Saved State
+     *
      * @param key   key name of the value to get
      * @return      value to get
      */
@@ -35,6 +36,8 @@ public class MySavedStateModel extends ViewModel {
     }
 
     /**
+     * Set value to Saved State
+     *
      * @param key   key name of the value to set
      * @param value value to set
      */
@@ -43,6 +46,8 @@ public class MySavedStateModel extends ViewModel {
     }
 
     /**
+     * Get current Settings map from Saved State or Repository
+     *
      * @param activity  current Activity context
      * @return          configuration settings
      */
@@ -60,15 +65,8 @@ public class MySavedStateModel extends ViewModel {
     }
 
     /**
-     * @param activity  current Activity context
-     * @param uri       query uri to parse the configuration settings from
-     * @return          configuration settings parsed
-     */
-    HashMap<String, Object> parseQuery(AppCompatActivity activity, Uri uri) {
-        return MySettingsRepository.parseQueryParameters(uri);
-    }
-
-    /**
+     * Set Saved State values from Settings map
+     *
      * @param hashMap   configuration settings to set
      */
     private void setValuesFromMap(HashMap<String, Object> hashMap) {
@@ -91,6 +89,8 @@ public class MySavedStateModel extends ViewModel {
     }
 
     /**
+     * Get Settings map from Saved State values
+     *
      * @param hashMap   configuration settings to get
      */
     private void getMapFromValues(HashMap<String, Object> hashMap) {
@@ -119,6 +119,8 @@ public class MySavedStateModel extends ViewModel {
     }
 
     /**
+     * Set current Settings map to Saved State and Repository
+     *
      * @param activity  current Activity context
      * @param hashMap   configuration settings to set
      * @return          json string with the new settings

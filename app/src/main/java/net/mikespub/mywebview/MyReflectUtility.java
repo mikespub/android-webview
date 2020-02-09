@@ -33,6 +33,39 @@ class MyReflectUtility {
     }
 
     /**
+     * @param var           variable to compare
+     * @param methodName    method for comparison
+     * @param value         value to compare with
+     * @return              comparison
+     */
+    // https://stackoverflow.com/questions/160970/how-do-i-invoke-a-java-method-when-given-the-method-name-as-a-string
+    // TODO: create hashmap of methods?
+    static boolean stringCompare(String var, String methodName, String value) {
+        if (var == null) {
+            return false;
+        }
+        // with single parameter, return boolean
+        try {
+            Method method;
+            if (methodName.equals("equals")) {
+                method = var.getClass().getMethod(methodName, Object.class);
+            } else if (methodName.equals("contains")) {
+                method = var.getClass().getMethod(methodName, CharSequence.class);
+            } else {
+                method = var.getClass().getMethod(methodName, value.getClass());
+            }
+            boolean result = (boolean) method.invoke(var, value); // pass arg
+            Log.d(TAG, var + " " + methodName + " " + value + " = " + result);
+            return result;
+        } catch (Exception e) {
+            Log.e(TAG, var + " " + methodName + " " + value + " = ERROR", e);
+            return false;
+        }
+    }
+
+    /**
+     * Get all getter values for an object instance
+     *
      * @param objectInstance    object instance
      * @return                  getter values
      */
@@ -56,7 +89,7 @@ class MyReflectUtility {
                     Object returnValue = method.invoke(objectInstance);
                     hashMap.put(methodName.substring(3), returnValue);
                 } catch (Exception e) {
-                    Log.e(TAG, methodName + ": " + e.toString());
+                    Log.e(TAG, methodName, e);
                 }
             }
         }
@@ -64,6 +97,8 @@ class MyReflectUtility {
     }
 
     /**
+     * Is this object method a getter
+     *
      * @param method    object method
      * @return          is getter
      */
@@ -74,6 +109,8 @@ class MyReflectUtility {
     }
 
     /**
+     * Is this object method a setter
+     *
      * @param method    object method
      * @return          is setter
      */
@@ -83,6 +120,37 @@ class MyReflectUtility {
     }
 
     /**
+     * Get a value via getter for an object instance
+     *
+     * @param objectInstance    object instance
+     * @param getName           getter name without "get"
+     */
+    static Object get(Object objectInstance, String getName) {
+        Class aClass = objectInstance.getClass();
+        //Method method = aClass.getMethod("get" + getName);
+        Method[] methods = aClass.getMethods();
+        for (Method method: methods) {
+            String methodName = method.getName();
+            if (!methodName.equals("get" + getName)) {
+                continue;
+            }
+            if (!isGetter(method)) {
+                continue;
+            }
+            try {
+                Object returnValue = method.invoke(objectInstance);
+                return returnValue;
+            } catch (Exception e) {
+                Log.e(TAG, methodName, e);
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Set a value via setter for an object instance
+     *
      * @param objectInstance    object instance
      * @param setName           setter name without "set"
      * @param value             value to set
@@ -111,7 +179,7 @@ class MyReflectUtility {
                     try {
                         method.invoke(objectInstance, value);
                     } catch (Exception e) {
-                        Log.d(TAG, e.toString());
+                        Log.e(TAG, methodName, e);
                     }
                     return;
                 } else {
@@ -130,13 +198,13 @@ class MyReflectUtility {
                             Object[] values = (Object[]) getValues.invoke(null);
                             Log.d(TAG, "Enum: " + Arrays.toString(values));
                         } catch (Exception e) {
-                            Log.d(TAG, e.toString());
+                            Log.e(TAG, methodName, e);
                         }
                     }
                     try {
                         method.invoke(objectInstance, value);
                     } catch (Exception e) {
-                        Log.d(TAG, e.toString());
+                        Log.e(TAG, methodName, e);
                     }
                     return;
                 } else {
@@ -147,6 +215,8 @@ class MyReflectUtility {
     }
 
     /**
+     * Show details of an object instance via reflection
+     *
      * @param objectInstance object instance
      */
     static void showObject(Object objectInstance) {
@@ -167,7 +237,7 @@ class MyReflectUtility {
                 Object value = field.get(objectInstance);
                 Log.d(TAG, message + value);
             } catch (Exception e) {
-                Log.d(TAG, message + e.toString());
+                Log.e(TAG, message, e);
             }
         }
         Method[] methods = aClass.getMethods();
@@ -180,7 +250,7 @@ class MyReflectUtility {
                     Object returnValue = method.invoke(objectInstance);
                     Log.d(TAG, message + returnValue);
                 } catch (Exception e) {
-                    Log.d(TAG, message + e.toString());
+                    Log.e(TAG, message, e);
                 }
             } else {
                 Log.d(TAG, message);
@@ -189,6 +259,8 @@ class MyReflectUtility {
     }
 
     /**
+     * Get description of a class field
+     *
      * @param field class field
      * @return      description
      */
@@ -229,6 +301,8 @@ class MyReflectUtility {
     }
 
     /**
+     * Get description of a class method
+     *
      * @param method    class method
      * @return          description
      */
