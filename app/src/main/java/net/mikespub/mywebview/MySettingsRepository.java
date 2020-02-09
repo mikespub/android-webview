@@ -96,7 +96,7 @@ class MySettingsRepository {
                 hashMap.put("timestamp", timestamp);
             }
         } catch (JSONException e) {
-            Log.e(TAG, e.toString());
+            Log.e(TAG, "Load Settings: " + fileName, e);
             //loadStringConfig();
         }
         return hashMap;
@@ -109,7 +109,7 @@ class MySettingsRepository {
         try {
             return MyAssetUtility.getFilenameString(activity, fileName);
         } catch (IOException e) {
-            Log.e(TAG, e.toString());
+            Log.e(TAG, "Get Settings: " + fileName, e);
         }
         return null;
     }
@@ -219,7 +219,7 @@ class MySettingsRepository {
             //Log.d(TAG, jsonString);
             MyAssetUtility.saveFilenameString(activity, fileName, jsonString);
         } catch (JSONException e) {
-            Log.e(TAG, e.toString());
+            Log.e(TAG, "Save Settings: " + fileName, e);
         }
         return jsonString;
     }

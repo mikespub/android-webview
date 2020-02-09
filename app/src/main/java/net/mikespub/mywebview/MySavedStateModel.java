@@ -65,7 +65,6 @@ public class MySavedStateModel extends ViewModel {
      * @return          configuration settings parsed
      */
     HashMap<String, Object> parseQuery(AppCompatActivity activity, Uri uri) {
-        MySettingsRepository repo = new MySettingsRepository(activity);
         return MySettingsRepository.parseQueryParameters(uri);
     }
 
