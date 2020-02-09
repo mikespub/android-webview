@@ -28,6 +28,9 @@
   "context_menu": false,
   "not_matching": false,
   "update_zip": "",
+  "web_settings": {
+    "JavaScriptEnabled": true
+  },
   "source": "assets",
-  "timestamp": "2020-02-02T14:01:00Z"
+  "timestamp": "2020-02-09T14:01:00Z"
 }
