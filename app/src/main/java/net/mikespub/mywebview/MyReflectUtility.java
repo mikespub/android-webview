@@ -12,10 +12,30 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Reflect Utility Methods
+ */
 // http://tutorials.jenkov.com/java-reflection/getters-setters.html
 class MyReflectUtility {
     private static final String TAG = "Reflect";
+    private static final Map<String,Class> builtInMap = new HashMap<>();
 
+    static {
+        builtInMap.put("int", Integer.class );
+        builtInMap.put("long", Long.class );
+        builtInMap.put("double", Double.class );
+        builtInMap.put("float", Float.class );
+        builtInMap.put("boolean", Boolean.class );
+        builtInMap.put("char", Character.class );
+        builtInMap.put("byte", Byte.class );
+        builtInMap.put("void", Void.class );
+        builtInMap.put("short", Short.class );
+    }
+
+    /**
+     * @param objectInstance    object instance
+     * @return                  getter values
+     */
     static Map<String, Object> getValues(Object objectInstance) {
         Map<String, Object> hashMap = new HashMap<>();
         //Class aClass = MyObject.class;
@@ -43,17 +63,92 @@ class MyReflectUtility {
         return hashMap;
     }
 
+    /**
+     * @param method    object method
+     * @return          is getter
+     */
     static boolean isGetter(Method method){
         if(!method.getName().startsWith("get"))      return false;
         if(method.getParameterTypes().length != 0)   return false;
         return !void.class.equals(method.getReturnType());
     }
 
+    /**
+     * @param method    object method
+     * @return          is setter
+     */
     static boolean isSetter(Method method){
         if(!method.getName().startsWith("set")) return false;
         return method.getParameterTypes().length == 1;
     }
 
+    /**
+     * @param objectInstance    object instance
+     * @param setName           setter name without "set"
+     * @param value             value to set
+     */
+    static void set(Object objectInstance, String setName, Object value) {
+        Class aClass = objectInstance.getClass();
+        //Method method = aClass.getMethod("set" + setName);
+        Method[] methods = aClass.getMethods();
+        for (Method method: methods) {
+            String methodName = method.getName();
+            if (!methodName.equals("set" + setName)) {
+                continue;
+            }
+            if (!isSetter(method)) {
+                continue;
+            }
+            Class[] parameterTypes = method.getParameterTypes();
+            //Type[] genericParameterTypes = method.getGenericParameterTypes();
+            // https://stackoverflow.com/questions/54446200/is-there-a-way-to-compare-a-primitive-type-with-its-corresponding-wrapper-type
+            // https://stackoverflow.com/questions/180097/dynamically-find-the-class-that-represents-a-primitive-java-type/180139#180139
+            if (parameterTypes[0].isPrimitive()) {
+                Log.d(TAG, parameterTypes[0].getName());
+                Class equivClass = builtInMap.get(parameterTypes[0].getName());
+                if (equivClass.isInstance(value)) {
+                    Log.d(TAG, "Method: " + methodName + " - Param Type: " + equivClass.getName() + " - Value: " + value.getClass() + " MATCH");
+                    try {
+                        method.invoke(objectInstance, value);
+                    } catch (Exception e) {
+                        Log.d(TAG, e.toString());
+                    }
+                    return;
+                } else {
+                    Log.d(TAG, "Method: " + methodName + " - Param Type: " + equivClass.getName() + " - Value: " + value.getClass() + " NO MATCH");
+                }
+            } else {
+                if (parameterTypes[0].isInstance(value)) {
+                    Log.d(TAG, "Method: " + methodName + " - Param Type: " + parameterTypes[0] + " - Value: " + value.getClass() + " MATCH");
+                    if (parameterTypes[0].getName().contains("$")) {
+                        //Annotation[] annotations = method.getDeclaredAnnotations();
+                        //for (Annotation annotation: annotations) {
+                        //    Log.d(TAG, "Annotation: " + annotation.toString());
+                        //}
+                        try {
+                            Method getValues = parameterTypes[0].getMethod("values");
+                            Object[] values = (Object[]) getValues.invoke(null);
+                            Log.d(TAG, "Enum: " + Arrays.toString(values));
+                        } catch (Exception e) {
+                            Log.d(TAG, e.toString());
+                        }
+                    }
+                    try {
+                        method.invoke(objectInstance, value);
+                    } catch (Exception e) {
+                        Log.d(TAG, e.toString());
+                    }
+                    return;
+                } else {
+                    Log.d(TAG, "Method: " + methodName + " - Param Type: " + parameterTypes[0] + " - Value: " + value.getClass() + " NO MATCH");
+                }
+            }
+        }
+    }
+
+    /**
+     * @param objectInstance object instance
+     */
     static void showObject(Object objectInstance) {
         //Class aClass = MyObject.class;
         Class aClass = objectInstance.getClass();
@@ -93,6 +188,10 @@ class MyReflectUtility {
         }
     }
 
+    /**
+     * @param field class field
+     * @return      description
+     */
     static String showField(Field field) {
         String fieldName = field.getName();
         Object fieldType = field.getType();
@@ -129,6 +228,10 @@ class MyReflectUtility {
         return message;
     }
 
+    /**
+     * @param method    class method
+     * @return          description
+     */
     static String showMethod(Method method) {
         String methodName = method.getName();
         Class[] parameterTypes = method.getParameterTypes();

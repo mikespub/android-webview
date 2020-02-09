@@ -10,9 +10,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * JSON Utility Methods
+ */
 // See https://stackoverflow.com/questions/22011200/creating-hashmap-from-a-json-string/51121461#51121461
 class MyJsonUtility {
 
+    /**
+     * @param json  object to convert to map
+     * @return      converted map
+     * @throws JSONException    trouble converting
+     */
     static Map<String, Object> jsonToMap(Object json) throws JSONException {
 
         if(json instanceof JSONObject)
@@ -26,6 +34,11 @@ class MyJsonUtility {
         return null ;
     }
 
+    /**
+     * @param json  JSON object to convert to map
+     * @return      converted map
+     * @throws JSONException    trouble converting
+     */
     private static Map<String, Object> _jsonToMap_(JSONObject json) throws JSONException {
         Map<String, Object> retMap = new HashMap<>();
 
@@ -36,6 +49,11 @@ class MyJsonUtility {
     }
 
 
+    /**
+     * @param object    JSON object to convert to map
+     * @return          converted map
+     * @throws JSONException    trouble converting
+     */
     private static Map<String, Object> toMap(JSONObject object) throws JSONException {
         Map<String, Object> map = new HashMap<>();
 
@@ -57,6 +75,11 @@ class MyJsonUtility {
     }
 
 
+    /**
+     * @param array JSON array to convert to list
+     * @return      converted list
+     * @throws JSONException    trouble converting
+     */
     private static List<Object> toList(JSONArray array) throws JSONException {
         List<Object> list = new ArrayList<>();
         for(int i = 0; i < array.length(); i++) {
@@ -73,6 +96,11 @@ class MyJsonUtility {
         return list;
     }
 
+    /**
+     * @param object    object to convert to JSON
+     * @return          converted JSON object
+     * @throws JSONException    trouble converting
+     */
     // https://stackoverflow.com/questions/12155800/how-to-convert-hashmap-to-json-object-in-java
     static Object toJson(Object object) throws JSONException {
         if (object instanceof Map<?, ?>) {
@@ -85,6 +113,11 @@ class MyJsonUtility {
         }
     }
 
+    /**
+     * @param map   map to convert to JSON object
+     * @return      converted JSON object
+     * @throws JSONException    trouble converting
+     */
     static JSONObject mapToJson(Map<String, Object> map) throws JSONException {
         JSONObject jsonData = new JSONObject();
         for (String key : map.keySet()) {
@@ -98,6 +131,11 @@ class MyJsonUtility {
         return jsonData;
     }
 
+    /**
+     * @param list  list to convert to JSON array
+     * @return      converted JSON array
+     * @throws JSONException    trouble converting
+     */
     static JSONArray listToJson(Iterable list) throws JSONException {
         JSONArray jsonData = new JSONArray();
         for (Object value : list) {
@@ -106,6 +144,11 @@ class MyJsonUtility {
         return jsonData;
     }
 
+    /**
+     * @param object    object to convert to JSON string
+     * @return          converted JSON string
+     * @throws JSONException    trouble converting
+     */
     static String toJsonString(Object object) throws JSONException {
         Object jsonData = toJson(object);
         if (jsonData instanceof JSONObject) {

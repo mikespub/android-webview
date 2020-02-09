@@ -257,7 +257,7 @@ input[type=submit] {
     <script>
     function loadSites() {
         // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-        fetch('settings.json')
+        fetch('/assets/settings.json')
         .then((response) => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');

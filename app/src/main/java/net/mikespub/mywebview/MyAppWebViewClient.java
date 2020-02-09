@@ -10,6 +10,7 @@ import android.util.Log;
 import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
 import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
@@ -19,7 +20,6 @@ import androidx.webkit.WebViewAssetLoader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -27,6 +27,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ *
+ */
 class MyAppWebViewClient extends WebViewClient {
     static final String domainName;
     static final String domainUrl;
@@ -48,7 +51,12 @@ class MyAppWebViewClient extends WebViewClient {
     private DownloadManager mDownloadManager;
     //private File mDownloadFile;
     private long mDownloadId = -1;
+    private Map<String, Object> myDefaultWebSettings;
+    private Map<String, Object> myCustomWebSettings;
 
+    /**
+     * @param activity  current Activity context
+     */
     MyAppWebViewClient(MainActivity activity) {
         this.activity = activity;
         Log.d("Web Create", activity.toString());
@@ -58,6 +66,9 @@ class MyAppWebViewClient extends WebViewClient {
         setReceiver();
     }
 
+    /**
+     * Set BroadcastReceiver for download complete
+     */
     private void setReceiver() {
         activity.stopReceiver();
         activity.onDownloadComplete = new BroadcastReceiver() {
@@ -99,34 +110,104 @@ class MyAppWebViewClient extends WebViewClient {
         activity.registerReceiver(activity.onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
     }
 
+    /**
+     * Get setting
+     *
+     * @return  setting
+     */
     Boolean hasDebuggingEnabled() {
         return (Boolean) mySavedStateModel.getValue("remote_debug");
     }
 
+    /**
+     * Get setting
+     *
+     * @return  setting
+     */
     Boolean hasConsoleLog() {
         return (Boolean) mySavedStateModel.getValue("console_log");
     }
 
+    /**
+     * Get setting
+     *
+     * @return  setting
+     */
     Boolean hasJavascriptInterface() {
         return (Boolean) mySavedStateModel.getValue("js_interface");
     }
 
+    /**
+     * Get setting
+     *
+     * @return  setting
+     */
     Boolean hasContextMenu() {
         return (Boolean) mySavedStateModel.getValue("context_menu");
     }
 
+    /**
+     * Get setting
+     *
+     * @return  setting
+     */
     Boolean hasNotMatching() {
         return (Boolean) mySavedStateModel.getValue("not_matching");
     }
 
+    /**
+     * Get setting
+     *
+     * @return  setting
+     */
     String getUpdateZip() {
         return (String) mySavedStateModel.getValue("update_zip");
     }
 
+    /**
+     * Get custom Web Settings
+     *
+     * @return  setting
+     */
     Map<String, Object> getWebSettings() {
         return (Map<String, Object>) mySavedStateModel.getValue("web_settings");
     }
 
+    /**
+     * Set custom Web Settings
+     *
+     * @param webSettings   current WebSettings
+     */
+    void setWebSettings(WebSettings webSettings) {
+        myCustomWebSettings = getWebSettings();
+        if (myCustomWebSettings == null) {
+            Log.d("WebSettings", "No custom settings");
+            return;
+        }
+        Log.d("WebSettings", myCustomWebSettings.toString());
+        //Map<String, Object> defaultSettings = MyReflectUtility.getValues(webSettings);
+        myDefaultWebSettings = MyReflectUtility.getValues(webSettings);
+        //mySavedStateModel.setValue("web_settings", defaultSettings);
+        //Log.d("WebView", "WebSettings: " + defaultSettings.toString());
+        for (String key: myCustomWebSettings.keySet()) {
+            if (!myDefaultWebSettings.containsKey(key)) {
+                Log.d("WebSettings", "Unknown key: " + key);
+                continue;
+            }
+            Log.d("WebSettings", "Key: " + key + " - default: " + myDefaultWebSettings.get(key) + " - custom: " + myCustomWebSettings.get(key));
+            if ((myCustomWebSettings.get(key) == null) || (myDefaultWebSettings.get(key) == myCustomWebSettings.get(key)) || ((myDefaultWebSettings.get(key) instanceof String) && myDefaultWebSettings.get(key).equals(myCustomWebSettings.get(key)))) {
+            } else {
+                MyReflectUtility.set(webSettings, key, myCustomWebSettings.get(key));
+            }
+        }
+        //for (String key: myDefaultWebSettings.keySet()) {
+        //    MyReflectUtility.set(webSettings, key, myDefaultWebSettings.get(key));
+        //}
+    }
+
+    /**
+     * Load current settings from Saved State in ViewModel
+     */
     private void loadSettings() {
         HashMap<String, Object> hashMap = mySavedStateModel.getSettings(this.activity);
         Log.d("State Get", hashMap.toString());
@@ -161,6 +242,9 @@ class MyAppWebViewClient extends WebViewClient {
         Log.d("Settings", Arrays.deepToString(this.mySkipCompare));
     }
 
+    /**
+     * Load fallback settings from strings
+     */
     private void loadStringConfig() {
         String[] myMatchArr = this.activity.getResources().getStringArray(R.array.url_match);
         String[] mySkipArr = this.activity.getResources().getStringArray(R.array.url_skip);
@@ -177,6 +261,12 @@ class MyAppWebViewClient extends WebViewClient {
         Log.d("Settings", Arrays.deepToString(this.mySkipCompare));
     }
 
+    /**
+     * @param var   variable to compare
+     * @param oper  operator for comparison
+     * @param value value to compare with
+     * @return      comparison
+     */
     // https://stackoverflow.com/questions/160970/how-do-i-invoke-a-java-method-when-given-the-method-name-as-a-string
     // TODO: create hashmap of methods?
     private boolean compare(String var, String oper, String value) {
@@ -203,6 +293,13 @@ class MyAppWebViewClient extends WebViewClient {
         }
     }
 
+    /**
+     * Check if we need to override a particular url and/or create an Intent
+     *
+     * @param view  current WebView context
+     * @param url   url to check for override
+     * @return      decision to override or not
+     */
     // https://stackoverflow.com/questions/41972463/android-web-view-shouldoverrideurlloading-deprecated-alternative/41973017
     @SuppressWarnings("deprecation")
     @Override
@@ -273,7 +370,6 @@ class MyAppWebViewClient extends WebViewClient {
                     message,
                     Toast.LENGTH_LONG);
             toast.show();
-
         }
         return true;
     }
@@ -292,6 +388,13 @@ class MyAppWebViewClient extends WebViewClient {
     }
      */
 
+    /**
+     * Check if we need to intercept a particular request and handle it ourselves
+     *
+     * @param view  current WebView context
+     * @param url   url to check for intercept
+     * @return      WebResourceResponse or null
+     */
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
@@ -310,24 +413,26 @@ class MyAppWebViewClient extends WebViewClient {
         if (path.equals("/assets/web/fake_post.jsp")) {
             // String query = uri.getQuery();
             HashMap<String, Object> hashMap = this.mySavedStateModel.parseQuery(this.activity, uri);
+            // add custom web settings here?
+            hashMap.put("web_settings", myCustomWebSettings);
             String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
             loadSettings();
-            String update_zip = getUpdateZip();
+            String updateZip = getUpdateZip();
             mDownloadId = -1;
-            if (update_zip != null && update_zip.startsWith("http")) {
+            if (updateZip != null && updateZip.startsWith("http")) {
                 // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
-                Uri update_uri = Uri.parse(update_zip);
-                if (update_uri != null && URLUtil.isNetworkUrl(update_uri.toString())) {
-                    String update_name = URLUtil.guessFileName(update_uri.toString(), null, null);
-                    File mDownloadFile = new File(this.activity.getExternalFilesDir(null), update_name);
+                Uri updateUri = Uri.parse(updateZip);
+                if (updateUri != null && URLUtil.isNetworkUrl(updateUri.toString())) {
+                    String updateName = URLUtil.guessFileName(updateUri.toString(), null, null);
+                    File mDownloadFile = new File(this.activity.getExternalFilesDir(null), updateName);
                     if (mDownloadFile.exists()) {
                         Log.d("Web Update", mDownloadFile.getAbsolutePath() + " exists");
                         mDownloadFile.delete();
                     } else {
                         Log.d("Web Update", mDownloadFile.getAbsolutePath() + " does not exist");
                     }
-                    DownloadManager.Request request = new DownloadManager.Request(update_uri);
-                    request.setDestinationInExternalFilesDir(this.activity, null, update_name);
+                    DownloadManager.Request request = new DownloadManager.Request(updateUri);
+                    request.setDestinationInExternalFilesDir(this.activity, null, updateName);
                     // not easy to verify final path from DownloadManager in onDownloadComplete - use description to preset
                     request.setDescription(mDownloadFile.getAbsolutePath());
                     try {
@@ -339,22 +444,15 @@ class MyAppWebViewClient extends WebViewClient {
                     }
                 }
             }
-            /*
-            content += "<script>\n" +
-                    "    if(typeof androidAppProxy !== \"undefined\"){\n" +
-                    "        androidAppProxy.showMessage(\"Settings Updated\");\n" +
-                    "    } else {\n" +
-                    "        alert(\"Running outside Android app\");\n" +
-                    "    }\n" +
-                    "</script>\n";
-             */
+            // use template file for response here
+            String templateName = "web/fake_post.html";
             Map<String, String> valuesMap = new HashMap<>();
             valuesMap.put("output", jsonString);
-            String message = getWebPage("web/fake_post.html", valuesMap);
+            String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
             ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
             return new WebResourceResponse("text/html", "UTF-8", targetStream);
         }
-        if (path.startsWith("/assets/web/")) {
+        if (path.startsWith("/assets/")) {
             File extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/assets/".length()));
             if (extWebFile.exists()) {
                 String type;
@@ -395,22 +493,5 @@ class MyAppWebViewClient extends WebViewClient {
                     .build();
         }
         return this.assetLoader.shouldInterceptRequest(uri);
-    }
-
-    String getWebPage(String fileName, Map<String, String> valuesMap) {
-        String template;
-        try {
-            template = MyAssetUtility.getFilenameString(activity, fileName);
-        } catch (IOException e) {
-            template = e.toString();
-        }
-        if (valuesMap == null) {
-            return template;
-        }
-        //StringSubstitutor sub = new StringSubstitutor(valuesMap);
-        for (String key: valuesMap.keySet()) {
-            template = template.replace("${" + key + "}", valuesMap.get(key));
-        }
-        return template;
     }
 }

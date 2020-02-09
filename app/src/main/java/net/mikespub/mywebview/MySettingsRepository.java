@@ -18,23 +18,40 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+/**
+ * Repository for Settings from web/settings.json
+ */
 class MySettingsRepository {
     private static final String TAG = "Settings";
-    static final String fileName = "web/settings.json";
+    static final String fileName = "settings.json";
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
     private final AppCompatActivity activity;
 
+    /**
+     * @param activity  current Activity context
+     */
     MySettingsRepository(AppCompatActivity activity) {
         this.activity = activity;
     }
 
+    /**
+     * Check that the web asset files are available and load settings from settings.json
+     *
+     * @return  configuration settings
+     */
     HashMap<String, Object> loadJsonSettings() {
         long lastUpdated = MyAssetUtility.checkAssetFiles(activity);
         //loadStringConfig();
         return loadJsonConfig(lastUpdated);
     }
 
-    private String getTimestamp(long lastUpdated) {
+    /**
+     * Get an ISO-8601 formatted datetime string from a timestamp
+     *
+     * @param lastUpdated   last update time of the current package or 0 for current time
+     * @return              ISO-8601 formatted datetime string
+     */
+    static String getTimestamp(long lastUpdated) {
         // https://stackoverflow.com/questions/13515168/android-time-in-iso-8601
         // works with Instant
         // Instant instant = Instant.now();
@@ -56,6 +73,12 @@ class MySettingsRepository {
         return timestamp;
     }
 
+    /**
+     * Load configuration settings from JSON file
+     *
+     * @param lastUpdated   last update time of the current package
+     * @return              configuration settings
+     */
     private HashMap<String, Object> loadJsonConfig(long lastUpdated) {
         String content = getJsonSettings();
         HashMap<String, Object> hashMap = null;
@@ -79,6 +102,9 @@ class MySettingsRepository {
         return hashMap;
     }
 
+    /**
+     * @return  json string with the current settings
+     */
     private String getJsonSettings() {
         try {
             return MyAssetUtility.getFilenameString(activity, fileName);
@@ -88,7 +114,11 @@ class MySettingsRepository {
         return null;
     }
 
-    HashMap<String, Object> parseQueryParameters(Uri uri) {
+    /**
+     * @param uri   query uri to parse the configuration settings from
+     * @return      configuration settings parsed
+     */
+    static HashMap<String, Object> parseQueryParameters(Uri uri) {
         // String query = uri.getQuery();
         List<String> titles = uri.getQueryParameters("title[]");
         List<String> urls = uri.getQueryParameters("url[]");
@@ -174,10 +204,14 @@ class MySettingsRepository {
         return hashMap;
     }
 
+    /**
+     * @param hashMap   configuration settings to set
+     * @return          json string with the new settings
+     */
     String saveJsonSettings(HashMap<String, Object> hashMap) {
         hashMap.put("timestamp", getTimestamp(0));
         Log.d(TAG, hashMap.toString());
-        JSONObject jsonObject=new JSONObject(hashMap);
+        JSONObject jsonObject = new JSONObject(hashMap);
         String jsonString = "";
         // https://stackoverflow.com/questions/16563579/jsonobject-tostring-how-not-to-escape-slashes
         try {

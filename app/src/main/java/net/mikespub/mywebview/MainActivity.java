@@ -19,8 +19,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProvider;
 
-import java.util.Map;
-
+/**
+ * Main Activity for Android App
+ */
 // See also Chrome Custom Tabs https://developer.chrome.com/multidevice/android/customtabs
 // and Android Browser Helper https://github.com/GoogleChrome/android-browser-helper
 public class MainActivity extends AppCompatActivity {
@@ -30,9 +31,12 @@ public class MainActivity extends AppCompatActivity {
     //private MySavedStateModel mySavedStateModel;
 
     // https://developer.chrome.com/multidevice/webview/gettingstarted
-    private WebView myWebView;
+    protected WebView myWebView;
     BroadcastReceiver onDownloadComplete;
 
+    /**
+     * @param savedInstanceState    saved instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,8 +56,7 @@ public class MainActivity extends AppCompatActivity {
         // Some other options - https://github.com/codepath/android_guides/wiki/Working-with-the-WebView
         // webSettings.setUseWideViewPort(true);
         // webSettings.setLoadWithOverviewMode(true);
-        Map<String, Object> defaultSettings = MyReflectUtility.getValues(webSettings);
-        Log.d("WebView", "WebSettings: " + defaultSettings.toString());
+        //MyContentUtility.showMyDownloadFiles(this);
         /*
         try {
             //JSONObject jsonObject = MyJsonUtility.mapToJson(defaultSettings);
@@ -74,16 +77,9 @@ public class MainActivity extends AppCompatActivity {
         if (myWebViewClient.hasDebuggingEnabled()) {
             WebView.setWebContentsDebuggingEnabled(true);
         }
-        Map<String, Object> customWebSettings = myWebViewClient.getWebSettings();
-        if (customWebSettings != null) {
-            for (String key: customWebSettings.keySet()) {
-                if (!defaultSettings.containsKey(key)) {
-                    Log.d("WebView", "Unknown WebSettings key " + key);
-                    continue;
-                }
-                Log.d("WebView", "WebSettings key " + key);
-            }
-        }
+        // Set custom WebSettings (if any)
+        //MyReflectUtility.showObject(webSettings);
+        myWebViewClient.setWebSettings(webSettings);
         myWebView.setWebViewClient(myWebViewClient);
         // Add Javascript interface
         if (myWebViewClient.hasJavascriptInterface()) {
@@ -191,11 +187,17 @@ public class MainActivity extends AppCompatActivity {
         // https://stackoverflow.com/questions/33326833/save-state-of-webview-when-switching-activity
     }
 
+    /**
+     * @return  ViewModel with Saved State
+     */
     // https://stackoverflow.com/questions/57838759/how-android-jetpack-savedstateviewmodelfactory-works
     public MySavedStateModel getSavedStateModel() {
         return new ViewModelProvider(this, new SavedStateViewModelFactory(getApplication(), this)).get(MySavedStateModel.class);
     }
 
+    /**
+     *
+     */
     // Note: this is different from https://developer.android.com/guide/webapps/webview#java
     // and http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
     @Override
@@ -207,6 +209,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * @param overrideConfiguration configuration to override
+     */
     // https://stackoverflow.com/questions/41025200/android-view-inflateexception-error-inflating-class-android-webkit-webview
     @Override
     public void applyOverrideConfiguration(final Configuration overrideConfiguration) {
@@ -216,6 +221,9 @@ public class MainActivity extends AppCompatActivity {
         super.applyOverrideConfiguration(overrideConfiguration);
     }
 
+    /**
+     * @param outState  instance state to save
+     */
     // https://stackoverflow.com/questions/39086084/save-webview-state-on-screen-rotation
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
@@ -228,6 +236,9 @@ public class MainActivity extends AppCompatActivity {
         //outState.putBundle("webViewState", bundle);
     }
 
+    /**
+     * @param savedInstanceState    saved instance state
+     */
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
@@ -238,6 +249,9 @@ public class MainActivity extends AppCompatActivity {
         // myWebView.restoreState(bundle);
     }
 
+    /**
+     *
+     */
     void stopReceiver() {
         if (onDownloadComplete != null) {
             Log.d("Web Create", "unregister receiver");
@@ -245,6 +259,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     *
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();

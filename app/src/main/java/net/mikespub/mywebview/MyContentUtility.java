@@ -4,13 +4,24 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.File;
+import java.util.Arrays;
+
+/**
+ * Content Utility Methods
+ */
 class MyContentUtility {
     private static final String TAG = "Content";
 
+    /**
+     * @param activity  current Activity context
+     * @param uri       content uri to show
+     */
     /*
     Content: 0 name: _id type: 1 value: 47
     Content: 1 name: entity type: 0 value: null
@@ -39,41 +50,95 @@ class MyContentUtility {
         Log.d(TAG, "URI: " + uri);
         Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
         if (cursor.moveToFirst()) {
-            //String local_uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-            //Log.d(TAG, "Local URI: " + local_uri);
-            //String[] columns = cursor.getColumnNames();
-            //Log.d(TAG, "Columns: " + Arrays.toString(columns));
-            for (int i=0; i < cursor.getColumnCount(); i++) {
-                switch (cursor.getType(i)) {
-                    case Cursor.FIELD_TYPE_NULL:
-                        Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: null");
-                        break;
-                    case Cursor.FIELD_TYPE_INTEGER:
-                        Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getInt(i));
-                        break;
-                    case Cursor.FIELD_TYPE_FLOAT:
-                        Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getFloat(i));
-                        break;
-                    case Cursor.FIELD_TYPE_STRING:
-                        Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getString(i));
-                        break;
-                    case Cursor.FIELD_TYPE_BLOB:
-                        Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getBlob(i).toString());
-                        break;
-                    default:
-                        Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: ?");
-                        break;
-                }
-            }
-            Log.d(TAG, "Extras: " + cursor.getExtras().toString());
+            showCursor(cursor);
         }
         cursor.close();
     }
 
+    /**
+     * @param cursor    current cursor
+     */
+    static void showCursor(Cursor cursor) {
+        //String local_uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+        //Log.d(TAG, "Local URI: " + local_uri);
+        //String[] columns = cursor.getColumnNames();
+        //Log.d(TAG, "Columns: " + Arrays.toString(columns));
+        for (int i=0; i < cursor.getColumnCount(); i++) {
+            switch (cursor.getType(i)) {
+                case Cursor.FIELD_TYPE_NULL:
+                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: null");
+                    break;
+                case Cursor.FIELD_TYPE_INTEGER:
+                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getInt(i));
+                    break;
+                case Cursor.FIELD_TYPE_FLOAT:
+                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getFloat(i));
+                    break;
+                case Cursor.FIELD_TYPE_STRING:
+                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getString(i));
+                    break;
+                case Cursor.FIELD_TYPE_BLOB:
+                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + Arrays.toString(cursor.getBlob(i)));
+                    break;
+                default:
+                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: ?");
+                    break;
+            }
+        }
+        Log.d(TAG, "Extras: " + cursor.getExtras().toString());
+    }
+
+    /**
+     * @param activity  current Activity context
+     */
+    static void showMyDownloadFiles(AppCompatActivity activity) {
+        //static android.provider.Downloads.Impl.ALL_DOWNLOADS_CONTENT_URI;
+        //ALL_DOWNLOADS_CONTENT_URI
+        Uri uri = Uri.parse("content://downloads/my_downloads");
+        //Uri uri = Uri.parse("content://downloads/public_downloads");
+        //Uri uri = Uri.parse("content://downloads/all_downloads");
+        //activity.grantUriPermission(activity.getPackageName(),uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Log.d(TAG, "Uri: " + uri.toString());
+        Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
+        // MediaStore.Downloads.EXTERNAL_CONTENT_URI
+        while (cursor.moveToNext()) {
+            showCursor(cursor);
+        }
+        cursor.close();
+    }
+
+    /**
+     * @param activity  current Activity context
+     * @return          external downloads directory
+     */
+    static File getMyExternalDownloadsDir(AppCompatActivity activity) {
+        return activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+    }
+
+    /**
+     * @param activity  current Activity context
+     */
+    static void showMyExternalDownloadFiles(AppCompatActivity activity) {
+        File downloadsDir = getMyExternalDownloadsDir(activity);
+        Log.d(TAG, "Dir: " + downloadsDir.getAbsolutePath());
+        for (File file: downloadsDir.listFiles()) {
+            Log.d(TAG, "File: " + file.getAbsolutePath());
+        }
+    }
+
+    /**
+     * @param activity  current Activity context
+     * @return          download manager
+     */
     static DownloadManager getDownloadManager(AppCompatActivity activity) {
         return (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
     }
 
+    /**
+     * @param activity      current Activity context
+     * @param downloadId    download id
+     * @return              current status
+     */
     static int getDownloadStatus(AppCompatActivity activity, int downloadId) {
         DownloadManager mDownloadManager = getDownloadManager(activity);
         // query download status
