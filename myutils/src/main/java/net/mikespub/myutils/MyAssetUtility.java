@@ -41,7 +41,7 @@ public class MyAssetUtility {
      * @param activity  current Activity context
      * @return          last update time of the current package
      */
-    public static long checkAssetFiles(AppCompatActivity activity, String fileName) {
+    public static long checkAssetFiles(AppCompatActivity activity, String fileName, String dirName) {
         // /data/user/0/net.mikespub.mywebview/files
         // File filesDir = getFilesDir();
         // Log.d("Internal Files Dir", filesDir.getAbsolutePath());
@@ -52,29 +52,23 @@ public class MyAssetUtility {
         // File extFilesDir = getExternalFilesDir(null);
         // Log.d("External Files Dir", extFilesDir.getAbsolutePath());
         // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/web
-        copyAssetFile(activity, fileName, 0);
-        File extWebDir = new File(activity.getExternalFilesDir(null), "web");
-        Log.d(TAG, "External Dir: " + extWebDir.getAbsolutePath());
+        long lastUpdated = 0;
+        if (fileName != null) {
+            copyAssetFile(activity, fileName, lastUpdated);
+        }
         // https://stackoverflow.com/questions/5248094/is-it-possible-to-get-last-modified-date-from-an-assets-file - using shared preferences in the end
         // See also https://stackoverflow.com/questions/37953002/mess-with-the-shared-preferences-of-android-which-function-to-use/37953072 for preferences
-        long lastUpdated = 0;
-        if (!extWebDir.exists()) {
-            if (!extWebDir.mkdirs()) {
-                Log.d(TAG, "External Dir exists: " + extWebDir.exists());
-                return lastUpdated;
-            }
-            Log.d(TAG, "External Dir exists: " + extWebDir.exists());
-        } else {
-            try {
-                PackageManager pm = activity.getPackageManager();
-                PackageInfo appInfo = pm.getPackageInfo(activity.getPackageName(), 0);
-                lastUpdated = appInfo.lastUpdateTime;
-                Log.d(TAG, "Package Updated: " + lastUpdated);
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.e(TAG, "Package Unknown", e);
-            }
+        try {
+            PackageManager pm = activity.getPackageManager();
+            PackageInfo appInfo = pm.getPackageInfo(activity.getPackageName(), 0);
+            lastUpdated = appInfo.lastUpdateTime;
+            Log.d(TAG, "Package Updated: " + lastUpdated);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "Package Unknown", e);
         }
-        copyWebAssetFiles(activity, extWebDir, lastUpdated);
+        if (dirName != null) {
+            lastUpdated = copyWebAssetFiles(activity, dirName, lastUpdated);
+        }
         // copy _local asset files
         return lastUpdated;
     }
@@ -108,38 +102,52 @@ public class MyAssetUtility {
     }
 
     /**
-     * Copy all web asset files to an external web directory. External web files that were modified
+     * Copy all asset files to an external web directory. External web files that were modified
      * after this package was last updated will not be overwritten.
      *
      * @param activity      current Activity context
-     * @param extWebDir     external web directory to copy the asset files to
+     * @param dirName       external directory to copy the asset files to
      * @param lastUpdated   last update time of the current package
      */
     // https://stackoverflow.com/questions/4447477/how-to-copy-files-from-assets-folder-to-sdcard
-    static void copyWebAssetFiles(AppCompatActivity activity, File extWebDir, long lastUpdated) {
+    static long copyWebAssetFiles(AppCompatActivity activity, String dirName, long lastUpdated) {
+        File extDir = new File(activity.getExternalFilesDir(null), dirName);
+        Log.d(TAG, "External Dir: " + extDir.getAbsolutePath());
+        if (!extDir.exists()) {
+            if (!extDir.mkdirs()) {
+                Log.d(TAG, "External Dir exists: " + extDir.exists());
+                return 0;
+            }
+            Log.d(TAG, "External Dir exists: " + extDir.exists());
+        } else if (!extDir.isDirectory()) {
+            Log.d(TAG, "External Dir is File");
+            return 0;
+        }
         AssetManager manager = activity.getAssets();
         String[] files;
         try {
-            files = manager.list("web");
+            files = manager.list(dirName);
             Log.d(TAG, "Files: " + Arrays.toString(files));
         } catch (IOException e) {
             Log.e(TAG, "Files Error", e);
-            return;
+            return 0;
         }
         for (String f: files) {
-            File extFile = new File(extWebDir, f);
+            File extFile = new File(extDir, f);
             if (extFile.exists() && lastUpdated <= extFile.lastModified()) {
                 continue;
             }
-            Log.d(TAG, "File Missing:" + extFile.getAbsolutePath());
-            try (InputStream in = manager.open("web/" + f); OutputStream out = new FileOutputStream(extFile)) {
+            String fileName = dirName + "/" + f;
+            Log.d(TAG, "File Missing: " + fileName);
+            try (InputStream in = manager.open(fileName); OutputStream out = new FileOutputStream(extFile)) {
                 copyFileStream(in, out);
             } catch (IOException e) {
-                Log.e(TAG, "File Error:" + extFile.getAbsolutePath(), e);
-                break;
+                Log.e(TAG, "File Error: " + extFile.getAbsolutePath(), e);
+                return 0;
             }
-            Log.d(TAG, "File Copied:" + extFile.getAbsolutePath());
+            Log.d(TAG, "File Copied: " + extFile.getAbsolutePath());
         }
+        return lastUpdated;
     }
 
     /**

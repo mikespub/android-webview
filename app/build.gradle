@@ -19,6 +19,12 @@ android {
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // https://stackoverflow.com/questions/9206117/how-to-workaround-autoomitting-fiiles-folders-starting-with-underscore-in
+        // https://github.com/ionic-team/capacitor/issues/1750
+        aaptOptions {
+            //ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"
+            ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~"
+        }
     }
     buildTypes {
         release {
@@ -31,7 +37,7 @@ android {
 dependencies {
     //def appCompatVersion = "1.1.0"
     def lifeCycleVersion = "2.2.0"
-    def savedStateVersion = "1.0.0"
+    //def savedStateVersion = "1.0.0"
 
     // https://developer.android.com/studio/projects/android-library
     implementation project(":myutils")
@@ -47,7 +53,7 @@ dependencies {
     // LiveData
     implementation "androidx.lifecycle:lifecycle-livedata:$lifeCycleVersion"
     // Saved state module for ViewModel
-    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$savedStateVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifeCycleVersion"
     // Annotation processor
     annotationProcessor "androidx.lifecycle:lifecycle-compiler:$lifeCycleVersion"
     // alternately - if using Java8, use the following instead of lifecycle-compiler
@@ -57,6 +63,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
 
+// based on https://gist.github.com/delor/f70560f14674b322dcd2
+// adapted https://stackoverflow.com/questions/26874498/publish-an-android-library-to-maven-with-aar-and-source-jar
 task createPom {
     apply plugin: 'maven'
     description "Generates pom.xml"
@@ -71,10 +79,16 @@ task createPom {
         def dependenciesNode = asNode().appendNode('dependencies')
 
         configurations.implementation.allDependencies.each { dependency ->
-            def dependencyNode = dependenciesNode.appendNode('dependency')
-            dependencyNode.appendNode('groupId', dependency.group)
-            dependencyNode.appendNode('artifactId', dependency.name)
-            dependencyNode.appendNode('version', dependency.version)
+            if (dependency.group != null && dependency.name != null) {
+                def dependencyNode = dependenciesNode.appendNode('dependency')
+                dependencyNode.appendNode('groupId', dependency.group)
+                dependencyNode.appendNode('artifactId', dependency.name)
+                if (dependency.group == project.group) {
+                    dependencyNode.appendNode('version', versionCode)
+                } else {
+                    dependencyNode.appendNode('version', dependency.version)
+                }
+            }
         }
     }.writeTo("$rootDir/pom.xml")
 }
