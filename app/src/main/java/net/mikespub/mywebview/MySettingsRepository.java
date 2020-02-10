@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.SavedStateHandle;
 
 import net.mikespub.myutils.MyAssetUtility;
 import net.mikespub.myutils.MyJsonUtility;
@@ -22,29 +23,34 @@ import java.util.TimeZone;
 
 /**
  * Repository for Settings from assets file "settings.json"
+ *
+ * We cannot generalize this to MyJsonFileRepository because static variables/methods cannot be overridden in Java,
+ * see https://stackoverflow.com/questions/2223386/why-doesnt-java-allow-overriding-of-static-methods
  */
 class MySettingsRepository {
     private static final String TAG = "Settings";
     static final String fileName = "settings.json";
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
-    private final AppCompatActivity activity;
+    //private final AppCompatActivity activity;
 
-    /**
+    /*
      * @param activity  current Activity context
      */
-    MySettingsRepository(AppCompatActivity activity) {
-        this.activity = activity;
-    }
+    //MySettingsRepository(AppCompatActivity activity) {
+    //    this.activity = activity;
+    //}
 
     /**
      * Check that the web asset files are available and load settings from settings.json
      *
+     * @param activity current Activity context
      * @return  configuration settings
      */
-    HashMap<String, Object> loadJsonSettings() {
+    static HashMap<String, Object> loadJsonSettings(AppCompatActivity activity) {
         long lastUpdated = MyAssetUtility.checkAssetFiles(activity, fileName);
         //loadStringConfig();
-        return loadJsonConfig(lastUpdated);
+        String jsonString = getJsonSettings(activity);
+        return loadJsonConfig(jsonString, lastUpdated);
     }
 
     /**
@@ -76,16 +82,16 @@ class MySettingsRepository {
     }
 
     /**
-     * Load configuration settings from JSON file
+     * Load configuration settings from JSON string
      *
+     * @param jsonString    json string with settings
      * @param lastUpdated   last update time of the current package
      * @return              configuration settings
      */
-    private HashMap<String, Object> loadJsonConfig(long lastUpdated) {
-        String content = getJsonSettings();
+    static private HashMap<String, Object> loadJsonConfig(String jsonString, long lastUpdated) {
         HashMap<String, Object> hashMap = null;
         try {
-            hashMap = new HashMap<>(MyJsonUtility.jsonToMap(content));
+            hashMap = new HashMap<>(MyJsonUtility.jsonToMap(jsonString));
             Log.d(TAG, hashMap.toString());
             if (!hashMap.containsKey("timestamp")) {
                 String timestamp = getTimestamp(0);
@@ -105,15 +111,78 @@ class MySettingsRepository {
     }
 
     /**
+     * Get JSON string from settings.json file
+     *
+     * @param activity current Activity context
      * @return  json string with the current settings
      */
-    private String getJsonSettings() {
+    static private String getJsonSettings(AppCompatActivity activity) {
         try {
             return MyAssetUtility.getFilenameString(activity, fileName);
         } catch (IOException e) {
             Log.e(TAG, "Get Settings: " + fileName, e);
         }
         return null;
+    }
+
+    /**
+     * Set Saved State values from Settings map
+     *
+     * @param hashMap   configuration settings to set
+     * @param mState    Saved State Handle
+     */
+    static void setValuesFromMap(HashMap<String, Object> hashMap, SavedStateHandle mState) {
+        mState.set("sites", hashMap.get("sites"));
+        mState.set("other", hashMap.get("other"));
+        mState.set("match", hashMap.get("match"));
+        mState.set("skip", hashMap.get("skip"));
+        mState.set("source", hashMap.get("source"));
+        mState.set("remote_debug", hashMap.get("remote_debug"));
+        mState.set("console_log", hashMap.get("console_log"));
+        mState.set("js_interface", hashMap.get("js_interface"));
+        mState.set("context_menu", hashMap.get("context_menu"));
+        mState.set("not_matching", hashMap.get("not_matching"));
+        mState.set("local_sites", hashMap.get("local_sites"));
+        mState.set("update_zip", hashMap.get("update_zip"));
+        mState.set("timestamp", hashMap.get("timestamp"));
+        if (hashMap.containsKey("web_settings")) {
+            // TODO: skip null values coming from Enum-style values in WebSettings being turned into null in json string
+            mState.set("web_settings", hashMap.get("web_settings"));
+        }
+    }
+
+    /**
+     * Get Settings map from Saved State values
+     *
+     * @param hashMap   configuration settings to get
+     * @param mState    Saved State Handle
+     */
+    static void getMapFromValues(HashMap<String, Object> hashMap, SavedStateHandle mState) {
+        String source = mState.get("source");
+        hashMap.put("source", source);
+        List<HashMap<String, String>> sites = (ArrayList) mState.get("sites");
+        hashMap.put("sites", sites);
+        String other = mState.get("other");
+        hashMap.put("other", other);
+        List<List<String>> match = (ArrayList) mState.get("match");
+        hashMap.put("match", match);
+        List<List<String>> skip = (ArrayList) mState.get("skip");
+        hashMap.put("skip", skip);
+        Boolean remote_debug = mState.get("remote_debug");
+        hashMap.put("remote_debug", remote_debug);
+        Boolean console_log = mState.get("console_log");
+        hashMap.put("console_log", console_log);
+        Boolean js_interface = mState.get("js_interface");
+        hashMap.put("js_interface", js_interface);
+        Boolean context_menu = mState.get("context_menu");
+        hashMap.put("context_menu", context_menu);
+        Boolean not_matching = mState.get("not_matching");
+        hashMap.put("not_matching", not_matching);
+        Boolean local_sites = mState.get("local_sites");
+        hashMap.put("local_sites", local_sites);
+        String update_zip = mState.get("update_zip");
+        hashMap.put("update_zip", update_zip);
+        // web_settings are handled in MyAppWebViewClient for now...
     }
 
     /**
@@ -219,10 +288,11 @@ class MySettingsRepository {
     /**
      * Save configuration settings to JSON file
      *
+     * @param activity  current Activity context
      * @param hashMap   configuration settings to set
      * @return          json string with the new settings
      */
-    String saveJsonSettings(HashMap<String, Object> hashMap) {
+    static String saveJsonSettings(AppCompatActivity activity, HashMap<String, Object> hashMap) {
         hashMap.put("timestamp", getTimestamp(0));
         Log.d(TAG, hashMap.toString());
         //JSONObject jsonObject = new JSONObject(hashMap);

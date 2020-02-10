@@ -1,7 +1,9 @@
 package net.mikespub.mywebview;
 
+import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
@@ -250,9 +252,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     *
+     * Register BroadcastReceiver for Downloads
      */
-    void stopReceiver() {
+    void startDownloadReceiver(BroadcastReceiver mReceiver) {
+        stopDownloadReceiver();
+        onDownloadComplete = mReceiver;
+        Log.d("Web Create", "register receiver");
+        registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+    }
+
+    /**
+     * Unregister BroadcastReceiver for Downloads
+     */
+    void stopDownloadReceiver() {
         if (onDownloadComplete != null) {
             Log.d("Web Create", "unregister receiver");
             unregisterReceiver(onDownloadComplete);
@@ -265,6 +277,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopReceiver();
+        stopDownloadReceiver();
     }
 }

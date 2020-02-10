@@ -4,7 +4,6 @@ import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
@@ -72,8 +71,7 @@ class MyAppWebViewClient extends WebViewClient {
      * Set BroadcastReceiver for download complete
      */
     private void setReceiver() {
-        activity.stopReceiver();
-        activity.onDownloadComplete = new BroadcastReceiver() {
+        activity.startDownloadReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 //Fetching the download id received with the broadcast
@@ -108,9 +106,7 @@ class MyAppWebViewClient extends WebViewClient {
                     Log.e("Web Update", e.toString());
                 }
             }
-        };
-        Log.d("Web Create", "register receiver");
-        activity.registerReceiver(activity.onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        });
     }
 
     /**

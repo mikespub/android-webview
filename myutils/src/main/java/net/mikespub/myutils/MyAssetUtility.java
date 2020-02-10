@@ -52,22 +52,18 @@ public class MyAssetUtility {
         // File extFilesDir = getExternalFilesDir(null);
         // Log.d("External Files Dir", extFilesDir.getAbsolutePath());
         // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/web
-        File extSettingsFile = new File(activity.getExternalFilesDir(null), fileName);
-        Log.d(TAG, "External Settings File: " + extSettingsFile.getAbsolutePath());
-        if (!extSettingsFile.exists()) {
-            copyAssetFile(activity, fileName, extSettingsFile);
-        }
+        copyAssetFile(activity, fileName, 0);
         File extWebDir = new File(activity.getExternalFilesDir(null), "web");
-        Log.d(TAG, "External Web Dir: " + extWebDir.getAbsolutePath());
+        Log.d(TAG, "External Dir: " + extWebDir.getAbsolutePath());
         // https://stackoverflow.com/questions/5248094/is-it-possible-to-get-last-modified-date-from-an-assets-file - using shared preferences in the end
         // See also https://stackoverflow.com/questions/37953002/mess-with-the-shared-preferences-of-android-which-function-to-use/37953072 for preferences
         long lastUpdated = 0;
         if (!extWebDir.exists()) {
             if (!extWebDir.mkdirs()) {
-                Log.d(TAG, "External Web Dir exists: " + extWebDir.exists());
+                Log.d(TAG, "External Dir exists: " + extWebDir.exists());
                 return lastUpdated;
             }
-            Log.d(TAG, "External Web Dir exists: " + extWebDir.exists());
+            Log.d(TAG, "External Dir exists: " + extWebDir.exists());
         } else {
             try {
                 PackageManager pm = activity.getPackageManager();
@@ -84,13 +80,19 @@ public class MyAssetUtility {
     }
 
     /**
-     * Copy an asset file to an external directory
+     * Copy an asset file to an external directory if needed
      *
      * @param activity  current Activity context
      * @param fileName  name of the asset file
-     * @param extFile   corresponding file in the external directory
+     * @param lastUpdated   last update time needed
      */
-    static void copyAssetFile(AppCompatActivity activity, String fileName, File extFile) {
+    static void copyAssetFile(AppCompatActivity activity, String fileName, long lastUpdated) {
+        File extFile = new File(activity.getExternalFilesDir(null), fileName);
+        Log.d(TAG, "External File: " + fileName);
+        if (extFile.exists() && lastUpdated <= extFile.lastModified()) {
+            Log.d(TAG, "File Exists: " + extFile.getAbsolutePath());
+            return;
+        }
         File extDir = extFile.getParentFile();
         if (!extDir.isDirectory() && !extDir.mkdirs()) {
             Log.e(TAG, "Dir Create: FAIL " + extDir.getAbsolutePath());
@@ -99,7 +101,7 @@ public class MyAssetUtility {
         AssetManager manager = activity.getAssets();
         try (InputStream in = manager.open(fileName); OutputStream out = new FileOutputStream(extFile)) {
             copyFileStream(in, out);
-            Log.d(TAG, "File Copy: " + extFile.getAbsolutePath());
+            Log.d(TAG, "File Copied: " + extFile.getAbsolutePath());
         } catch (IOException e) {
             Log.e(TAG, "File Error: " + extFile.getAbsolutePath(), e);
         }
@@ -119,9 +121,9 @@ public class MyAssetUtility {
         String[] files;
         try {
             files = manager.list("web");
-            Log.d(TAG, "Web Files: " + Arrays.toString(files));
+            Log.d(TAG, "Files: " + Arrays.toString(files));
         } catch (IOException e) {
-            Log.e(TAG, "Web Files Error", e);
+            Log.e(TAG, "Files Error", e);
             return;
         }
         for (String f: files) {
@@ -129,14 +131,14 @@ public class MyAssetUtility {
             if (extFile.exists() && lastUpdated <= extFile.lastModified()) {
                 continue;
             }
-            Log.d(TAG, "Web File Missing:" + extFile.getAbsolutePath());
+            Log.d(TAG, "File Missing:" + extFile.getAbsolutePath());
             try (InputStream in = manager.open("web/" + f); OutputStream out = new FileOutputStream(extFile)) {
                 copyFileStream(in, out);
             } catch (IOException e) {
-                Log.e(TAG, "Web File Failed:" + extFile.getAbsolutePath(), e);
+                Log.e(TAG, "File Error:" + extFile.getAbsolutePath(), e);
                 break;
             }
-            Log.d(TAG, "Web File Copied:" + extFile.getAbsolutePath());
+            Log.d(TAG, "File Copied:" + extFile.getAbsolutePath());
         }
     }
 
@@ -182,7 +184,7 @@ public class MyAssetUtility {
                 // don't overwrite local settings
                 String name = ze.getName();
                 if (skipList.contains(name)) {
-                    Log.d(TAG, "Web Update Unzip: " + name + " skip names");
+                    Log.d(TAG, "Unzip: " + name + " skip names");
                     continue;
                 }
                 File file = new File(targetDirectory, name);
@@ -191,15 +193,15 @@ public class MyAssetUtility {
                     throw new FileNotFoundException("Failed to ensure directory: " +
                             dir.getAbsolutePath());
                 if (ze.isDirectory()) {
-                    Log.d(TAG, "Web Update Unzip: " + name + " skip directory");
+                    Log.d(TAG, "Unzip: " + name + " skip directory");
                     continue;
                 }
                 long time = ze.getTime();
-                if (file.exists() && (time > 0) && (time < file.lastModified())) {
-                    Log.d(TAG, "Web Update Unzip: " + name + " skip newer file");
+                if (file.exists() && (time > 0) && (time <= file.lastModified())) {
+                    Log.d(TAG, "Unzip: " + name + " skip current file");
                     continue;
                 }
-                Log.d(TAG, "Web Update Unzip: " + name + " update");
+                Log.d(TAG, "Unzip: " + name + " updated");
                 try (FileOutputStream fout = new FileOutputStream(file)) {
                     while ((count = zis.read(buffer)) != -1)
                         fout.write(buffer, 0, count);
