@@ -80,6 +80,7 @@ public class MySavedStateModel extends ViewModel {
         setValue("js_interface", hashMap.get("js_interface"));
         setValue("context_menu", hashMap.get("context_menu"));
         setValue("not_matching", hashMap.get("not_matching"));
+        setValue("local_sites", hashMap.get("local_sites"));
         setValue("update_zip", hashMap.get("update_zip"));
         setValue("timestamp", hashMap.get("timestamp"));
         if (hashMap.containsKey("web_settings")) {
@@ -114,8 +115,11 @@ public class MySavedStateModel extends ViewModel {
         hashMap.put("context_menu", context_menu);
         Boolean not_matching = (Boolean) getValue("not_matching");
         hashMap.put("not_matching", not_matching);
+        Boolean local_sites = (Boolean) getValue("local_sites");
+        hashMap.put("local_sites", local_sites);
         String update_zip = (String) getValue("update_zip");
         hashMap.put("update_zip", update_zip);
+        // web_settings are handled in MyAppWebViewClient for now...
     }
 
     /**

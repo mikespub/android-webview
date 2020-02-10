@@ -1,4 +1,4 @@
-package net.mikespub.mywebview;
+package net.mikespub.myutils;
 
 import android.app.DownloadManager;
 import android.content.Context;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 /**
  * Content Utility Methods
  */
-class MyContentUtility {
+public class MyContentUtility {
     private static final String TAG = "Content";
 
     /**
@@ -48,7 +48,7 @@ class MyContentUtility {
     Content: 20 name: _display_name type: 3 value: assets.zip
     Content: 21 name: _size type: 1 value: 6313
      */
-    static void showContent(AppCompatActivity activity, Uri uri) {
+    public static void showContent(AppCompatActivity activity, Uri uri) {
         Log.d(TAG, "URI: " + uri);
         Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
         if (cursor.moveToFirst()) {
@@ -62,7 +62,7 @@ class MyContentUtility {
      *
      * @param cursor    current cursor
      */
-    static void showCursor(Cursor cursor) {
+    private static void showCursor(Cursor cursor) {
         //String local_uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
         //Log.d(TAG, "Local URI: " + local_uri);
         //String[] columns = cursor.getColumnNames();
@@ -97,7 +97,7 @@ class MyContentUtility {
      *
      * @param activity  current Activity context
      */
-    static void showMyDownloadFiles(AppCompatActivity activity) {
+    public static void showMyDownloadFiles(AppCompatActivity activity) {
         //static android.provider.Downloads.Impl.ALL_DOWNLOADS_CONTENT_URI;
         //ALL_DOWNLOADS_CONTENT_URI
         Uri uri = Uri.parse("content://downloads/my_downloads");
@@ -119,7 +119,7 @@ class MyContentUtility {
      * @param activity  current Activity context
      * @return          external downloads directory
      */
-    static File getMyExternalDownloadsDir(AppCompatActivity activity) {
+    private static File getMyExternalDownloadsDir(AppCompatActivity activity) {
         return activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
     }
 
@@ -128,7 +128,7 @@ class MyContentUtility {
      *
      * @param activity  current Activity context
      */
-    static void showMyExternalDownloadFiles(AppCompatActivity activity) {
+    public static void showMyExternalDownloadFiles(AppCompatActivity activity) {
         File downloadsDir = getMyExternalDownloadsDir(activity);
         Log.d(TAG, "Dir: " + downloadsDir.getAbsolutePath());
         for (File file: downloadsDir.listFiles()) {
@@ -153,7 +153,7 @@ class MyContentUtility {
      * @param downloadId    download id
      * @return              current status
      */
-    static int getDownloadStatus(AppCompatActivity activity, int downloadId) {
+    public static int getDownloadStatus(AppCompatActivity activity, int downloadId) {
         DownloadManager mDownloadManager = getDownloadManager(activity);
         // query download status
         Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));

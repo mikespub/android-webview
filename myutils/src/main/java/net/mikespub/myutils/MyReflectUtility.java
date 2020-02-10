@@ -1,4 +1,4 @@
-package net.mikespub.mywebview;
+package net.mikespub.myutils;
 
 import android.util.Log;
 
@@ -16,7 +16,7 @@ import java.util.Map;
  * Reflect Utility Methods
  */
 // http://tutorials.jenkov.com/java-reflection/getters-setters.html
-class MyReflectUtility {
+public class MyReflectUtility {
     private static final String TAG = "Reflect";
     private static final Map<String,Class> builtInMap = new HashMap<>();
 
@@ -40,7 +40,7 @@ class MyReflectUtility {
      */
     // https://stackoverflow.com/questions/160970/how-do-i-invoke-a-java-method-when-given-the-method-name-as-a-string
     // TODO: create hashmap of methods?
-    static boolean stringCompare(String var, String methodName, String value) {
+    public static boolean stringCompare(String var, String methodName, String value) {
         if (var == null) {
             return false;
         }
@@ -69,7 +69,7 @@ class MyReflectUtility {
      * @param objectInstance    object instance
      * @return                  getter values
      */
-    static Map<String, Object> getValues(Object objectInstance) {
+    public static Map<String, Object> getValues(Object objectInstance) {
         Map<String, Object> hashMap = new HashMap<>();
         //Class aClass = MyObject.class;
         Class aClass = objectInstance.getClass();
@@ -102,7 +102,7 @@ class MyReflectUtility {
      * @param method    object method
      * @return          is getter
      */
-    static boolean isGetter(Method method){
+    private static boolean isGetter(Method method){
         if(!method.getName().startsWith("get"))      return false;
         if(method.getParameterTypes().length != 0)   return false;
         return !void.class.equals(method.getReturnType());
@@ -114,7 +114,7 @@ class MyReflectUtility {
      * @param method    object method
      * @return          is setter
      */
-    static boolean isSetter(Method method){
+    private static boolean isSetter(Method method){
         if(!method.getName().startsWith("set")) return false;
         return method.getParameterTypes().length == 1;
     }
@@ -125,7 +125,7 @@ class MyReflectUtility {
      * @param objectInstance    object instance
      * @param getName           getter name without "get"
      */
-    static Object get(Object objectInstance, String getName) {
+    public static Object get(Object objectInstance, String getName) {
         Class aClass = objectInstance.getClass();
         //Method method = aClass.getMethod("get" + getName);
         Method[] methods = aClass.getMethods();
@@ -155,7 +155,7 @@ class MyReflectUtility {
      * @param setName           setter name without "set"
      * @param value             value to set
      */
-    static void set(Object objectInstance, String setName, Object value) {
+    public static void set(Object objectInstance, String setName, Object value) {
         Class aClass = objectInstance.getClass();
         //Method method = aClass.getMethod("set" + setName);
         Method[] methods = aClass.getMethods();
@@ -219,7 +219,7 @@ class MyReflectUtility {
      *
      * @param objectInstance object instance
      */
-    static void showObject(Object objectInstance) {
+    public static void showObject(Object objectInstance) {
         //Class aClass = MyObject.class;
         Class aClass = objectInstance.getClass();
         String className = aClass.getName();
@@ -264,7 +264,7 @@ class MyReflectUtility {
      * @param field class field
      * @return      description
      */
-    static String showField(Field field) {
+    private static String showField(Field field) {
         String fieldName = field.getName();
         Object fieldType = field.getType();
         Type genericFieldType = field.getGenericType();
@@ -306,7 +306,7 @@ class MyReflectUtility {
      * @param method    class method
      * @return          description
      */
-    static String showMethod(Method method) {
+    private static String showMethod(Method method) {
         String methodName = method.getName();
         Class[] parameterTypes = method.getParameterTypes();
         //Type[] genericParameterTypes = method.getGenericParameterTypes();

@@ -5,6 +5,9 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import net.mikespub.myutils.MyAssetUtility;
+import net.mikespub.myutils.MyJsonUtility;
+
 import org.json.JSONException;
 
 import java.io.IOException;
@@ -39,7 +42,7 @@ class MySettingsRepository {
      * @return  configuration settings
      */
     HashMap<String, Object> loadJsonSettings() {
-        long lastUpdated = MyAssetUtility.checkAssetFiles(activity);
+        long lastUpdated = MyAssetUtility.checkAssetFiles(activity, fileName);
         //loadStringConfig();
         return loadJsonConfig(lastUpdated);
     }
@@ -135,7 +138,9 @@ class MySettingsRepository {
         String js_interface = uri.getQueryParameter("js_interface");
         String context_menu = uri.getQueryParameter("context_menu");
         String not_matching = uri.getQueryParameter("not_matching");
+        String local_sites = uri.getQueryParameter("local_sites");
         String update_zip = uri.getQueryParameter("update_zip");
+        // web_settings are handled in MyAppWebViewClient for now...
         HashMap<String, Object> hashMap = new HashMap<>();
         List<HashMap<String, String>> sites = new ArrayList<>();
         for (int i = 0; i < titles.size(); i++) {
@@ -199,7 +204,13 @@ class MySettingsRepository {
         } else {
             hashMap.put("not_matching", false);
         }
+        if (local_sites != null && local_sites.equals("true")) {
+            hashMap.put("local_sites", true);
+        } else {
+            hashMap.put("local_sites", false);
+        }
         hashMap.put("update_zip", update_zip);
+        // web_settings are handled in MyAppWebViewClient for now...
         hashMap.put("source", "updated via WebView");
         hashMap.put("timestamp", getTimestamp(0));
         return hashMap;

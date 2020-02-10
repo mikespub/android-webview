@@ -195,6 +195,10 @@
     </ul>
     <p>Source: <span id="source">assets</span></p>
     <p>Timestamp: <span id="timestamp">Loading...</span></p>
+    <div id="local_sites" hidden>
+        <hr>
+        <h2><a href="/assets/_local/sites.html">Local Websites</a></h2>
+    </div>
 	</div>
 	
     <script>
@@ -218,6 +222,12 @@
             source.innerHTML = settings["source"];
             var timestamp = document.getElementById("timestamp");
             timestamp.innerHTML = settings["timestamp"];
+            var local_sites = document.getElementById("local_sites");
+            if (settings["local_sites"]) {
+                local_sites.hidden = false;
+            } else {
+                local_sites.hidden = true;
+            }
         })
         .catch((error) => {
             console.error('There has been a problem with your fetch operation:', error);

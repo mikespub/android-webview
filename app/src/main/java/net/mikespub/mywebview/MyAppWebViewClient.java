@@ -17,6 +17,9 @@ import android.widget.Toast;
 
 import androidx.webkit.WebViewAssetLoader;
 
+import net.mikespub.myutils.MyAssetUtility;
+import net.mikespub.myutils.MyReflectUtility;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -95,7 +98,8 @@ class MyAppWebViewClient extends WebViewClient {
                 try {
                     InputStream inputStream = activity.getContentResolver().openInputStream(uri);
                     File targetDirectory = activity.getExternalFilesDir(null);
-                    MyAssetUtility.unzipStream(inputStream, targetDirectory);
+                    String[] skipNames = { MySettingsRepository.fileName };
+                    MyAssetUtility.unzipStream(inputStream, targetDirectory, skipNames);
                     if (inputStream != null)
                         inputStream.close();
                     // delete entry in Downloads to avoid multiple duplicates there
@@ -152,6 +156,15 @@ class MyAppWebViewClient extends WebViewClient {
      */
     Boolean hasNotMatching() {
         return (Boolean) mySavedStateModel.getValue("not_matching");
+    }
+
+    /**
+     * Get setting for local_sites
+     *
+     * @return  setting
+     */
+    Boolean hasLocalSites() {
+        return (Boolean) mySavedStateModel.getValue("local_sites");
     }
 
     /**
@@ -427,32 +440,7 @@ class MyAppWebViewClient extends WebViewClient {
                 extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/assets/".length()));
             }
             if (extWebFile.exists() && !extWebFile.isDirectory()) {
-                String type;
-                String extension = MimeTypeMap.getFileExtensionFromUrl(extWebFile.getName());
-                if (extension != null) {
-                    extension = extension.toLowerCase();
-                }
-                MimeTypeMap mime = MimeTypeMap.getSingleton();
-                // https://www.iana.org/assignments/media-types/media-types.xhtml
-                if (extension != null && mime.hasExtension(extension)) {
-                    type = mime.getMimeTypeFromExtension(extension);
-                } else if (extWebFile.getName().endsWith(".json")) {
-                    type = "application/json";
-                } else if (extWebFile.getName().endsWith(".js")) {
-                    type = "application/javascript";
-                } else if (extWebFile.getName().endsWith(".ttf")) {
-                    //type = "application/x-font-ttf";
-                    type = "font/ttf";
-                } else if (extWebFile.getName().endsWith(".woff")) {
-                    //type = "application/font-woff";
-                    type = "font/woff";
-                } else if (extWebFile.getName().endsWith(".woff2")) {
-                    type = "font/woff2";
-                } else if (extWebFile.getName().endsWith(".svg")) {
-                    type = "image/svg+xml";
-                } else {
-                    type = "TODO";
-                }
+                String type = getMimeType(extWebFile.getName());
                 if (!type.equals("TODO")) {
                     try {
                         InputStream targetStream = new FileInputStream(extWebFile);
@@ -466,9 +454,21 @@ class MyAppWebViewClient extends WebViewClient {
                         Log.e("WebResource", e.toString());
                     }
                 }
-                Log.d("WebResource External", extWebFile.getName() + " extension: " + extension + " mimetype: " + type);
             }
             Log.d("WebResource Assets", extWebFile + " exists: " + extWebFile.exists());
+        } else if (hasLocalSites() && path.startsWith("/sites/")) {
+            // handle local sites if not already under /assets/...
+            File extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/sites/".length()));
+            if (path.endsWith("/") && extWebFile.exists() && extWebFile.isDirectory()) {
+                Log.d("WebResource Sites", extWebFile + " is directory - trying with index.html");
+                path += "index.html";
+                extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/sites/".length()));
+            }
+            if (extWebFile.exists() && !extWebFile.isDirectory()) {
+                String type = getMimeType(extWebFile.getName());
+                // see above
+            }
+            Log.d("WebResource Sites", extWebFile + " exists: " + extWebFile.exists());
         }
         if (this.assetLoader == null) {
             this.assetLoader = new WebViewAssetLoader.Builder()
@@ -478,5 +478,36 @@ class MyAppWebViewClient extends WebViewClient {
                     .build();
         }
         return this.assetLoader.shouldInterceptRequest(uri);
+    }
+
+    static String getMimeType(String fileName) {
+        String type;
+        String extension = MimeTypeMap.getFileExtensionFromUrl(fileName);
+        if (extension != null) {
+            extension = extension.toLowerCase();
+        }
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+        // https://www.iana.org/assignments/media-types/media-types.xhtml
+        if (extension != null && mime.hasExtension(extension)) {
+            type = mime.getMimeTypeFromExtension(extension);
+        } else if (fileName.endsWith(".json")) {
+            type = "application/json";
+        } else if (fileName.endsWith(".js")) {
+            type = "application/javascript";
+        } else if (fileName.endsWith(".ttf")) {
+            //type = "application/x-font-ttf";
+            type = "font/ttf";
+        } else if (fileName.endsWith(".woff")) {
+            //type = "application/font-woff";
+            type = "font/woff";
+        } else if (fileName.endsWith(".woff2")) {
+            type = "font/woff2";
+        } else if (fileName.endsWith(".svg")) {
+            type = "image/svg+xml";
+        } else {
+            type = "TODO";
+            Log.d("WebResource External", fileName + " extension: " + extension + " mimetype: " + type);
+        }
+        return type;
     }
 }

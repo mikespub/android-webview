@@ -1,4 +1,4 @@
-package net.mikespub.mywebview;
+package net.mikespub.myutils;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -23,6 +23,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -30,7 +31,7 @@ import java.util.zip.ZipInputStream;
 /**
  * Asset Utility Methods
  */
-class MyAssetUtility {
+public class MyAssetUtility {
     private static final String TAG = "Asset";
 
     /**
@@ -40,7 +41,7 @@ class MyAssetUtility {
      * @param activity  current Activity context
      * @return          last update time of the current package
      */
-    static long checkAssetFiles(AppCompatActivity activity) {
+    public static long checkAssetFiles(AppCompatActivity activity, String fileName) {
         // /data/user/0/net.mikespub.mywebview/files
         // File filesDir = getFilesDir();
         // Log.d("Internal Files Dir", filesDir.getAbsolutePath());
@@ -51,10 +52,10 @@ class MyAssetUtility {
         // File extFilesDir = getExternalFilesDir(null);
         // Log.d("External Files Dir", extFilesDir.getAbsolutePath());
         // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/web
-        File extSettingsFile = new File(activity.getExternalFilesDir(null), MySettingsRepository.fileName);
+        File extSettingsFile = new File(activity.getExternalFilesDir(null), fileName);
         Log.d(TAG, "External Settings File: " + extSettingsFile.getAbsolutePath());
         if (!extSettingsFile.exists()) {
-            copyAssetFile(activity, MySettingsRepository.fileName, extSettingsFile);
+            copyAssetFile(activity, fileName, extSettingsFile);
         }
         File extWebDir = new File(activity.getExternalFilesDir(null), "web");
         Log.d(TAG, "External Web Dir: " + extWebDir.getAbsolutePath());
@@ -78,6 +79,7 @@ class MyAssetUtility {
             }
         }
         copyWebAssetFiles(activity, extWebDir, lastUpdated);
+        // copy _local asset files
         return lastUpdated;
     }
 
@@ -143,7 +145,7 @@ class MyAssetUtility {
      * @param out   output stream
      * @throws IOException  trouble with IO
      */
-    static void copyFileStream(InputStream in, OutputStream out) throws IOException {
+    private static void copyFileStream(InputStream in, OutputStream out) throws IOException {
         byte[] buffer = new byte[8192];
         int read;
         while((read = in.read(buffer)) != -1){
@@ -157,9 +159,9 @@ class MyAssetUtility {
      * @throws IOException      trouble with IO
      */
     // See https://stackoverflow.com/questions/3382996/how-to-unzip-files-programmatically-in-android
-    static void unzipFile(File zipFile, File targetDirectory) throws IOException {
+    public static void unzipFile(File zipFile, File targetDirectory, String[] skipNames) throws IOException {
         try (FileInputStream inputStream = new FileInputStream(zipFile)) {
-            unzipStream(inputStream, targetDirectory);
+            unzipStream(inputStream, targetDirectory, skipNames);
         }
     }
 
@@ -168,7 +170,9 @@ class MyAssetUtility {
      * @param targetDirectory   target directory
      * @throws IOException      trouble with IO
      */
-    static void unzipStream(InputStream inputStream, File targetDirectory) throws IOException {
+    public static void unzipStream(InputStream inputStream, File targetDirectory, String[] skipNames) throws IOException {
+        //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
+        List<String> skipList = Arrays.asList(skipNames);
         try (ZipInputStream zis = new ZipInputStream(
                 new BufferedInputStream(inputStream))) {
             ZipEntry ze;
@@ -177,8 +181,8 @@ class MyAssetUtility {
             while ((ze = zis.getNextEntry()) != null) {
                 // don't overwrite local settings
                 String name = ze.getName();
-                if (name.equals(MySettingsRepository.fileName)) {
-                    Log.d(TAG, "Web Update Unzip: " + name + " skip settings");
+                if (skipList.contains(name)) {
+                    Log.d(TAG, "Web Update Unzip: " + name + " skip names");
                     continue;
                 }
                 File file = new File(targetDirectory, name);
@@ -214,7 +218,7 @@ class MyAssetUtility {
      * @return          string content of the file
      * @throws IOException  trouble with IO
      */
-    static String getFilenameString(AppCompatActivity activity, String fileName) throws IOException {
+    public static String getFilenameString(AppCompatActivity activity, String fileName) throws IOException {
         File extWebFile = new File(activity.getExternalFilesDir(null), fileName);
         String result = "";
         if (extWebFile.exists()) {
@@ -243,7 +247,7 @@ class MyAssetUtility {
      * @return              string content of the input stream
      * @throws IOException  trouble with IO
      */
-    static String getInputstreamString(InputStream inputStream) throws IOException {
+    private static String getInputstreamString(InputStream inputStream) throws IOException {
         Writer writer = new StringWriter();
         char[] buffer = new char[8192];
         Reader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
@@ -259,7 +263,7 @@ class MyAssetUtility {
      * @param fileName  name of the external file to save to
      * @param content   string content to save
      */
-    static void saveFilenameString(AppCompatActivity activity, String fileName, String content) {
+    public static void saveFilenameString(AppCompatActivity activity, String fileName, String content) {
         File extWebFile = new File(activity.getExternalFilesDir(null), fileName);
         // https://stackoverflow.com/questions/11371154/outputstreamwriter-vs-filewriter/11371322
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(extWebFile), StandardCharsets.UTF_8)) {
@@ -277,7 +281,7 @@ class MyAssetUtility {
      * @param valuesMap values to replace in the template file
      * @return          content of the template with replaced values
      */
-    static String getTemplateFile(AppCompatActivity activity, String fileName, Map<String, String> valuesMap) {
+    public static String getTemplateFile(AppCompatActivity activity, String fileName, Map<String, String> valuesMap) {
         String template;
         try {
             template = MyAssetUtility.getFilenameString(activity, fileName);

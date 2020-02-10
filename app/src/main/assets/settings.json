@@ -27,6 +27,7 @@
   "js_interface": false,
   "context_menu": false,
   "not_matching": false,
+  "local_sites": true,
   "update_zip": "",
   "web_settings": {
     "JavaScriptEnabled": true

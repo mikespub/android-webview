@@ -1,4 +1,4 @@
-package net.mikespub.mywebview;
+package net.mikespub.myutils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,7 +14,7 @@ import java.util.Map;
  * JSON Utility Methods
  */
 // See https://stackoverflow.com/questions/22011200/creating-hashmap-from-a-json-string/51121461#51121461
-class MyJsonUtility {
+public class MyJsonUtility {
 
     /**
      * Convert JSON string or object to map
@@ -23,7 +23,7 @@ class MyJsonUtility {
      * @return      converted map
      * @throws JSONException    trouble converting
      */
-    static Map<String, Object> jsonToMap(Object json) throws JSONException {
+    public static Map<String, Object> jsonToMap(Object json) throws JSONException {
 
         if(json instanceof JSONObject)
             return _jsonToMap_((JSONObject)json) ;
@@ -106,7 +106,7 @@ class MyJsonUtility {
      * @throws JSONException    trouble converting
      */
     // https://stackoverflow.com/questions/12155800/how-to-convert-hashmap-to-json-object-in-java
-    static Object toJson(Object object) throws JSONException {
+    public static Object toJson(Object object) throws JSONException {
         if (object instanceof Map<?, ?>) {
             return mapToJson((Map<String, Object>) object);
         } else if (object instanceof Iterable) {
@@ -124,7 +124,7 @@ class MyJsonUtility {
      * @return      converted JSON object
      * @throws JSONException    trouble converting
      */
-    static JSONObject mapToJson(Map<String, Object> map) throws JSONException {
+    private static JSONObject mapToJson(Map<String, Object> map) throws JSONException {
         JSONObject jsonData = new JSONObject();
         for (String key : map.keySet()) {
             Object value = map.get(key);
@@ -144,7 +144,7 @@ class MyJsonUtility {
      * @return      converted JSON array
      * @throws JSONException    trouble converting
      */
-    static JSONArray listToJson(Iterable list) throws JSONException {
+    private static JSONArray listToJson(Iterable list) throws JSONException {
         JSONArray jsonData = new JSONArray();
         for (Object value : list) {
             jsonData.put(toJson(value));
@@ -159,7 +159,7 @@ class MyJsonUtility {
      * @return          converted JSON string
      * @throws JSONException    trouble converting
      */
-    static String toJsonString(Object object) throws JSONException {
+    public static String toJsonString(Object object) throws JSONException {
         Object jsonData = toJson(object);
         if (jsonData instanceof JSONObject) {
             return ((JSONObject) jsonData).toString(2).replace("\\","");

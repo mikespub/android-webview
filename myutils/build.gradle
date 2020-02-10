@@ -1,4 +1,4 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 // https://developer.android.com/studio/build/gradle-tips#configure-project-wide-properties
 // Use the following syntax to access properties you define at the project level:
@@ -8,8 +8,8 @@ android {
     //buildToolsVersion "29.0.3"
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
+
     defaultConfig {
-        applicationId "net.mikespub.mywebview"
         //minSdkVersion 19
         //targetSdkVersion 29
         //versionCode 16
@@ -18,40 +18,26 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'consumer-rules.pro'
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
 }
 
 dependencies {
     //def appCompatVersion = "1.1.0"
-    def lifeCycleVersion = "2.2.0"
-    def savedStateVersion = "1.0.0"
-
-    // https://developer.android.com/studio/projects/android-library
-    implementation project(":myutils")
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+
     implementation "androidx.appcompat:appcompat:${rootProject.ext.appCompatVersion}"
-    // For loading and tinting drawables on older versions of the platform
-    // implementation "androidx.appcompat:appcompat-resources:${rootProject.ext.appCompatVersion}"
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation "androidx.webkit:webkit:1.1.0"
-    // ViewModel
-    implementation "androidx.lifecycle:lifecycle-viewmodel:$lifeCycleVersion"
-    // LiveData
-    implementation "androidx.lifecycle:lifecycle-livedata:$lifeCycleVersion"
-    // Saved state module for ViewModel
-    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$savedStateVersion"
-    // Annotation processor
-    annotationProcessor "androidx.lifecycle:lifecycle-compiler:$lifeCycleVersion"
-    // alternately - if using Java8, use the following instead of lifecycle-compiler
-    // implementation "androidx.lifecycle:lifecycle-common-java8:$lifeCycleVersion"
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
