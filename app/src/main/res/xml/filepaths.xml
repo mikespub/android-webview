@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-files-path name="sites" path="Documents/" />
+    <external-files-path name="files" path="Download/" />
+    <external-files-path name="web" path="web/" />
+    <external-files-path name="local" path="local/" />
+    <external-files-path name="root" path="." />
+</paths>

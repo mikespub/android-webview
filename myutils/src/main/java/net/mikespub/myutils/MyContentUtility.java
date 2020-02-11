@@ -4,12 +4,10 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.io.File;
 import java.util.Arrays;
 
 /**
@@ -111,29 +109,6 @@ public class MyContentUtility {
             showCursor(cursor);
         }
         cursor.close();
-    }
-
-    /**
-     * Get external downloads dir for this app
-     *
-     * @param activity  current Activity context
-     * @return          external downloads directory
-     */
-    private static File getMyExternalDownloadsDir(AppCompatActivity activity) {
-        return activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-    }
-
-    /**
-     * Show external download files for this app
-     *
-     * @param activity  current Activity context
-     */
-    public static void showMyExternalDownloadFiles(AppCompatActivity activity) {
-        File downloadsDir = getMyExternalDownloadsDir(activity);
-        Log.d(TAG, "Dir: " + downloadsDir.getAbsolutePath());
-        for (File file: downloadsDir.listFiles()) {
-            Log.d(TAG, "File: " + file.getAbsolutePath());
-        }
     }
 
     /**

@@ -241,7 +241,7 @@ input[type=submit] {
 
         <fieldset id="update">
             <legend><label for="update_zip">Update Assets from trusted site</label></legend>
-            <input id="update_zip" type="url" name="update_zip" value="" placeholder="https://my.trusted.site/sites.zip">
+            <input id="update_zip" type="url" name="update_zip" value="" placeholder="https://my.trusted.site/download/sitebundle.zip">
             <input id="local_sites" type="checkbox" name="local_sites" value="true"> <label for="local_sites">Manage <a href="/assets/local/sites.html">Local Websites</a> separately</label>
         </fieldset>
 
@@ -300,10 +300,10 @@ input[type=submit] {
             if (local_sites && settings["local_sites"]) {
                 local_sites.checked = true;
             }
-            var update_zip = document.getElementById("update_zip");
-            if (update_zip) {
-                update_zip.value = settings["update_zip"];
-            }
+            //var update_zip = document.getElementById("update_zip");
+            //if (update_zip) {
+            //    update_zip.value = settings["update_zip"];
+            //}
             var timestamp = document.getElementById("timestamp");
             if (timestamp) {
                 timestamp.value = settings["timestamp"];

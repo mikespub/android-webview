@@ -8,6 +8,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -20,6 +21,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProvider;
+
+import net.mikespub.myutils.MyContentUtility;
+
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * Main Activity for Android App
@@ -270,7 +278,52 @@ public class MainActivity extends AppCompatActivity {
             unregisterReceiver(onDownloadComplete);
         }
     }
-
+    /*
+     * When the Activity of the app that hosts files sets a result and calls
+     * finish(), this method is invoked. The returned Intent contains the
+     * content URI of a selected file. The result code indicates if the
+     * selection worked or not.
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode,
+                                 Intent returnIntent) {
+        super.onActivityResult(requestCode, resultCode, returnIntent);
+        // If the selection didn't work
+        if (resultCode != RESULT_OK) {
+            // Exit without doing anything else
+            return;
+        } else {
+            // Get the file's content URI from the incoming Intent
+            Uri returnUri = returnIntent.getData();
+            MyContentUtility.showContent(this, returnUri);
+            /*
+             * Try to open the file for "read" access using the
+             * returned URI. If the file isn't found, write to the
+             * error log and return.
+             */
+            ParcelFileDescriptor inputPFD;
+            try {
+                /*
+                 * Get the content resolver instance for this context, and use it
+                 * to get a ParcelFileDescriptor for the file.
+                 */
+                inputPFD = getContentResolver().openFileDescriptor(returnUri, "r");
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                Log.e("MainActivity", "File not found.");
+                return;
+            }
+            // Get a regular file descriptor for the file
+            FileDescriptor fd = inputPFD.getFileDescriptor();
+            try {
+                FileInputStream inputStream = new FileInputStream(fd);
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
+        }
+    }
     /**
      *
      */

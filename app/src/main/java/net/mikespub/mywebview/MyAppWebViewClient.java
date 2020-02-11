@@ -15,9 +15,14 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.webkit.WebViewAssetLoader;
 
 import net.mikespub.myutils.MyAssetUtility;
+import net.mikespub.myutils.MyContentUtility;
+import net.mikespub.myutils.MyJsonUtility;
 import net.mikespub.myutils.MyReflectUtility;
 
 import java.io.ByteArrayInputStream;
@@ -27,6 +32,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,6 +61,7 @@ class MyAppWebViewClient extends WebViewClient {
     private long mDownloadId = -1;
     private Map<String, Object> myDefaultWebSettings;
     private Map<String, Object> myCustomWebSettings;
+    private Map<String, Object> myLocalSitesConfig;
 
     /**
      * @param activity  current Activity context
@@ -183,6 +190,15 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
+     * Get local sites config
+     *
+     * @return  setting
+     */
+    Map<String, Object> getLocalConfig() {
+        return (Map<String, Object>) mySavedStateModel.getValue("local_config");
+    }
+
+    /**
      * Set custom Web Settings
      *
      * @param webSettings   current WebSettings
@@ -283,6 +299,11 @@ class MyAppWebViewClient extends WebViewClient {
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         Log.d("Web Override", url);
         if(url.startsWith(domainUrl) || url.startsWith("http://localhost/")) {
+            // should be handled here already or not?
+            final Uri uri = Uri.parse(url);
+            if (getIntentPrefixFromUri(uri) != null) {
+                return handleIntentUri(view, uri);
+            }
             return false;
         }
         final Uri uri = Uri.parse(url);
@@ -388,96 +409,17 @@ class MyAppWebViewClient extends WebViewClient {
         // return new WebResourceResponse((url.contains(".js") ? "text/javascript" : "text/css"), "UTF-8", localStream);
         // Note: we could also have used the Javascript interface, but then this might be available for all sites
         if (path.equals("/assets/web/fake_post.jsp")) {
-            // String query = uri.getQuery();
-            HashMap<String, Object> hashMap = MySettingsRepository.parseQueryParameters(uri);
-            // add custom web settings here?
-            hashMap.put("web_settings", myCustomWebSettings);
-            String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
-            loadSettings();
-            String updateZip = getUpdateZip();
-            mDownloadId = -1;
-            if (updateZip != null && updateZip.startsWith("http")) {
-                // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
-                Uri updateUri = Uri.parse(updateZip);
-                if (updateUri != null && URLUtil.isHttpsUrl(updateUri.toString())) {
-                    String updateName = URLUtil.guessFileName(updateUri.toString(), null, null);
-                    File mDownloadFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), updateName);
-                    if (mDownloadFile.exists()) {
-                        Log.d("Web Update", mDownloadFile.getAbsolutePath() + " exists");
-                        mDownloadFile.delete();
-                    } else {
-                        Log.d("Web Update", mDownloadFile.getAbsolutePath() + " does not exist");
-                    }
-                    DownloadManager.Request request = new DownloadManager.Request(updateUri);
-                    request.setDestinationInExternalFilesDir(this.activity, Environment.DIRECTORY_DOWNLOADS, updateName);
-                    // not easy to verify final path from DownloadManager in onDownloadComplete - use description to preset
-                    request.setDescription(mDownloadFile.getAbsolutePath());
-                    try {
-                        mDownloadManager = (DownloadManager) this.activity.getSystemService(Context.DOWNLOAD_SERVICE);
-                        mDownloadId = mDownloadManager.enqueue(request);
-                        Log.d("Web Update", "Enqueue: " + mDownloadId);
-                    } catch (Exception e) {
-                        Log.e("Web Update", e.toString());
-                    }
-                }
-            }
-            // use template file for response here
-            String templateName = "web/fake_post.html";
-            Map<String, String> valuesMap = new HashMap<>();
-            valuesMap.put("output", jsonString);
-            String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
-            ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
-            return new WebResourceResponse("text/html", "UTF-8", targetStream);
-        }
-        if (path.startsWith("/assets/")) {
-            File extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/assets/".length()));
-            if (path.endsWith("/") && extWebFile.exists() && extWebFile.isDirectory()) {
-                Log.d("WebResource External", extWebFile + " is directory - trying with index.html");
-                path += "index.html";
-                extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/assets/".length()));
-            }
-            if (extWebFile.exists() && !extWebFile.isDirectory()) {
-                String type = getMimeType(extWebFile.getName());
-                if (!type.equals("TODO")) {
-                    try {
-                        InputStream targetStream = new FileInputStream(extWebFile);
-                        Log.d("WebResource External", extWebFile + " mimetype: " + type);
-                        if (type.startsWith("image/") || type.startsWith("font/")) {
-                            return new WebResourceResponse(type, null, targetStream);
-                        } else {
-                            return new WebResourceResponse(type, "UTF-8", targetStream);
-                        }
-                    } catch (Exception e) {
-                        Log.e("WebResource", e.toString());
-                    }
-                }
-            }
-            Log.d("WebResource Assets", extWebFile + " exists: " + extWebFile.exists());
+            return handleUpdateSettings(uri);
+        } else if (path.equals("/assets/local/get_config.jsp")) {
+            return handleGetLocalConfig(uri);
+        } else if (path.startsWith("/assets/")) {
+            return handleAssetFileRequest(uri);
         } else if (hasLocalSites() && path.startsWith("/sites/")) {
             // handle local sites if not already under /assets/...
-            File extWebFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), path.substring("/sites/".length()));
-            if (path.endsWith("/") && extWebFile.exists() && extWebFile.isDirectory()) {
-                Log.d("WebResource Sites", extWebFile + " is directory - trying with index.html");
-                path += "index.html";
-                extWebFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), path.substring("/sites/".length()));
-            }
-            if (extWebFile.exists() && !extWebFile.isDirectory()) {
-                String type = getMimeType(extWebFile.getName());
-                if (!type.equals("TODO")) {
-                    try {
-                        InputStream targetStream = new FileInputStream(extWebFile);
-                        Log.d("WebResource Sites", extWebFile + " mimetype: " + type);
-                        if (type.startsWith("image/") || type.startsWith("font/")) {
-                            return new WebResourceResponse(type, null, targetStream);
-                        } else {
-                            return new WebResourceResponse(type, "UTF-8", targetStream);
-                        }
-                    } catch (Exception e) {
-                        Log.e("WebResource", e.toString());
-                    }
-                }
-            }
-            Log.d("WebResource Sites", extWebFile + " exists: " + extWebFile.exists());
+            return handleLocalSiteRequest(uri);
+        } else if (getIntentPrefixFromUri(uri) != null) {
+            // should be handled in shouldOverrideUrlLoading already or not?
+            return handleIntentRequest(view, uri);
         }
         if (this.assetLoader == null) {
             this.assetLoader = new WebViewAssetLoader.Builder()
@@ -487,6 +429,199 @@ class MyAppWebViewClient extends WebViewClient {
                     .build();
         }
         return this.assetLoader.shouldInterceptRequest(uri);
+    }
+
+    public WebResourceResponse handleAssetFileRequest(Uri uri) {
+        String fileName = uri.getPath().substring("/assets/".length());
+        return handleFileRequest(null, fileName);
+    }
+
+    public WebResourceResponse handleLocalSiteRequest(Uri uri) {
+        String fileName = uri.getPath().substring("/sites/".length());
+        return handleFileRequest(Environment.DIRECTORY_DOCUMENTS, fileName);
+    }
+
+    public WebResourceResponse handleFileRequest(@Nullable String dirName, @NonNull String fileName) {
+        File extFile = new File(this.activity.getExternalFilesDir(dirName), fileName);
+        if (fileName.endsWith("/") && extFile.exists() && extFile.isDirectory()) {
+            Log.d("File Request", extFile + " is directory - trying with index.html");
+            fileName += "index.html";
+            extFile = new File(this.activity.getExternalFilesDir(dirName), fileName);
+        }
+        if (!extFile.exists() || extFile.isDirectory()) {
+            Log.d("File Request", extFile + " exists: " + extFile.exists());
+            return null;
+        }
+        String type = getMimeType(extFile.getName());
+        if (type.equals("TODO")) {
+            Log.d("File Request", extFile + " type: " + type);
+            return null;
+        }
+        try {
+            InputStream targetStream = new FileInputStream(extFile);
+            Log.d("File Request", extFile + " mimetype: " + type);
+            if (type.startsWith("image/") || type.startsWith("font/")) {
+                return new WebResourceResponse(type, null, targetStream);
+            } else {
+                return new WebResourceResponse(type, "UTF-8", targetStream);
+            }
+        } catch (Exception e) {
+            Log.e("File Request", extFile.getAbsolutePath(), e);
+        }
+        return null;
+    }
+
+    public WebResourceResponse handleIntentRequest(WebView view, Uri uri) {
+        Boolean isHandled = handleIntentUri(view, uri);
+        // use template file for response here
+        String templateName = "web/fake_post.html";
+        Map<String, String> valuesMap = new HashMap<>();
+        valuesMap.put("output", "Intent: " + uri.toString() + "\nHandled: " + isHandled);
+        String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("text/html", "UTF-8", targetStream);
+    }
+
+    private String getIntentPrefixFromUri(Uri uri) {
+        //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
+        final String[] intentNames = {"intent", "view", "send", "pick"};
+        final List<String> intentList = Arrays.asList(intentNames);
+        String[] parts = uri.getPath().split("/", 3);
+        if (intentList.contains(parts[1])) {
+            return "/" + parts[1];
+        }
+        return null;
+    }
+
+    private File getExternalFileFromPath(String path) {
+        if (path.startsWith("/assets/")) {
+            String fileName = path.substring("/assets/".length());
+            return new File(this.activity.getExternalFilesDir(null), fileName);
+        } else if (path.startsWith("/sites/")) {
+            String dirName = Environment.DIRECTORY_DOCUMENTS;
+            String fileName = path.substring("/sites/".length());
+            return new File(this.activity.getExternalFilesDir(dirName), fileName);
+        }
+        return null;
+    }
+
+    public Boolean handleIntentUri(WebView view, Uri uri) {
+        Log.d("WebResource Intent", uri.toString());
+        String prefix = getIntentPrefixFromUri(uri);
+        if (prefix == null) {
+            return false;
+        }
+        String path = uri.getPath().substring(prefix.length());
+        File extFile = getExternalFileFromPath(path);
+        if (extFile == null) {
+            Log.d("Intent", "File Not Found");
+            return false;
+        }
+        Log.d("Intent", "File: " + extFile.getAbsolutePath());
+        Uri contentUri;
+        try {
+            contentUri = FileProvider.getUriForFile(activity, "net.mikespub.mywebview.fileprovider", extFile);
+            MyContentUtility.showContent(activity, contentUri);
+        } catch (Exception e) {
+            Log.e("Intent", extFile.getAbsolutePath(), e);
+            contentUri = Uri.fromFile(extFile);
+        }
+        /*
+        */
+        if (prefix.equals("/view")) {
+            //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(extFile));
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            //intent.setDataAndType(Uri.fromFile(extFile), getMimeType(extFile.getName()));
+            intent.setDataAndType(contentUri, getMimeType(extFile.getName()));
+            // Grant temporary read permission to the content URI
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.putExtra(Intent.EXTRA_STREAM, contentUri);
+            //view.getContext().startActivity(intent);
+            // Create intent to show chooser
+            String title = uri.toString() + "\n\nOpen with";
+            Intent chooser = Intent.createChooser(intent, title);
+            view.getContext().startActivity(chooser);
+            return true;
+        }
+        if (prefix.equals("/pick")) {
+            //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(extFile));
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            activity.startActivityForResult(intent, 1);
+            return true;
+        }
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setDataAndType(contentUri, getMimeType(extFile.getName()));
+        // Grant temporary read permission to the content URI
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.putExtra(Intent.EXTRA_STREAM, contentUri);
+        view.getContext().startActivity(intent);
+        // Create intent to show chooser
+        //String title = uri.toString() + "\n\nOpen with";
+        //Intent chooser = Intent.createChooser(intent, title);
+        //view.getContext().startActivity(chooser);
+        return true;
+    }
+
+    public WebResourceResponse handleGetLocalConfig(Uri uri) {
+        String message;
+        try {
+            message = MyJsonUtility.toJsonString(mySavedStateModel.getValue("local_config"));
+        } catch (Exception e) {
+            Log.e("Config", e.toString());
+            message = e.toString();
+        }
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("application/json", "UTF-8", targetStream);
+    }
+
+    public WebResourceResponse handleUpdateSettings(Uri uri) {
+        // String query = uri.getQuery();
+        HashMap<String, Object> hashMap = MySettingsRepository.parseQueryParameters(uri);
+        // add custom web settings here?
+        hashMap.put("web_settings", myCustomWebSettings);
+        // add local config here?
+        hashMap.put("local_config", getLocalConfig());
+        String jsonString = this.mySavedStateModel.setSettings(this.activity, hashMap);
+        loadSettings();
+        String updateZip = getUpdateZip();
+        mDownloadId = -1;
+        if (updateZip != null && updateZip.startsWith("http")) {
+            // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
+            Uri updateUri = Uri.parse(updateZip);
+            if (updateUri != null && URLUtil.isHttpsUrl(updateUri.toString())) {
+                requestUriDownload(updateUri);
+            }
+        }
+        // use template file for response here
+        String templateName = "web/fake_post.html";
+        Map<String, String> valuesMap = new HashMap<>();
+        valuesMap.put("output", jsonString);
+        String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("text/html", "UTF-8", targetStream);
+    }
+
+    public long requestUriDownload(Uri updateUri) {
+        String updateName = URLUtil.guessFileName(updateUri.toString(), null, null);
+        File mDownloadFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), updateName);
+        if (mDownloadFile.exists()) {
+            Log.d("Web Update", mDownloadFile.getAbsolutePath() + " exists");
+            mDownloadFile.delete();
+        } else {
+            Log.d("Web Update", mDownloadFile.getAbsolutePath() + " does not exist");
+        }
+        DownloadManager.Request request = new DownloadManager.Request(updateUri);
+        request.setDestinationInExternalFilesDir(this.activity, Environment.DIRECTORY_DOWNLOADS, updateName);
+        // not easy to verify final path from DownloadManager in onDownloadComplete - use description to preset
+        request.setDescription(mDownloadFile.getAbsolutePath());
+        try {
+            mDownloadManager = (DownloadManager) this.activity.getSystemService(Context.DOWNLOAD_SERVICE);
+            mDownloadId = mDownloadManager.enqueue(request);
+            Log.d("Web Update", "Enqueue: " + mDownloadId);
+        } catch (Exception e) {
+            Log.e("Web Update", e.toString());
+        }
+        return mDownloadId;
     }
 
     static String getMimeType(String fileName) {

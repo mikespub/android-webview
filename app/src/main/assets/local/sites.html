@@ -19,19 +19,26 @@
         }
     </style>
     <script>
+		function addSiteLi(frag, url, title)
+		{
+			var li = document.createElement('li');
+			li.innerHTML = '<a href="' + url + '">' + title + '</a>';
+			frag.appendChild(li);
+		}
+
 		function addSiteList(sites) {
 			// get reference to select element
 			//var select = document.getElementById("website");
 			// https://devdocs.io/dom/document/createdocumentfragment
-			//var fragment = document.createDocumentFragment();
-			sites.forEach(function(site) {
-				//addSiteOption(select, site["url"], site["title"]);
-				//addSiteLi(fragment, site["url"], site["title"]);
-				console.log(site["title"] + ": " + site["url"]);
-			});
+			var fragment = document.createDocumentFragment();
+			//for (var url in sites) {
+			Object.keys(sites).sort().forEach(function(url) {
+				//addSiteOption(select, url, sites[url]);
+				addSiteLi(fragment, url, sites[url]);
+            });
 			// get reference to ul element
-			//var weblist = document.getElementById("sitelist");
-			//weblist.appendChild(fragment);
+			var weblist = document.getElementById("sitelist");
+			weblist.appendChild(fragment);
 		}
 
     </script>
@@ -40,14 +47,19 @@
     <div id="main">
         <h1><a href="/assets/web/index.html">My WebView</a></h1>
         <h2>Local Websites</h2>
-        <label for="prefix">URL Base</label>: <span id="prefix">https://appassets.androidplatform.net/sites/</span><br>
-        <label for="path">Path</label>: <span id="path">/Android/data/net.mikespub.mywebview/files/Documents/</span><br>
+        Site List:
+        <ul id="sitelist">
+        </ul>
+        <p><label for="prefix">URL Base</label>:<br>
+        <span id="prefix">https://appassets.androidplatform.net/sites/</span></p>
+        <p><label for="path">Path</label>:<br>
+        <span id="path">/Android/data/net.mikespub.mywebview/files/Documents/</span></p>
     </div>
 
     <script>
     function loadSites() {
         // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-        fetch('config.json')
+        fetch('get_config.jsp')
         .then((response) => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');

@@ -1,35 +1,24 @@
 package net.mikespub.mywebview;
 
 import android.net.Uri;
-import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.SavedStateHandle;
 
-import net.mikespub.myutils.MyAssetUtility;
-import net.mikespub.myutils.MyJsonUtility;
-
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * Repository for Settings from assets file "settings.json"
  *
- * We cannot generalize this to MyJsonFileRepository because static variables/methods cannot be overridden in Java,
+ * Warning: static variables/methods cannot be overridden in Java,
  * see https://stackoverflow.com/questions/2223386/why-doesnt-java-allow-overriding-of-static-methods
  */
-class MySettingsRepository {
-    private static final String TAG = "Settings";
+class MySettingsRepository extends MyJsonFileRepository {
+    static final String TAG = "Settings";
     static final String fileName = "settings.json";
+    static final String dirName = "web";
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
     //private final AppCompatActivity activity;
 
@@ -44,93 +33,30 @@ class MySettingsRepository {
      * Check that the web asset files are available and load settings from settings.json
      *
      * @param activity current Activity context
-     * @return  configuration settings
+     * @return  configuration
      */
-    static HashMap<String, Object> loadJsonSettings(AppCompatActivity activity) {
-        long lastUpdated = MyAssetUtility.checkAssetFiles(activity, fileName, "web");
+    static HashMap<String, Object> loadConfiguration(AppCompatActivity activity) {
         // move this elsewhere?
-        MyAssetUtility.checkAssetFiles(activity, "local/config.json", "local");
+        // MyAssetUtility.checkAssetFiles(activity, "local/config.json", "local");
         //loadStringConfig();
-        String jsonString = getJsonSettings(activity);
-        return loadJsonConfig(jsonString, lastUpdated);
+        return loadJsonFile(activity, fileName, dirName);
     }
 
     /**
-     * Get an ISO-8601 formatted datetime string from a timestamp or now
+     * Save configuration to JSON file
      *
-     * @param lastUpdated   last update time of the current package or 0 for current time
-     * @return              ISO-8601 formatted datetime string
+     * @param activity  current Activity context
+     * @param hashMap   configuration to save
+     * @return          json string with the new configuration
      */
-    static String getTimestamp(long lastUpdated) {
-        // https://stackoverflow.com/questions/13515168/android-time-in-iso-8601
-        // works with Instant
-        // Instant instant = Instant.now();
-        // String timestamp = (String) instant.format(DateTimeFormatter.ISO_INSTANT);
-        //ZonedDateTime zdt = ZonedDateTime.now();
-        //String timestamp = zdt.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
-        // https://stackoverflow.com/questions/3914404/how-to-get-current-moment-in-iso-8601-format-with-date-hour-and-minute
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US); // Quoted "Z" to indicate UTC, no timezone offset
-        df.setTimeZone(tz);
-        String timestamp;
-        if (lastUpdated > 0) {
-            timestamp = df.format(new Date(lastUpdated));
-        } else {
-            timestamp = df.format(new Date());
-
-        }
-        // String timestamp = Instant.now().toString();
-        return timestamp;
+    static String saveConfiguration(AppCompatActivity activity, HashMap<String, Object> hashMap) {
+        return saveJsonFile(activity, hashMap, fileName);
     }
 
     /**
-     * Load configuration settings from JSON string
+     * Set Saved State values from Config map
      *
-     * @param jsonString    json string with settings
-     * @param lastUpdated   last update time of the current package
-     * @return              configuration settings
-     */
-    static private HashMap<String, Object> loadJsonConfig(String jsonString, long lastUpdated) {
-        HashMap<String, Object> hashMap = null;
-        try {
-            hashMap = new HashMap<>(MyJsonUtility.jsonToMap(jsonString));
-            Log.d(TAG, hashMap.toString());
-            if (!hashMap.containsKey("timestamp")) {
-                String timestamp = getTimestamp(0);
-                Log.d(TAG, "Timestamp New: " + timestamp);
-                hashMap.put("timestamp", timestamp);
-            } else if (lastUpdated > 0) {
-                String timestamp = getTimestamp(lastUpdated);
-                Log.d(TAG, "Timestamp Old: " + timestamp);
-                // String timestamp = Instant.now().toString();
-                hashMap.put("timestamp", timestamp);
-            }
-        } catch (JSONException e) {
-            Log.e(TAG, "Load Settings: " + fileName, e);
-            //loadStringConfig();
-        }
-        return hashMap;
-    }
-
-    /**
-     * Get JSON string from settings.json file
-     *
-     * @param activity current Activity context
-     * @return  json string with the current settings
-     */
-    static private String getJsonSettings(AppCompatActivity activity) {
-        try {
-            return MyAssetUtility.getFilenameString(activity, fileName);
-        } catch (IOException e) {
-            Log.e(TAG, "Get Settings: " + fileName, e);
-        }
-        return null;
-    }
-
-    /**
-     * Set Saved State values from Settings map
-     *
-     * @param hashMap   configuration settings to set
+     * @param hashMap   configuration to set
      * @param mState    Saved State Handle
      */
     static void setValuesFromMap(HashMap<String, Object> hashMap, SavedStateHandle mState) {
@@ -151,12 +77,16 @@ class MySettingsRepository {
             // TODO: skip null values coming from Enum-style values in WebSettings being turned into null in json string
             mState.set("web_settings", hashMap.get("web_settings"));
         }
+        // local_config are handled in MySavedStateModel for now...
+        //if (hashMap.containsKey("local_config")) {
+        //    mState.set("local_config", hashMap.get("local_config"));
+        //}
     }
 
     /**
-     * Get Settings map from Saved State values
+     * Get Config map from Saved State values
      *
-     * @param hashMap   configuration settings to get
+     * @param hashMap   configuration to get
      * @param mState    Saved State Handle
      */
     static void getMapFromValues(HashMap<String, Object> hashMap, SavedStateHandle mState) {
@@ -185,13 +115,14 @@ class MySettingsRepository {
         String update_zip = mState.get("update_zip");
         hashMap.put("update_zip", update_zip);
         // web_settings are handled in MyAppWebViewClient for now...
+        // local_config are handled in MySavedStateModel for now...
     }
 
     /**
-     * Parse configuration settings from query uri
+     * Parse configuration from query uri
      *
-     * @param uri   query uri to parse the configuration settings from
-     * @return      configuration settings parsed
+     * @param uri   query uri to parse the configuration from
+     * @return      configuration parsed
      */
     static HashMap<String, Object> parseQueryParameters(Uri uri) {
         // String query = uri.getQuery();
@@ -212,6 +143,7 @@ class MySettingsRepository {
         String local_sites = uri.getQueryParameter("local_sites");
         String update_zip = uri.getQueryParameter("update_zip");
         // web_settings are handled in MyAppWebViewClient for now...
+        // local_config are handled in MySavedStateModel for now...
         HashMap<String, Object> hashMap = new HashMap<>();
         List<HashMap<String, String>> sites = new ArrayList<>();
         for (int i = 0; i < titles.size(); i++) {
@@ -282,32 +214,10 @@ class MySettingsRepository {
         }
         hashMap.put("update_zip", update_zip);
         // web_settings are handled in MyAppWebViewClient for now...
+        // local_config are handled in MySavedStateModel for now...
         hashMap.put("source", "updated via WebView");
         hashMap.put("timestamp", getTimestamp(0));
         return hashMap;
     }
 
-    /**
-     * Save configuration settings to JSON file
-     *
-     * @param activity  current Activity context
-     * @param hashMap   configuration settings to set
-     * @return          json string with the new settings
-     */
-    static String saveJsonSettings(AppCompatActivity activity, HashMap<String, Object> hashMap) {
-        hashMap.put("timestamp", getTimestamp(0));
-        Log.d(TAG, hashMap.toString());
-        //JSONObject jsonObject = new JSONObject(hashMap);
-        String jsonString = "";
-        // https://stackoverflow.com/questions/16563579/jsonobject-tostring-how-not-to-escape-slashes
-        try {
-            //jsonString = jsonObject.toString(2).replace("\\","");
-            jsonString = MyJsonUtility.toJsonString(hashMap);
-            //Log.d(TAG, jsonString);
-            MyAssetUtility.saveFilenameString(activity, fileName, jsonString);
-        } catch (JSONException e) {
-            Log.e(TAG, "Save Settings: " + fileName, e);
-        }
-        return jsonString;
-    }
 }

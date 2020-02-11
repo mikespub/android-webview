@@ -54,10 +54,15 @@ public class MySavedStateModel extends ViewModel {
         String source = (String) getValue("source");
         if (source == null) {
             //MySettingsRepository repo = new MySettingsRepository(activity);
-            hashMap = MySettingsRepository.loadJsonSettings(activity);
+            hashMap = MySettingsRepository.loadConfiguration(activity);
             MySettingsRepository.setValuesFromMap(hashMap, mState);
+            // add local config here?
+            hashMap.put("local_config", MyLocalConfigRepository.loadConfiguration(activity));
+            MyLocalConfigRepository.setValuesFromMap(hashMap, mState);
         } else {
             MySettingsRepository.getMapFromValues(hashMap, mState);
+            // add local config here?
+            MyLocalConfigRepository.getMapFromValues(hashMap, mState);
         }
         return hashMap;
     }
@@ -70,10 +75,11 @@ public class MySavedStateModel extends ViewModel {
      * @return          json string with the new settings
      */
     String setSettings(AppCompatActivity activity, HashMap<String, Object> hashMap) {
+        // add local config here?
         MySettingsRepository.setValuesFromMap(hashMap, mState);
         //MySettingsRepository repo = new MySettingsRepository(activity);
         //setValue("timestamp", repo.getTimestamp(0));
-        return MySettingsRepository.saveJsonSettings(activity, hashMap);
+        return MySettingsRepository.saveConfiguration(activity, hashMap);
     }
 
 }

@@ -1,13 +1,7 @@
 {
-  "sites": [
-    {
-      "url": "/assets/web/index.html",
-      "title": "My WebView"
-    },
-    {
-      "url": "/assets/local/sites.html",
-      "title": "Local Websites"
-    }
-  ],
+  "sites": {
+    "/assets/web/index.html": "My WebView",
+    "/assets/local/sites.html": "Local Websites"
+  },
   "prefix": "https://appassets.androidplatform.net/sites/"
 }

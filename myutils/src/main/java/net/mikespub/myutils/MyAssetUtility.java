@@ -67,7 +67,7 @@ public class MyAssetUtility {
             Log.e(TAG, "Package Unknown", e);
         }
         if (dirName != null) {
-            lastUpdated = copyWebAssetFiles(activity, dirName, lastUpdated);
+            lastUpdated = copyAssetDir(activity, dirName, lastUpdated);
         }
         // copy local asset files
         return lastUpdated;
@@ -110,7 +110,7 @@ public class MyAssetUtility {
      * @param lastUpdated   last update time of the current package
      */
     // https://stackoverflow.com/questions/4447477/how-to-copy-files-from-assets-folder-to-sdcard
-    static long copyWebAssetFiles(AppCompatActivity activity, String dirName, long lastUpdated) {
+    static long copyAssetDir(AppCompatActivity activity, String dirName, long lastUpdated) {
         File extDir = new File(activity.getExternalFilesDir(null), dirName);
         Log.d(TAG, "External Dir: " + extDir.getAbsolutePath());
         if (!extDir.exists()) {
@@ -307,4 +307,26 @@ public class MyAssetUtility {
         }
         return template;
     }
+
+    /**
+     * Show external files for this app
+     *
+     * @param activity  current Activity context
+     */
+    public static void showMyExternalFiles(AppCompatActivity activity, String dirName, Boolean recursive) {
+        File extDir = activity.getExternalFilesDir(dirName);
+        Log.d(TAG, "External Dir: " + extDir.getAbsolutePath());
+        for (File file: extDir.listFiles()) {
+            if (file.isDirectory()) {
+                if (recursive) {
+                    showMyExternalFiles(activity, dirName + "/" + file.getName(), recursive);
+                } else {
+                    Log.d(TAG, "Dir: " + file.getAbsolutePath());
+                }
+            } else {
+                Log.d(TAG, "File: " + file.getAbsolutePath());
+            }
+        }
+    }
+
 }
