@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
@@ -95,7 +96,7 @@ class MyAppWebViewClient extends WebViewClient {
                 //Log.d("Web Update", mDownloadFile.getAbsolutePath());
                 try {
                     InputStream inputStream = activity.getContentResolver().openInputStream(uri);
-                    File targetDirectory = activity.getExternalFilesDir(null);
+                    File targetDirectory = activity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
                     String[] skipNames = { MySettingsRepository.fileName };
                     MyAssetUtility.unzipStream(inputStream, targetDirectory, skipNames);
                     if (inputStream != null)
@@ -398,9 +399,9 @@ class MyAppWebViewClient extends WebViewClient {
             if (updateZip != null && updateZip.startsWith("http")) {
                 // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
                 Uri updateUri = Uri.parse(updateZip);
-                if (updateUri != null && URLUtil.isNetworkUrl(updateUri.toString())) {
+                if (updateUri != null && URLUtil.isHttpsUrl(updateUri.toString())) {
                     String updateName = URLUtil.guessFileName(updateUri.toString(), null, null);
-                    File mDownloadFile = new File(this.activity.getExternalFilesDir(null), updateName);
+                    File mDownloadFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), updateName);
                     if (mDownloadFile.exists()) {
                         Log.d("Web Update", mDownloadFile.getAbsolutePath() + " exists");
                         mDownloadFile.delete();
@@ -408,7 +409,7 @@ class MyAppWebViewClient extends WebViewClient {
                         Log.d("Web Update", mDownloadFile.getAbsolutePath() + " does not exist");
                     }
                     DownloadManager.Request request = new DownloadManager.Request(updateUri);
-                    request.setDestinationInExternalFilesDir(this.activity, null, updateName);
+                    request.setDestinationInExternalFilesDir(this.activity, Environment.DIRECTORY_DOWNLOADS, updateName);
                     // not easy to verify final path from DownloadManager in onDownloadComplete - use description to preset
                     request.setDescription(mDownloadFile.getAbsolutePath());
                     try {
@@ -454,15 +455,27 @@ class MyAppWebViewClient extends WebViewClient {
             Log.d("WebResource Assets", extWebFile + " exists: " + extWebFile.exists());
         } else if (hasLocalSites() && path.startsWith("/sites/")) {
             // handle local sites if not already under /assets/...
-            File extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/sites/".length()));
+            File extWebFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), path.substring("/sites/".length()));
             if (path.endsWith("/") && extWebFile.exists() && extWebFile.isDirectory()) {
                 Log.d("WebResource Sites", extWebFile + " is directory - trying with index.html");
                 path += "index.html";
-                extWebFile = new File(this.activity.getExternalFilesDir(null), path.substring("/sites/".length()));
+                extWebFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), path.substring("/sites/".length()));
             }
             if (extWebFile.exists() && !extWebFile.isDirectory()) {
                 String type = getMimeType(extWebFile.getName());
-                // see above
+                if (!type.equals("TODO")) {
+                    try {
+                        InputStream targetStream = new FileInputStream(extWebFile);
+                        Log.d("WebResource Sites", extWebFile + " mimetype: " + type);
+                        if (type.startsWith("image/") || type.startsWith("font/")) {
+                            return new WebResourceResponse(type, null, targetStream);
+                        } else {
+                            return new WebResourceResponse(type, "UTF-8", targetStream);
+                        }
+                    } catch (Exception e) {
+                        Log.e("WebResource", e.toString());
+                    }
+                }
             }
             Log.d("WebResource Sites", extWebFile + " exists: " + extWebFile.exists());
         }

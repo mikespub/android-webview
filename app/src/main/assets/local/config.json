@@ -1,11 +1,11 @@
 {
   "sites": [
     {
-      "url": "/web/index.html",
+      "url": "/assets/web/index.html",
       "title": "My WebView"
     },
     {
-      "url": "/_local/sites.html",
+      "url": "/assets/local/sites.html",
       "title": "Local Websites"
     }
   ],

@@ -38,8 +38,10 @@
 </head>
 <body onload="loadSites()">
     <div id="main">
+        <h1><a href="/assets/web/index.html">My WebView</a></h1>
         <h2>Local Websites</h2>
-        <label for="prefix">Prefix</label>: <input id="prefix" type="url" name="prefix" value="https://appassets.androidplatform.net/sites/">
+        <label for="prefix">URL Base</label>: <span id="prefix">https://appassets.androidplatform.net/sites/</span><br>
+        <label for="path">Path</label>: <span id="path">/Android/data/net.mikespub.mywebview/files/Documents/</span><br>
     </div>
 
     <script>
@@ -55,7 +57,7 @@
         .then((myJson) => {
             var config = myJson;
             var prefix = document.getElementById("prefix");
-            prefix.value = config["prefix"];
+            prefix.innerHTML = config["prefix"];
             addSiteList(config["sites"]);
         })
         .catch((error) => {

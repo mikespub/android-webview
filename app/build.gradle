@@ -21,10 +21,10 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // https://stackoverflow.com/questions/9206117/how-to-workaround-autoomitting-fiiles-folders-starting-with-underscore-in
         // https://github.com/ionic-team/capacitor/issues/1750
-        aaptOptions {
-            //ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"
-            ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~"
-        }
+        //aaptOptions {
+        //    //ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"
+        //    ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~"
+        //}
     }
     buildTypes {
         release {
@@ -70,9 +70,9 @@ task createPom {
     description "Generates pom.xml"
     pom {
         project {
-            //groupId 'com.example'
-            //artifactId 'example'
-            version versionCode
+            groupId 'net.mikespub'
+            artifactId 'mywebview'
+            version versionName
             //packaging 'aar'
         }
     }.withXml {
@@ -81,11 +81,13 @@ task createPom {
         configurations.implementation.allDependencies.each { dependency ->
             if (dependency.group != null && dependency.name != null) {
                 def dependencyNode = dependenciesNode.appendNode('dependency')
-                dependencyNode.appendNode('groupId', dependency.group)
-                dependencyNode.appendNode('artifactId', dependency.name)
                 if (dependency.group == project.group) {
-                    dependencyNode.appendNode('version', versionCode)
+                    dependencyNode.appendNode('groupId', 'net.mikespub')
+                    dependencyNode.appendNode('artifactId', dependency.name)
+                    dependencyNode.appendNode('version', versionName)
                 } else {
+                    dependencyNode.appendNode('groupId', dependency.group)
+                    dependencyNode.appendNode('artifactId', dependency.name)
                     dependencyNode.appendNode('version', dependency.version)
                 }
             }

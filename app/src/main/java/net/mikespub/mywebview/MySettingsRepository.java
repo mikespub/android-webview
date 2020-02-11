@@ -49,7 +49,7 @@ class MySettingsRepository {
     static HashMap<String, Object> loadJsonSettings(AppCompatActivity activity) {
         long lastUpdated = MyAssetUtility.checkAssetFiles(activity, fileName, "web");
         // move this elsewhere?
-        MyAssetUtility.checkAssetFiles(activity, "_local/config.json", "_local");
+        MyAssetUtility.checkAssetFiles(activity, "local/config.json", "local");
         //loadStringConfig();
         String jsonString = getJsonSettings(activity);
         return loadJsonConfig(jsonString, lastUpdated);

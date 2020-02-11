@@ -69,7 +69,7 @@ public class MyAssetUtility {
         if (dirName != null) {
             lastUpdated = copyWebAssetFiles(activity, dirName, lastUpdated);
         }
-        // copy _local asset files
+        // copy local asset files
         return lastUpdated;
     }
 
