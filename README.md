@@ -18,11 +18,11 @@ Adapt [assets/web/](app/src/main/assets/web/) and [res/values/strings.xml](app/s
 
 Check the [latest release](https://github.com/mikespub/android-webview/releases) for [app-release.apk](app/release/app-release.apk)
 
-Note: steps 10-12 are new for release v1.15
+Note: steps 10-12 are ~~new for release v1.15~~updated for release v1.16
 
 <img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/index.png" width="200">
 
-1. Press on HTML5 Test link or select in dropdown list
+1. Press on HTML5 Test Site link or select in dropdown list
 
 <img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/html5test.png" width="200">
 
@@ -65,24 +65,38 @@ Verify that now the app goes to that site without telling the link does not matc
 
 Verify that your new settings are still there
 
-10. Click on the Update Settings link and specify a .zip file in Update Assets from trusted site
+10. Click on the Local Websites link and specify a .zip file in Download Bundle from trusted site (v1.16+)
 
 For testing, you could download a bootstrap template from https://bootstrapmade.com/ and put it on your site,
 e.g. https://owncloud.mikespub.net/eBusiness.zip
 
+<img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/site_bundle.png" width="200">
+
+11. Press the Download Bundle button to download the site bundle and extract it (v1.16+)
+
+Verify that your changes are shown in the result page (json format)
+
+12. Press the Local Websites link or Back until you get to the Local Websites page (v1.16+)
+
+Verify that your local website is in the Site List now, and click the link to test it.
+
+<img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/local_site.png" width="200">
+
+
+If you don't use Local Websites much and you unchecked the option to manage Local Websites separately, you can also:
+
+10. Click on the Update Settings link and specify a .zip file in Update Assets from trusted site (v1.15+)
+
 If the .zip file contains a homepage at eBusiness/index.html, also change the Other: field to
-https://appassets.androidplatform.net/assets/eBusiness/index.html (or http://localhost/assets/eBusiness/index.html)
+https://appassets.androidplatform.net/sites/eBusiness/index.html (or http://localhost/sites/eBusiness/index.html)
 to go to the local site in your app after the update.
 
 <img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/update_assets.png" width="200">
 
-11. Press the Update Settings button to submit the changes
+11. Press the Update Settings button to submit the changes (v1.15+)
 
 Verify that your changes are shown in the result page (json format)
 
-12. Press the My WebView link or Back until you get to the first page
+12. Press the My WebView link or Back until you get to the first page (v1.15+)
 
 Verify that your local website is in the Other: field, and press Go to test it.
-
-<img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/local_site.png" width="200">
-
