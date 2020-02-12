@@ -422,6 +422,8 @@ class MyAppWebViewClient extends WebViewClient {
             return handleExtractBundle(uri);
         } else if (path.equals("/assets/local/delete.jsp")) {
             return handleDeleteBundle(uri);
+        } else if (path.equals("/assets/local/cleanup.jsp")) {
+            return handleCleanUpDownloads(uri);
         } else if (path.startsWith("/assets/")) {
             return handleAssetFileRequest(uri);
         } else if (hasLocalSites() && path.startsWith("/sites/")) {
@@ -660,6 +662,21 @@ class MyAppWebViewClient extends WebViewClient {
         return new WebResourceResponse("text/html", "UTF-8", targetStream);
     }
 
+    public WebResourceResponse handleCleanUpDownloads(Uri uri) {
+        try {
+            MyContentUtility.showMyDownloadFiles(this.activity, true);
+        } catch (Exception e) {
+            Log.e("Cleanup", e.toString());
+        }
+        // use template file for response here
+        String templateName = "local/download.html";
+        Map<String, String> valuesMap = new HashMap<>();
+        valuesMap.put("output", "Cleaned up...");
+        String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("text/html", "UTF-8", targetStream);
+    }
+
     public WebResourceResponse handleUpdateSettings(Uri uri) {
         // String query = uri.getQuery();
         HashMap<String, Object> hashMap = MySettingsRepository.parseQueryParameters(uri);
@@ -695,6 +712,7 @@ class MyAppWebViewClient extends WebViewClient {
             String lastModified = String.valueOf(mDownloadFile.lastModified() / 1000);
             File renameFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), updateName.replace(".zip", "." + lastModified + ".zip"));
             mDownloadFile.renameTo(renameFile);
+            // update corresponding Downloads entry as well via getContentResolver.update()
         } else {
             Log.d("Web Update", mDownloadFile.getAbsolutePath() + " does not exist");
         }
