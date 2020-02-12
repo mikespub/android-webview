@@ -59,9 +59,10 @@ class MyAppWebViewClient extends WebViewClient {
     private DownloadManager mDownloadManager;
     //private File mDownloadFile;
     private long mDownloadId = -1;
+    private boolean mDownloadExtract = true;
     private Map<String, Object> myDefaultWebSettings;
     private Map<String, Object> myCustomWebSettings;
-    private Map<String, Object> myLocalSitesConfig;
+    //private Map<String, Object> myLocalSitesConfig;
 
     /**
      * @param activity  current Activity context
@@ -99,6 +100,9 @@ class MyAppWebViewClient extends WebViewClient {
                     return;
                 }
                 //MyContentUtility.showContent(activity, uri);
+                if (!mDownloadExtract) {
+                    return;
+                }
                 // unzip
                 //Log.d("Web Update", mDownloadFile.getAbsolutePath());
                 try {
@@ -109,7 +113,7 @@ class MyAppWebViewClient extends WebViewClient {
                     if (inputStream != null)
                         inputStream.close();
                     // delete entry in Downloads to avoid multiple duplicates there
-                    activity.getContentResolver().delete(uri,null,null);
+                    //activity.getContentResolver().delete(uri,null,null);
                 } catch (Exception e) {
                     Log.e("Web Update", e.toString());
                 }
@@ -412,6 +416,12 @@ class MyAppWebViewClient extends WebViewClient {
             return handleUpdateSettings(uri);
         } else if (path.equals("/assets/local/get_config.jsp")) {
             return handleGetLocalConfig(uri);
+        } else if (path.equals("/assets/local/download.jsp")) {
+            return handleDownloadBundle(uri);
+        } else if (path.equals("/assets/local/extract.jsp")) {
+            return handleExtractBundle(uri);
+        } else if (path.equals("/assets/local/delete.jsp")) {
+            return handleDeleteBundle(uri);
         } else if (path.startsWith("/assets/")) {
             return handleAssetFileRequest(uri);
         } else if (hasLocalSites() && path.startsWith("/sites/")) {
@@ -565,13 +575,89 @@ class MyAppWebViewClient extends WebViewClient {
     public WebResourceResponse handleGetLocalConfig(Uri uri) {
         String message;
         try {
-            message = MyJsonUtility.toJsonString(mySavedStateModel.getValue("local_config"));
+            Map<String, Object> localConfig = getLocalConfig();
+            localConfig.put("sites", MyLocalConfigRepository.findLocalSites(activity));
+            localConfig.put("bundles", MyLocalConfigRepository.findAvailableBundles(activity));
+            message = MyJsonUtility.toJsonString(localConfig);
         } catch (Exception e) {
             Log.e("Config", e.toString());
             message = e.toString();
         }
         ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
         return new WebResourceResponse("application/json", "UTF-8", targetStream);
+    }
+
+    public WebResourceResponse handleDownloadBundle(Uri uri) {
+        String updateZip = uri.getQueryParameter("update_zip");
+        String extract = uri.getQueryParameter("extract");
+        Log.d("Download Bundle", "URL: " + updateZip + " Extract: " + extract);
+        if (updateZip != null && updateZip.startsWith("http")) {
+            // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
+            Uri updateUri = Uri.parse(updateZip);
+            if (updateUri != null && URLUtil.isHttpsUrl(updateUri.toString())) {
+                if (extract != null && extract.equals("true")) {
+                    requestUriDownload(updateUri, true);
+                } else {
+                    requestUriDownload(updateUri, false);
+                }
+            }
+        }
+        // use template file for response here
+        String templateName = "local/download.html";
+        Map<String, String> valuesMap = new HashMap<>();
+        Map<String, String> output = new HashMap<>();
+        output.put("update_zip", updateZip);
+        output.put("extract", extract);
+        try {
+            valuesMap.put("output", MyJsonUtility.toJsonString(output));
+        } catch (Exception e) {
+            valuesMap.put("output", e.toString());
+        }
+        String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("text/html", "UTF-8", targetStream);
+    }
+
+    public WebResourceResponse handleExtractBundle(Uri uri) {
+        String bundle = uri.getQueryParameter("bundle");
+        File extFile = new File(activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), bundle);
+        Log.d("Extract", extFile.getAbsolutePath());
+        try {
+            FileInputStream inputStream = new FileInputStream(extFile);
+            File targetDirectory = activity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+            String[] skipNames = { MySettingsRepository.fileName };
+            MyAssetUtility.unzipStream(inputStream, targetDirectory, skipNames);
+            if (inputStream != null)
+                inputStream.close();
+        } catch (Exception e) {
+            Log.e("Extract", e.toString());
+        }
+        // use template file for response here
+        String templateName = "local/download.html";
+        Map<String, String> valuesMap = new HashMap<>();
+        valuesMap.put("output", "Extracted: " + extFile.getName());
+        String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("text/html", "UTF-8", targetStream);
+    }
+
+    public WebResourceResponse handleDeleteBundle(Uri uri) {
+        String bundle = uri.getQueryParameter("bundle");
+        File extFile = new File(activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), bundle);
+        Log.d("Delete", extFile.getAbsolutePath());
+        try {
+            // do we need to find the equivalent Download file first?
+            extFile.delete();
+        } catch (Exception e) {
+            Log.e("Delete", e.toString());
+        }
+        // use template file for response here
+        String templateName = "local/download.html";
+        Map<String, String> valuesMap = new HashMap<>();
+        valuesMap.put("output", "Deleted: " + extFile.getName());
+        String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("text/html", "UTF-8", targetStream);
     }
 
     public WebResourceResponse handleUpdateSettings(Uri uri) {
@@ -589,7 +675,7 @@ class MyAppWebViewClient extends WebViewClient {
             // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
             Uri updateUri = Uri.parse(updateZip);
             if (updateUri != null && URLUtil.isHttpsUrl(updateUri.toString())) {
-                requestUriDownload(updateUri);
+                requestUriDownload(updateUri, true);
             }
         }
         // use template file for response here
@@ -601,12 +687,14 @@ class MyAppWebViewClient extends WebViewClient {
         return new WebResourceResponse("text/html", "UTF-8", targetStream);
     }
 
-    public long requestUriDownload(Uri updateUri) {
+    public long requestUriDownload(Uri updateUri, boolean extract) {
         String updateName = URLUtil.guessFileName(updateUri.toString(), null, null);
         File mDownloadFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), updateName);
         if (mDownloadFile.exists()) {
             Log.d("Web Update", mDownloadFile.getAbsolutePath() + " exists");
-            mDownloadFile.delete();
+            String lastModified = String.valueOf(mDownloadFile.lastModified() / 1000);
+            File renameFile = new File(this.activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), updateName.replace(".zip", "." + lastModified + ".zip"));
+            mDownloadFile.renameTo(renameFile);
         } else {
             Log.d("Web Update", mDownloadFile.getAbsolutePath() + " does not exist");
         }
@@ -616,6 +704,7 @@ class MyAppWebViewClient extends WebViewClient {
         request.setDescription(mDownloadFile.getAbsolutePath());
         try {
             mDownloadManager = (DownloadManager) this.activity.getSystemService(Context.DOWNLOAD_SERVICE);
+            mDownloadExtract = extract;
             mDownloadId = mDownloadManager.enqueue(request);
             Log.d("Web Update", "Enqueue: " + mDownloadId);
         } catch (Exception e) {

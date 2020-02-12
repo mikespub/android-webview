@@ -1,14 +1,17 @@
 package net.mikespub.myutils;
 
 import android.app.DownloadManager;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.BaseColumns;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.util.Arrays;
+import java.io.File;
+import java.util.HashMap;
 
 /**
  * Content Utility Methods
@@ -49,8 +52,14 @@ public class MyContentUtility {
     public static void showContent(AppCompatActivity activity, Uri uri) {
         Log.d(TAG, "URI: " + uri);
         Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
+        HashMap<String, Object> cursorInfo;
         if (cursor.moveToFirst()) {
-            showCursor(cursor);
+            cursorInfo = getCursorInfo(cursor, uri);
+            try {
+                Log.d(TAG, MyJsonUtility.toJsonString(cursorInfo));
+            } catch (Exception e) {
+                Log.e(TAG, cursorInfo.toString(), e);
+            }
         }
         cursor.close();
     }
@@ -60,54 +69,169 @@ public class MyContentUtility {
      *
      * @param cursor    current cursor
      */
-    private static void showCursor(Cursor cursor) {
+    private static HashMap<String, Object> getCursorInfo(Cursor cursor, Uri parentUri) {
         //String local_uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
         //Log.d(TAG, "Local URI: " + local_uri);
         //String[] columns = cursor.getColumnNames();
         //Log.d(TAG, "Columns: " + Arrays.toString(columns));
+        //Uri contentUri = ContentUris.withAppendedId(uri, cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_ID)));
+        //String id = DocumentsContract.getDocumentId(contentUri);
+        //Log.d(TAG, "Current URI: " + contentUri + " Document Id: " + id);
+        HashMap<String, Object> cursorInfo = new HashMap<>();
         for (int i=0; i < cursor.getColumnCount(); i++) {
             switch (cursor.getType(i)) {
                 case Cursor.FIELD_TYPE_NULL:
-                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: null");
+                    //Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: null");
+                    cursorInfo.put(cursor.getColumnName(i), null);
                     break;
                 case Cursor.FIELD_TYPE_INTEGER:
-                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getInt(i));
+                    //Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getInt(i));
+                    //cursorInfo.put(cursor.getColumnName(i), cursor.getInt(i));
+                    cursorInfo.put(cursor.getColumnName(i), cursor.getLong(i));
                     break;
                 case Cursor.FIELD_TYPE_FLOAT:
-                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getFloat(i));
+                    //Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getFloat(i));
+                    //cursorInfo.put(cursor.getColumnName(i), cursor.getFloat(i));
+                    cursorInfo.put(cursor.getColumnName(i), cursor.getDouble(i));
                     break;
                 case Cursor.FIELD_TYPE_STRING:
-                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getString(i));
+                    //Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + cursor.getString(i));
+                    cursorInfo.put(cursor.getColumnName(i), cursor.getString(i));
                     break;
                 case Cursor.FIELD_TYPE_BLOB:
-                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + Arrays.toString(cursor.getBlob(i)));
+                    //Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: " + Arrays.toString(cursor.getBlob(i)));
+                    cursorInfo.put(cursor.getColumnName(i), cursor.getBlob(i));
                     break;
                 default:
-                    Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: ?");
+                    //Log.d(TAG, i + " name: " + cursor.getColumnName(i) + " type: " + cursor.getType(i) + " value: ?");
+                    cursorInfo.put(cursor.getColumnName(i), "??? - type: " + cursor.getType(i));
                     break;
             }
         }
-        Log.d(TAG, "Extras: " + cursor.getExtras().toString());
+        //Log.d(TAG, "Extras: " + cursor.getExtras().toString());
+        if (cursorInfo.containsKey("[extras]")) {
+            cursorInfo.put("[**extras**]", cursor.getExtras());
+        } else {
+            cursorInfo.put("[extras]", cursor.getExtras());
+        }
+        return cursorInfo;
     }
 
     /**
      * Show app downloads via content provider
      *
      * @param activity  current Activity context
+     * @param cleanUp   clean up download content provider
      */
-    public static void showMyDownloadFiles(AppCompatActivity activity) {
+    public static void showMyDownloadFiles(AppCompatActivity activity, boolean cleanUp) {
         //static android.provider.Downloads.Impl.ALL_DOWNLOADS_CONTENT_URI;
         //ALL_DOWNLOADS_CONTENT_URI
-        Uri uri = Uri.parse("content://downloads/my_downloads");
+        //Uri uri = Uri.parse("content://downloads/my_downloads");
         //Uri uri = Uri.parse("content://downloads/public_downloads");
         //Uri uri = Uri.parse("content://downloads/all_downloads");
         //activity.grantUriPermission(activity.getPackageName(),uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        Log.d(TAG, "Uri: " + uri.toString());
-        Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
         // MediaStore.Downloads.EXTERNAL_CONTENT_URI
+        // Also see https://android.googlesource.com/platform/packages/providers/DownloadProvider.git/+/refs/heads/master/src/com/android/providers/downloads/DownloadProvider.java
+        showContentFiles(activity, "content://downloads/my_downloads", cleanUp);
+    }
+
+    /**
+     * Show content via content provider
+     *
+     * @param activity     current Activity context
+     * @param contentUri   content uri to show
+     * @param cleanUp      clean up download content provider
+     */
+    public static void showContentFiles(AppCompatActivity activity, String contentUri, boolean cleanUp) {
+        Uri uri = Uri.parse(contentUri);
+        Log.d(TAG, "Uri: " + uri.toString());
+        Log.d(TAG, "Authority: " + uri.getAuthority());
+        Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
+        HashMap<String, Object> cursorInfo;
+        HashMap<String, Long> mediaLastMods = new HashMap<>();
+        HashMap<String, Long> mediaContentIds = new HashMap<>();
         while (cursor.moveToNext()) {
-            showCursor(cursor);
+            cursorInfo = getCursorInfo(cursor, uri);
+            if (cursorInfo.containsKey(DownloadManager.COLUMN_MEDIAPROVIDER_URI)) {
+                //Long lastMod = (Long) cursorInfo.get(DownloadManager.COLUMN_LAST_MODIFIED_TIMESTAMP);
+                Long lastMod = (Long) cursorInfo.get("lastmod");  // Android Nougat 7.1.1 - API Level 25
+                String mediaUri = (String) cursorInfo.get(DownloadManager.COLUMN_MEDIAPROVIDER_URI);
+                if (mediaLastMods.containsKey(mediaUri)) {
+                    Log.d(TAG, mediaUri + " duplicate " + mediaLastMods.get(mediaUri) + " != " + lastMod);
+                    if (cleanUp && lastMod >= mediaLastMods.get(mediaUri)) {
+                        Uri curUri = ContentUris.withAppendedId(uri, mediaContentIds.get(mediaUri));
+                        /*
+                        // this will actually delete (all versions of) the item from Downloads + in files!?
+                        try {
+                            activity.getContentResolver().delete(curUri, null, null);
+                            Log.d(TAG, "Delete: " + curUri.toString());
+                        } catch (Exception e) {
+                            Log.e(TAG, "Delete: " + curUri.toString(), e);
+                        }
+                         */
+                        Log.d(TAG, "Duplicate: " + curUri.toString());
+                    }
+                }
+                mediaLastMods.put(mediaUri, lastMod);
+                mediaContentIds.put(mediaUri, (long) cursorInfo.get(BaseColumns._ID));
+            }
+            if (cursorInfo.containsKey(DownloadManager.COLUMN_DESCRIPTION) && ((String) cursorInfo.get(DownloadManager.COLUMN_DESCRIPTION)).startsWith("/storage")) {
+                File curFile = new File((String) cursorInfo.get(DownloadManager.COLUMN_DESCRIPTION));
+                if (curFile != null && curFile.exists()) {
+                    Log.d(TAG, "File: " + curFile.getAbsolutePath());
+                    if (cursorInfo.containsKey(DownloadManager.COLUMN_TITLE) && !curFile.getName().equals(cursorInfo.get(DownloadManager.COLUMN_TITLE))) {
+                        Log.d(TAG, "File: " + cursorInfo.get(DownloadManager.COLUMN_TITLE) + " != " + curFile.getName());
+                        if (cleanUp) {
+                            Uri curUri = ContentUris.withAppendedId(uri, (long) cursorInfo.get(BaseColumns._ID));
+                            Log.d(TAG, "TODO: " + curUri.toString());
+                        }
+                    }
+                } else if (cleanUp) {
+                    Log.d(TAG, "File: ?");
+                    Uri curUri = ContentUris.withAppendedId(uri, (long) cursorInfo.get(BaseColumns._ID));
+                    try {
+                        activity.getContentResolver().delete(curUri, null, null);
+                        Log.d(TAG, "Delete: " + curUri.toString());
+                    } catch (Exception e) {
+                        Log.e(TAG, "Delete: " + curUri.toString(), e);
+                    }
+                } else {
+                    Log.d(TAG, "File: ?");
+                }
+            } else if (cleanUp) {
+                String COLUMN_NOTIFICATION_PACKAGE = "notificationpackage";
+                if (cursorInfo.containsKey(COLUMN_NOTIFICATION_PACKAGE) && cursorInfo.get(COLUMN_NOTIFICATION_PACKAGE).equals(activity.getPackageName())) {
+                    Uri curUri = ContentUris.withAppendedId(uri, (long) cursorInfo.get(BaseColumns._ID));
+                    try {
+                        activity.getContentResolver().delete(curUri, null, null);
+                        Log.d(TAG, "Delete: " + curUri.toString());
+                    } catch (Exception e) {
+                        Log.e(TAG, "Delete: " + curUri.toString(), e);
+                    }
+                } else {
+                    Log.d(TAG, "Skip: " + cursorInfo.get(DownloadManager.COLUMN_TITLE));
+                }
+            }
+            try {
+                Log.d(TAG, MyJsonUtility.toJsonString(cursorInfo));
+            } catch (Exception e) {
+                Log.e(TAG, cursorInfo.toString(), e);
+            }
         }
+        Log.d(TAG, mediaLastMods.toString());
+        // https://stackoverflow.com/questions/5563747/how-to-use-class-contentquerymap-to-cache-cursor-values
+        /*
+        ContentQueryMap mQueryMap = new ContentQueryMap(cursor, BaseColumns._ID, false, null);
+        for (Map.Entry<String, ContentValues> row : mQueryMap.getRows().entrySet()) {
+            Long id = Long.valueOf(row.getKey());
+            Set<Map.Entry<String, Object>> data = row.getValue().valueSet();
+            try {
+                Log.d(TAG, MyJsonUtility.toJsonString(data));
+            } catch (Exception e) {
+                Log.e(TAG, data.toString(), e);
+            }
+        }
+         */
         cursor.close();
     }
 

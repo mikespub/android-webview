@@ -51,8 +51,10 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
                 hasAdded = true;
             }
         }
-        localConfig.put("sites", localSites);
+        //List<String> localBundles = (ArrayList<String>) localConfig.get("bundles");
+        localConfig.put("bundles", findAvailableBundles(activity));
         if (hasAdded) {
+            saveConfiguration(activity, localConfig);
             saveConfiguration(activity, localConfig);
         }
         return localConfig;
@@ -74,6 +76,22 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
             }
         }
         return siteMap;
+    }
+
+    static List<String> findAvailableBundles(AppCompatActivity activity) {
+        File extDir = activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        Log.d(TAG, "Bundles: " + extDir.getAbsolutePath());
+        List<String> bundles = new ArrayList<>();
+        for (File file: extDir.listFiles()) {
+            if (file.isDirectory()) {
+                continue;
+            } else if (file.getName().endsWith(".zip")){
+                bundles.add(file.getName());
+            } else if (file.getName().endsWith(".wbn")){
+                bundles.add(file.getName());
+            }
+        }
+        return bundles;
     }
 
     /**

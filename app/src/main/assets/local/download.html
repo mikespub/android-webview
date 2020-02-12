@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- No complains about missing favicon.ico from https requests. -->
+    <link rel="icon" href="data:,">
+    <title>Download Bundle</title>
+    <!--
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    -->
+    <style>
+    @media screen and (min-width: 600px) {
+      #main {
+        max-width: 600px;
+        margin: auto;
+      }
+    }
+    </style>
+</head>
+<body>
+<div id="main">
+    <h1><a href="/assets/web/index.html">My WebView</a></h1>
+    <h2><a href="/assets/local/sites.html">Local Websites</a></h2>
+    <pre>${output}</pre>
+</div>
+<!--
+<script>
+    if(typeof androidAppProxy !== "undefined"){
+        androidAppProxy.showMessage("Settings Updated");
+    } else {
+        console.log("Settings Updated");
+    }
+</script>
+-->
+</body>
+</html>

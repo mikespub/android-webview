@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * JSON Utility Methods
@@ -109,6 +110,8 @@ public class MyJsonUtility {
     public static Object toJson(Object object) throws JSONException {
         if (object instanceof Map<?, ?>) {
             return mapToJson((Map<String, Object>) object);
+        } else if (object instanceof Set<?>) {
+            return setToJson((Set<Map.Entry<String, Object>>) object);
         } else if (object instanceof Iterable) {
             return listToJson((Iterable) object);
         }
@@ -133,6 +136,22 @@ public class MyJsonUtility {
             //}
             //jsonData.put(key, value);
             jsonData.put(key, toJson(value));
+        }
+        return jsonData;
+    }
+
+    /**
+     * Convert set to JSON object - like ContentValues from ContentQueryMap
+     *
+     * @param set   set to convert to JSON object
+     * @return      converted JSON object
+     * @throws JSONException    trouble converting
+     */
+    // https://stackoverflow.com/questions/16108734/convert-setmap-entryk-v-to-hashmapk-v
+    private static JSONObject setToJson(Set<Map.Entry<String, Object>> set) throws JSONException {
+        JSONObject jsonData = new JSONObject();
+        for (Map.Entry<String, Object> entry : set) {
+            jsonData.put(entry.getKey(), toJson(entry.getValue()));
         }
         return jsonData;
     }

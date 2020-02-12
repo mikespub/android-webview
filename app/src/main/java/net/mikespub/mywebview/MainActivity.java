@@ -66,7 +66,26 @@ public class MainActivity extends AppCompatActivity {
         // Some other options - https://github.com/codepath/android_guides/wiki/Working-with-the-WebView
         // webSettings.setUseWideViewPort(true);
         // webSettings.setLoadWithOverviewMode(true);
-        //MyContentUtility.showMyDownloadFiles(this);
+        //MyContentUtility.showMyDownloadFiles(this, true);
+        //MyContentUtility.showContent(this, Uri.parse("content://media/external/file/86"));
+        /*
+        // From https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/provider/Downloads.java
+        String COLUMN_NOTIFICATION_PACKAGE = "notificationpackage";
+        String COLUMN_NOTIFICATION_CLASS = "notificationclass";
+        Uri CONTENT_URI =
+                Uri.parse("content://downloads/my_downloads");
+        String QUERY_WHERE_CLAUSE = Impl.COLUMN_NOTIFICATION_PACKAGE + "=? AND "
+            + Impl.COLUMN_NOTIFICATION_CLASS + "=?";
+
+        public static final void removeAllDownloadsByPackage(
+            Context context, String notification_package, String notification_class) {
+            context.getContentResolver().delete(Impl.CONTENT_URI, QUERY_WHERE_CLAUSE,
+                    new String[] { notification_package, notification_class });
+        }
+         */
+        //MyContentUtility.showContentFiles(this,"content://net.mikespub.mywebview.fileprovider/root/");
+        //String parentDoc = this.getContentResolver().getType(Uri.parse("content://net.mikespub.mywebview.fileprovider/root/"));
+        //Log.d("Parent", parentDoc);
         /*
         try {
             //JSONObject jsonObject = MyJsonUtility.mapToJson(defaultSettings);

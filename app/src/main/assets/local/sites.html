@@ -11,6 +11,29 @@
     <script src="script.js"></script>
     -->
     <style>
+        /* Style inputs */
+          input[type=text], input[type=url], select {
+          width: 100%;
+          padding: 4px 4px;
+          margin: 2px 0;
+          display: inline-block;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+        }
+
+        /* Style the submit button */
+        input[type=submit] {
+          width: 100%;
+          background-color: #4CAF50;
+          color: white;
+          padding: 14px 20px;
+          margin: 8px 0;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
         @media screen and (min-width: 600px) {
           #main {
             max-width: 600px;
@@ -41,6 +64,24 @@
 			weblist.appendChild(fragment);
 		}
 
+		function addBundleLi(frag, url, title)
+		{
+			var li = document.createElement('li');
+			li.innerHTML = '<a href="extract.jsp?bundle=' + url + '">Extract</a> <a href="delete.jsp?bundle=' + url + '">Delete</a> ' + title;
+			frag.appendChild(li);
+		}
+
+		function addBundleList(bundles) {
+			// https://devdocs.io/dom/document/createdocumentfragment
+			var fragment = document.createDocumentFragment();
+			for (var i in bundles) {
+				addBundleLi(fragment, bundles[i], bundles[i]);
+            }
+			// get reference to ul element
+			var bundlelist = document.getElementById("bundlelist");
+			bundlelist.appendChild(fragment);
+		}
+
     </script>
 </head>
 <body onload="loadSites()">
@@ -50,6 +91,19 @@
         Site List:
         <ul id="sitelist">
         </ul>
+        Available Bundles:
+        <ul id="bundlelist">
+        </ul>
+        <form action="download.jsp" method="GET">
+            <fieldset id="update">
+                <legend><label for="update_zip">Download Bundle from trusted site</label></legend>
+                <input id="update_zip" type="url" name="update_zip" value="" placeholder="https://my.trusted.site/download/sitebundle.zip">
+                <input id="extract" type="checkbox" name="extract" value="true" checked> <label for="extract">Extract site from bundle after download</label>
+            </fieldset>
+
+            <input type="hidden" name="csrf" value="">
+            <input id="submit" type="submit" value="Download Bundle">
+        </form>
         <p><label for="prefix">URL Base</label>:<br>
         <span id="prefix">https://appassets.androidplatform.net/sites/</span></p>
         <p><label for="path">Path</label>:<br>
@@ -71,6 +125,7 @@
             var prefix = document.getElementById("prefix");
             prefix.innerHTML = config["prefix"];
             addSiteList(config["sites"]);
+            addBundleList(config["bundles"]);
         })
         .catch((error) => {
             console.error('There has been a problem with your fetch operation:', error);
