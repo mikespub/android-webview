@@ -88,10 +88,10 @@
     <div id="main">
         <h1><a href="/assets/web/index.html">My WebView</a></h1>
         <h2>Local Websites</h2>
-        Site List:
+        <a href="/sites/">Current Site List</a>:
         <ul id="sitelist">
         </ul>
-        Available Bundles:
+        Available Site Bundles:
         <ul id="bundlelist">
         </ul>
         <form action="download.jsp" method="GET">
@@ -108,6 +108,8 @@
         <span id="prefix">https://appassets.androidplatform.net/sites/</span></p>
         <p><label for="path">File Path</label>:<br>
         <span id="path">/Android/data/net.mikespub.mywebview/files/Documents/</span></p>
+        <p><label for="link">Deep Link</label>:<br>
+            <span id="link">mywebview://sites/[site]</span></p>
     </div>
 
     <script>

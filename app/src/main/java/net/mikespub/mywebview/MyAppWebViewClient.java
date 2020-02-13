@@ -316,6 +316,10 @@ class MyAppWebViewClient extends WebViewClient {
             myUrl = domainUrl + "assets/" + host + path;
         // mywebview://sites/...
         } else if (host.equals("sites")) {
+            // check for missing trailing / if index.html is not specified
+            if (path.length() > 1 && path.indexOf("/", 1) < 0) {
+                path += "/";
+            }
             myUrl = domainUrl + host + path;
         } else {
             myUrl = domainUrl + "assets/local/404.jsp?link=" + host + path;
@@ -335,13 +339,20 @@ class MyAppWebViewClient extends WebViewClient {
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         Log.d("Web Override", url);
-        if(url.startsWith(domainUrl) || url.startsWith("http://localhost/")) {
+        if(url.startsWith(domainUrl) || url.startsWith("http://localhost/") ) {
             // should be handled here already or not?
             final Uri uri = Uri.parse(url);
             if (getIntentPrefixFromUri(uri) != null) {
                 return handleIntentUri(view, uri);
             }
             return false;
+        }
+        // if we put deep links in web, local or sites pages, reload here with site link to avoid CORS et al.
+        if (url.startsWith(activity.getString(R.string.link_scheme) + "://")) {
+            url = getSiteUrlFromAppLink(Uri.parse(url));
+            Log.d("Web Override", "Reload with site link " + url);
+            view.loadUrl(url);
+            return true;
         }
         final Uri uri = Uri.parse(url);
         // if(Uri.parse(url).getHost().endsWith("html5rocks.com")) {
@@ -434,6 +445,10 @@ class MyAppWebViewClient extends WebViewClient {
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
         Log.d("Web Intercept", url);
+        // if we put deep links in web, local or sites pages and don't reload above, we'll have CORS issues et al. here
+        if (url.startsWith(activity.getString(R.string.link_scheme) + "://")) {
+            url = getSiteUrlFromAppLink(Uri.parse(url));
+        }
         if(!url.startsWith(domainUrl) && !url.startsWith("http://localhost/")) {
             return null;
         }
@@ -485,6 +500,10 @@ class MyAppWebViewClient extends WebViewClient {
 
     public WebResourceResponse handleLocalSiteRequest(Uri uri) {
         String fileName = uri.getPath().substring("/sites/".length());
+        if (fileName.isEmpty()) {
+            // show sites index
+            return handleFileRequest(null, "local/index.html");
+        }
         return handleFileRequest(Environment.DIRECTORY_DOCUMENTS, fileName);
     }
 
