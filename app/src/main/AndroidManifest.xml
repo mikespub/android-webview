@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="net.mikespub.mywebview">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -11,17 +12,43 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".MainActivity" android:configChanges="orientation|screenSize">
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="http"
+                    android:host="@string/link_host"
+                    android:pathPrefix="@string/link_prefix" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="@string/link_scheme" />
+            </intent-filter>
         </activity>
-        <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing"
+
+        <meta-data
+            android:name="android.webkit.WebView.EnableSafeBrowsing"
             android:value="false" />
-        <meta-data android:name="android.webkit.WebView.MetricsOptOut"
+        <meta-data
+            android:name="android.webkit.WebView.MetricsOptOut"
             android:value="true" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="net.mikespub.mywebview.fileprovider"

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
@@ -39,13 +40,8 @@ import java.util.Map;
  * WebViewClient Methods + link to settings & downloads
  */
 class MyAppWebViewClient extends WebViewClient {
-    static final String domainName;
-    static final String domainUrl;
-
-    static {
-        domainName = "appassets.androidplatform.net";
-        domainUrl = "https://" + domainName + "/";
-    }
+    final String domainName;
+    final String domainUrl;
 
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
     private final MainActivity activity;
@@ -72,6 +68,8 @@ class MyAppWebViewClient extends WebViewClient {
         Log.d("Web Create", activity.toString());
         // https://stackoverflow.com/questions/57838759/how-android-jetpack-savedstateviewmodelfactory-works
         this.mySavedStateModel = activity.getSavedStateModel();
+        this.domainName = activity.getString(R.string.app_host);
+        this.domainUrl = "https://" + this.domainName + "/";
         loadSettings();
         setReceiver();
     }
@@ -291,6 +289,41 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
+     * Get the site url corresponding to an app link
+     *
+     * @param appLinkData the app link received via Intent
+     * @return  corresponding site url
+     */
+    String getSiteUrlFromAppLink(Uri appLinkData) {
+        String host = appLinkData.getEncodedAuthority();
+        String path = appLinkData.getEncodedPath();
+        if (path.isEmpty()) {
+            path = "/";
+        }
+        if (!path.contains("/")) {
+            path += "/";
+        }
+        Log.d("Intent", "Path: " + host + path);
+        String myUrl;
+        // mywebview://
+        if (host.isEmpty()) {
+            myUrl = domainUrl + activity.getString(R.string.start_uri);
+        // mywebview://web/...
+        } else if (host.equals("web")) {
+            myUrl = domainUrl + "assets/" + host + path;
+        // mywebview://local/...
+        } else if (host.equals("local")) {
+            myUrl = domainUrl + "assets/" + host + path;
+        // mywebview://sites/...
+        } else if (host.equals("sites")) {
+            myUrl = domainUrl + host + path;
+        } else {
+            myUrl = domainUrl + "assets/local/404.jsp?link=" + host + path;
+        }
+        return myUrl;
+    }
+
+    /**
      * Check if we need to override a particular url and/or create an Intent for it
      *
      * @param view  current WebView context
@@ -424,6 +457,8 @@ class MyAppWebViewClient extends WebViewClient {
             return handleDeleteBundle(uri);
         } else if (path.equals("/assets/local/cleanup.jsp")) {
             return handleCleanUpDownloads(uri);
+        } else if (path.equals("/assets/local/404.jsp")) {
+            return handleFileNotFound(uri);
         } else if (path.startsWith("/assets/")) {
             return handleAssetFileRequest(uri);
         } else if (hasLocalSites() && path.startsWith("/sites/")) {
@@ -457,7 +492,11 @@ class MyAppWebViewClient extends WebViewClient {
         File extFile = new File(this.activity.getExternalFilesDir(dirName), fileName);
         if (fileName.endsWith("/") && extFile.exists() && extFile.isDirectory()) {
             Log.d("File Request", extFile + " is directory - trying with index.html");
-            fileName += "index.html";
+            if (fileName.startsWith("local/")) {
+                fileName += "sites.html";
+            } else {
+                fileName += "index.html";
+            }
             extFile = new File(this.activity.getExternalFilesDir(dirName), fileName);
         }
         if (!extFile.exists() || extFile.isDirectory()) {
@@ -486,7 +525,7 @@ class MyAppWebViewClient extends WebViewClient {
     public WebResourceResponse handleIntentRequest(WebView view, Uri uri) {
         Boolean isHandled = handleIntentUri(view, uri);
         // use template file for response here
-        String templateName = "web/fake_post.html";
+        String templateName = "web/result.html";
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("output", "Intent: " + uri.toString() + "\nHandled: " + isHandled);
         String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
@@ -605,7 +644,7 @@ class MyAppWebViewClient extends WebViewClient {
             }
         }
         // use template file for response here
-        String templateName = "local/download.html";
+        String templateName = "local/result.html";
         Map<String, String> valuesMap = new HashMap<>();
         Map<String, String> output = new HashMap<>();
         output.put("update_zip", updateZip);
@@ -635,7 +674,7 @@ class MyAppWebViewClient extends WebViewClient {
             Log.e("Extract", e.toString());
         }
         // use template file for response here
-        String templateName = "local/download.html";
+        String templateName = "local/result.html";
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("output", "Extracted: " + extFile.getName());
         String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
@@ -654,7 +693,7 @@ class MyAppWebViewClient extends WebViewClient {
             Log.e("Delete", e.toString());
         }
         // use template file for response here
-        String templateName = "local/download.html";
+        String templateName = "local/result.html";
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("output", "Deleted: " + extFile.getName());
         String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
@@ -669,11 +708,25 @@ class MyAppWebViewClient extends WebViewClient {
             Log.e("Cleanup", e.toString());
         }
         // use template file for response here
-        String templateName = "local/download.html";
+        String templateName = "local/result.html";
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("output", "Cleaned up...");
         String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
         ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("text/html", "UTF-8", targetStream);
+    }
+
+    public WebResourceResponse handleFileNotFound(Uri uri) {
+        String link = uri.getQueryParameter("link");
+        // use template file for response here
+        String templateName = "local/result.html";
+        Map<String, String> valuesMap = new HashMap<>();
+        valuesMap.put("output", "File not found:" + link.replace("<", "&lt;"));
+        String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        if (Build.VERSION.SDK_INT >= 21) {
+            return new WebResourceResponse("text/html", "UTF-8", 404, "Not Found", null, targetStream);
+        }
         return new WebResourceResponse("text/html", "UTF-8", targetStream);
     }
 
@@ -696,7 +749,7 @@ class MyAppWebViewClient extends WebViewClient {
             }
         }
         // use template file for response here
-        String templateName = "web/fake_post.html";
+        String templateName = "web/result.html";
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("output", jsonString);
         String message = MyAssetUtility.getTemplateFile(this.activity, templateName, valuesMap);

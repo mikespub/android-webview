@@ -1,5 +1,6 @@
 package net.mikespub.mywebview;
 
+import android.net.Uri;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -40,8 +41,9 @@ class AppJavaScriptProxy {
 
             @Override
             public void run() {
-                if(!myWebView.getUrl().startsWith(MyAppWebViewClient.domainUrl)){
-                    Log.d("WebView", "Javascript Interface for " + myWebView.getUrl());
+                Uri uri = Uri.parse(myWebView.getUrl());
+                if(!uri.getHost().equals(myActivity.getString(R.string.app_host))){
+                    Log.d("WebView", "No Javascript Interface for " + uri.toString());
                     return;
                 }
 

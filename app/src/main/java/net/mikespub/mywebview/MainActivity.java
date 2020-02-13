@@ -199,10 +199,25 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+        // ATTENTION: This was auto-generated to handle app links.
+        Intent appLinkIntent = getIntent();
+        if (appLinkIntent != null) {
+            //Log.d("Intent", appLinkIntent.toString());
+            String appLinkAction = appLinkIntent.getAction();
+            if (appLinkAction.equals(Intent.ACTION_VIEW)) {
+                Uri appLinkData = appLinkIntent.getData();
+                Log.d("Intent", "Action: " + appLinkAction + " - Data: " + appLinkData);
+                if (appLinkData != null && appLinkData.getScheme().equals(getString(R.string.link_scheme))) {
+                    String myUrl = myWebViewClient.getSiteUrlFromAppLink(appLinkData);
+                    myWebView.loadUrl(myUrl);
+                    return;
+                }
+            }
+        }
         // https://stackoverflow.com/questions/36987144/preventing-webview-reload-on-rotate-android-studio/46849736#46849736
         if (savedInstanceState == null) {
             // myWebView.loadUrl("http://beta.html5test.com/");
-            String myUrl = getString(R.string.website_url);
+            String myUrl = myWebViewClient.domainUrl + getString(R.string.start_uri);
             myWebView.loadUrl(myUrl);
         } else {
             // Bundle bundle = savedInstanceState.getBundle("webViewState");
