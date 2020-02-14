@@ -7,7 +7,12 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.SavedStateHandle;
 
+import net.mikespub.myutils.MyAssetUtility;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,11 +44,44 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
      * @return  configuration
      */
     static HashMap<String, Object> loadConfiguration(AppCompatActivity activity) {
-        //MyAssetUtility.showMyExternalFiles(activity, Environment.DIRECTORY_DOWNLOADS, false);
-        HashMap<String, String> siteMap = findLocalSites(activity);
-        Log.d(TAG, "Sites: " + siteMap.toString());
         HashMap<String, Object> localConfig = loadJsonFile(activity, fileName, dirName);
         HashMap<String, String> localSites = (HashMap<String, String>) localConfig.get("sites");
+        //MyAssetUtility.showMyExternalFiles(activity, Environment.DIRECTORY_DOWNLOADS, false);
+        checkDemoSite(activity);
+        boolean hasAdded = updateLocalSites(activity, localSites);
+        //List<String> localBundles = (ArrayList<String>) localConfig.get("bundles");
+        localConfig.put("bundles", findAvailableBundles(activity));
+        if (hasAdded) {
+            saveConfiguration(activity, localConfig);
+        }
+        return localConfig;
+    }
+
+    static void checkDemoSite(AppCompatActivity activity) {
+        File extDir = activity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        if (!extDir.exists() && !extDir.mkdirs()) {
+            Log.e(TAG, "Dir Create: FAIL " + extDir.getAbsolutePath());
+            return;
+        }
+        File extFile = new File(extDir, ".installed");
+        if (extFile.exists()) {
+            Log.d(TAG, "The demo site was installed once already");
+            return;
+        }
+        try (OutputStream out = new FileOutputStream(extFile)) {
+            out.write(33);
+        } catch (IOException e) {
+            Log.e(TAG, "File Error: " + extFile.getAbsolutePath(), e);
+            return;
+        }
+        String dirName = "demo";
+        File targetDir = new File(extDir, dirName);
+        MyAssetUtility.copyAssetDir(activity, dirName, targetDir, 0);
+    }
+
+    static boolean updateLocalSites(AppCompatActivity activity, HashMap<String, String> localSites) {
+        HashMap<String, String> siteMap = findLocalSites(activity);
+        Log.d(TAG, "Sites: " + siteMap.toString());
         boolean hasAdded = false;
         for (String url: siteMap.keySet()) {
             if (!localSites.containsKey(url)) {
@@ -51,13 +89,7 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
                 hasAdded = true;
             }
         }
-        //List<String> localBundles = (ArrayList<String>) localConfig.get("bundles");
-        localConfig.put("bundles", findAvailableBundles(activity));
-        if (hasAdded) {
-            saveConfiguration(activity, localConfig);
-            saveConfiguration(activity, localConfig);
-        }
-        return localConfig;
+        return hasAdded;
     }
 
     static HashMap<String, String> findLocalSites(AppCompatActivity activity) {
@@ -66,11 +98,11 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
         HashMap<String, String> siteMap = new HashMap<>();
         for (File file: extDir.listFiles()) {
             if (file.isDirectory()) {
-                String url = "/sites/" + file.getName().replace(" ", "+") + "/index.html";
+                String url = file.getName().replace(" ", "+") + "/index.html";
                 String title = file.getName();
                 siteMap.put(url, title);
             } else if (file.getName().endsWith(".html")){
-                String url = "/sites/" + file.getName().replace(" ", "+");
+                String url = file.getName().replace(" ", "+");
                 String title = file.getName().replace(".html", "");
                 siteMap.put(url, title);
             }

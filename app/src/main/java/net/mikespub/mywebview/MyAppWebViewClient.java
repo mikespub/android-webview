@@ -636,7 +636,10 @@ class MyAppWebViewClient extends WebViewClient {
         String message;
         try {
             Map<String, Object> localConfig = getLocalConfig();
-            localConfig.put("sites", MyLocalConfigRepository.findLocalSites(activity));
+            HashMap<String, String> localSites = (HashMap<String, String>) localConfig.get("sites");
+            if (MyLocalConfigRepository.updateLocalSites(activity, localSites)) {
+                localConfig.put("sites", localSites);
+            }
             localConfig.put("bundles", MyLocalConfigRepository.findAvailableBundles(activity));
             message = MyJsonUtility.toJsonString(localConfig);
         } catch (Exception e) {

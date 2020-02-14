@@ -12,7 +12,7 @@
     -->
     <style>
         /* Style inputs */
-          input[type=text], input[type=url], select {
+        input[type=text], input[type=url], span {
           width: 100%;
           padding: 4px 4px;
           margin: 2px 0;
@@ -20,6 +20,15 @@
           border: 1px solid #ccc;
           border-radius: 4px;
           box-sizing: border-box;
+        }
+
+        input[class=title] {
+          width: 40%;
+        }
+
+        span[class=url] {
+          width: 60%;
+          border: none;
         }
 
         /* Style the submit button */
@@ -42,11 +51,11 @@
         }
     </style>
     <script>
-		function addSiteLi(frag, url, title)
+		function addSiteInput(frag, idx, url, title)
 		{
-			var li = document.createElement('li');
-			li.innerHTML = '<a href="' + url + '">' + title + '</a>';
-			frag.appendChild(li);
+			var p = document.createElement('p');
+			p.innerHTML = '<input type="text" class="title" name="title[]" value="' + title + '" size="12"><span class="url"><input type="hidden" name="url[]" value="' + url + '"><a href="/sites/' + url + '">' + url + '</a></span>';
+			frag.appendChild(p);
 		}
 
 		function addSiteList(sites) {
@@ -54,10 +63,12 @@
 			//var select = document.getElementById("website");
 			// https://devdocs.io/dom/document/createdocumentfragment
 			var fragment = document.createDocumentFragment();
+            var idx = 1;
 			//for (var url in sites) {
 			Object.keys(sites).sort().forEach(function(url) {
 				//addSiteOption(select, url, sites[url]);
-				addSiteLi(fragment, url, sites[url]);
+				addSiteInput(fragment, idx, url, sites[url]);
+                idx += 1;
             });
 			// get reference to ul element
 			var weblist = document.getElementById("sitelist");
@@ -88,12 +99,20 @@
     <div id="main">
         <h1><a href="/assets/web/index.html">My WebView</a></h1>
         <h2>Local Websites</h2>
-        <a href="/sites/">Current Site List</a>:
-        <ul id="sitelist">
-        </ul>
-        Available Site Bundles:
-        <ul id="bundlelist">
-        </ul>
+        <form action="update.jsp" method="GET">
+            <fieldset id="sitelist">
+                <legend><a href="/sites/">Current Site List</a></legend>
+            </fieldset>
+            <input type="hidden" name="csrf" value="">
+            <input id="action" type="submit" value="Update Site List">
+        </form>
+        <form>
+            <fieldset id="bundles">
+                <legend>Available Site Bundles</legend>
+                <ul id="bundlelist">
+                </ul>
+            </fieldset>
+        </form>
         <form action="download.jsp" method="GET">
             <fieldset id="update">
                 <legend><label for="update_zip">Download Bundle from trusted site</label></legend>

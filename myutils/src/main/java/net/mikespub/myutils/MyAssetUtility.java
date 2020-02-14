@@ -54,7 +54,8 @@ public class MyAssetUtility {
         // /storage/emulated/0/Android/data/net.mikespub.mywebview/files/web
         long lastUpdated = 0;
         if (fileName != null) {
-            copyAssetFile(activity, fileName, lastUpdated);
+            File extFile = new File(activity.getExternalFilesDir(null), fileName);
+            copyAssetFile(activity, fileName, extFile, lastUpdated);
         }
         // https://stackoverflow.com/questions/5248094/is-it-possible-to-get-last-modified-date-from-an-assets-file - using shared preferences in the end
         // See also https://stackoverflow.com/questions/37953002/mess-with-the-shared-preferences-of-android-which-function-to-use/37953072 for preferences
@@ -67,7 +68,8 @@ public class MyAssetUtility {
             Log.e(TAG, "Package Unknown", e);
         }
         if (dirName != null) {
-            lastUpdated = copyAssetDir(activity, dirName, lastUpdated);
+            File extDir = new File(activity.getExternalFilesDir(null), dirName);
+            lastUpdated = copyAssetDir(activity, dirName, extDir, lastUpdated);
         }
         // copy local asset files
         return lastUpdated;
@@ -78,49 +80,50 @@ public class MyAssetUtility {
      *
      * @param activity  current Activity context
      * @param fileName  name of the asset file
+     * @param targetFile    target file
      * @param lastUpdated   last update time needed
      */
-    static void copyAssetFile(AppCompatActivity activity, String fileName, long lastUpdated) {
-        File extFile = new File(activity.getExternalFilesDir(null), fileName);
-        Log.d(TAG, "External File: " + fileName);
-        if (extFile.exists() && lastUpdated <= extFile.lastModified()) {
-            Log.d(TAG, "File Exists: " + extFile.getAbsolutePath());
+    public static void copyAssetFile(AppCompatActivity activity, String fileName, File targetFile, long lastUpdated) {
+        Log.d(TAG, "Target File: " + targetFile.getAbsolutePath());
+        if (targetFile.exists() && lastUpdated <= targetFile.lastModified()) {
+            Log.d(TAG, "File Exists: " + targetFile.getAbsolutePath());
             return;
         }
-        File extDir = extFile.getParentFile();
+        File extDir = targetFile.getParentFile();
         if (!extDir.isDirectory() && !extDir.mkdirs()) {
             Log.e(TAG, "Dir Create: FAIL " + extDir.getAbsolutePath());
             return;
         }
         AssetManager manager = activity.getAssets();
-        try (InputStream in = manager.open(fileName); OutputStream out = new FileOutputStream(extFile)) {
+        try (InputStream in = manager.open(fileName); OutputStream out = new FileOutputStream(targetFile)) {
             copyFileStream(in, out);
-            Log.d(TAG, "File Copied: " + extFile.getAbsolutePath());
+            Log.d(TAG, "File Copied: " + targetFile.getAbsolutePath());
         } catch (IOException e) {
-            Log.e(TAG, "File Error: " + extFile.getAbsolutePath(), e);
+            Log.e(TAG, "File Error: " + targetFile.getAbsolutePath(), e);
         }
     }
 
     /**
-     * Copy all asset files to an external web directory. External web files that were modified
+     * Copy all asset files to an external directory. External files that were modified
      * after this package was last updated will not be overwritten.
      *
      * @param activity      current Activity context
-     * @param dirName       external directory to copy the asset files to
+     * @param dirName       directory to copy the asset files from
+     * @param targetDir     target directory
      * @param lastUpdated   last update time of the current package
+     * @return              last update time
      */
     // https://stackoverflow.com/questions/4447477/how-to-copy-files-from-assets-folder-to-sdcard
-    static long copyAssetDir(AppCompatActivity activity, String dirName, long lastUpdated) {
-        File extDir = new File(activity.getExternalFilesDir(null), dirName);
-        Log.d(TAG, "External Dir: " + extDir.getAbsolutePath());
-        if (!extDir.exists()) {
-            if (!extDir.mkdirs()) {
-                Log.d(TAG, "External Dir exists: " + extDir.exists());
+    public static long copyAssetDir(AppCompatActivity activity, String dirName, File targetDir, long lastUpdated) {
+        Log.d(TAG, "Target Dir: " + targetDir.getAbsolutePath());
+        if (!targetDir.exists()) {
+            if (!targetDir.mkdirs()) {
+                Log.d(TAG, "Target Dir exists: " + targetDir.exists());
                 return 0;
             }
-            Log.d(TAG, "External Dir exists: " + extDir.exists());
-        } else if (!extDir.isDirectory()) {
-            Log.d(TAG, "External Dir is File");
+            Log.d(TAG, "Target Dir exists: " + targetDir.exists());
+        } else if (!targetDir.isDirectory()) {
+            Log.d(TAG, "Target Dir is File");
             return 0;
         }
         AssetManager manager = activity.getAssets();
@@ -133,19 +136,35 @@ public class MyAssetUtility {
             return 0;
         }
         for (String f: files) {
-            File extFile = new File(extDir, f);
-            if (extFile.exists() && lastUpdated <= extFile.lastModified()) {
-                continue;
-            }
+            File targetFile = new File(targetDir, f);
             String fileName = dirName + "/" + f;
-            Log.d(TAG, "File Missing: " + fileName);
-            try (InputStream in = manager.open(fileName); OutputStream out = new FileOutputStream(extFile)) {
+            if (targetFile.exists()) {
+                if (lastUpdated <= targetFile.lastModified()) {
+                    continue;
+                }
+                Log.d(TAG, "File Update: " + fileName);
+            } else {
+                Log.d(TAG, "File Missing: " + fileName);
+            }
+            try (InputStream in = manager.open(fileName); OutputStream out = new FileOutputStream(targetFile)) {
                 copyFileStream(in, out);
+            } catch (FileNotFoundException e) {
+                try {
+                    if (manager.list(fileName).length > 0) {
+                        if (targetFile.exists() && !targetFile.isDirectory()) {
+                            targetFile.delete();
+                        }
+                        copyAssetDir(activity, fileName, targetFile, lastUpdated);
+                    }
+                } catch (IOException x){
+                    Log.e(TAG, "File Error: " + targetFile.getAbsolutePath(), x);
+                    return 0;
+                }
             } catch (IOException e) {
-                Log.e(TAG, "File Error: " + extFile.getAbsolutePath(), e);
+                Log.e(TAG, "File Error: " + targetFile.getAbsolutePath(), e);
                 return 0;
             }
-            Log.d(TAG, "File Copied: " + extFile.getAbsolutePath());
+            Log.d(TAG, "File Copied: " + targetFile.getAbsolutePath());
         }
         return lastUpdated;
     }
@@ -294,7 +313,7 @@ public class MyAssetUtility {
     public static String getTemplateFile(AppCompatActivity activity, String fileName, Map<String, String> valuesMap) {
         String template;
         try {
-            template = MyAssetUtility.getFilenameString(activity, fileName);
+            template = getFilenameString(activity, fileName);
         } catch (IOException e) {
             template = e.toString();
         }
