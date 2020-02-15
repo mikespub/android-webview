@@ -50,7 +50,7 @@
             android:value="true" />
 
         <provider
-            android:name="androidx.core.content.FileProvider"
+            android:name="net.mikespub.myutils.MyFileProvider"
             android:authorities="net.mikespub.mywebview.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">

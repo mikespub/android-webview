@@ -138,8 +138,7 @@ public class MyReflectUtility {
                 continue;
             }
             try {
-                Object returnValue = method.invoke(objectInstance);
-                return returnValue;
+                return method.invoke(objectInstance);
             } catch (Exception e) {
                 Log.e(TAG, methodName, e);
                 return null;

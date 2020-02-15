@@ -116,7 +116,6 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
         List<String> bundles = new ArrayList<>();
         for (File file: extDir.listFiles()) {
             if (file.isDirectory()) {
-                continue;
             } else if (file.getName().endsWith(".zip")){
                 bundles.add(file.getName());
             } else if (file.getName().endsWith(".wbn")){

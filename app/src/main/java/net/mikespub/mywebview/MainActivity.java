@@ -204,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
         if (appLinkIntent != null) {
             //Log.d("Intent", appLinkIntent.toString());
             String appLinkAction = appLinkIntent.getAction();
+            // support other actions besides VIEW? (= for deep links) - https://developer.android.com/training/secure-file-sharing/share-file
             if (appLinkAction.equals(Intent.ACTION_VIEW)) {
                 Uri appLinkData = appLinkIntent.getData();
                 Log.d("Intent", "Action: " + appLinkAction + " - Data: " + appLinkData);
@@ -229,6 +230,12 @@ public class MainActivity extends AppCompatActivity {
         }
         // https://stackoverflow.com/questions/19365668/getting-webview-history-from-webbackforwardlist
         // https://stackoverflow.com/questions/33326833/save-state-of-webview-when-switching-activity
+        // For document provider, see https://developer.android.com/guide/topics/providers/create-document-provider#queryRoots
+        // and https://github.com/android/storage-samples/blob/master/StorageProvider/Application/src/main/java/com/example/android/storageprovider/MyCloudProvider.java
+        /*
+            getActivity().getContentResolver().notifyChange(DocumentsContract.buildRootsUri
+                    (AUTHORITY), null, false);
+         */
     }
 
     /**
@@ -325,38 +332,39 @@ public class MainActivity extends AppCompatActivity {
         // If the selection didn't work
         if (resultCode != RESULT_OK) {
             // Exit without doing anything else
+            Log.d("Activity Result", "Not OK");
             return;
-        } else {
-            // Get the file's content URI from the incoming Intent
-            Uri returnUri = returnIntent.getData();
-            MyContentUtility.showContent(this, returnUri);
-            /*
-             * Try to open the file for "read" access using the
-             * returned URI. If the file isn't found, write to the
-             * error log and return.
-             */
-            ParcelFileDescriptor inputPFD;
-            try {
-                /*
-                 * Get the content resolver instance for this context, and use it
-                 * to get a ParcelFileDescriptor for the file.
-                 */
-                inputPFD = getContentResolver().openFileDescriptor(returnUri, "r");
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                Log.e("MainActivity", "File not found.");
-                return;
-            }
-            // Get a regular file descriptor for the file
-            FileDescriptor fd = inputPFD.getFileDescriptor();
-            try {
-                FileInputStream inputStream = new FileInputStream(fd);
-                inputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
         }
+        // Get the file's content URI from the incoming Intent
+        Uri returnUri = returnIntent.getData();
+        Log.d("Activity Result", returnUri.toString());
+        MyContentUtility.showContent(this, returnUri);
+        /*
+         * Try to open the file for "read" access using the
+         * returned URI. If the file isn't found, write to the
+         * error log and return.
+         */
+        ParcelFileDescriptor inputPFD;
+        try {
+            /*
+             * Get the content resolver instance for this context, and use it
+             * to get a ParcelFileDescriptor for the file.
+             */
+            inputPFD = getContentResolver().openFileDescriptor(returnUri, "r");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Log.e("MainActivity", "File not found.");
+            return;
+        }
+        // Get a regular file descriptor for the file
+        FileDescriptor fd = inputPFD.getFileDescriptor();
+        try {
+            FileInputStream inputStream = new FileInputStream(fd);
+            inputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
     }
     /**
      *

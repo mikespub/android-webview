@@ -38,8 +38,12 @@ import java.util.Map;
 
 /**
  * WebViewClient Methods + link to settings & downloads
+ *
+ * Some inspiration: https://github.com/react-native-community/react-native-webview/tree/master/android/src/main/java/com/reactnativecommunity/webview
  */
 class MyAppWebViewClient extends WebViewClient {
+    static final String[] linkNames = {"sites", "files", "web", "local", "root"};
+    static final String[] intentNames = {"intent", "view", "send", "pick", "get", "open", "tree", "create", "edit", "delete"};
     final String domainName;
     final String domainUrl;
 
@@ -56,7 +60,6 @@ class MyAppWebViewClient extends WebViewClient {
     //private File mDownloadFile;
     private long mDownloadId = -1;
     private boolean mDownloadExtract = true;
-    private Map<String, Object> myDefaultWebSettings;
     private Map<String, Object> myCustomWebSettings;
     //private Map<String, Object> myLocalSitesConfig;
 
@@ -213,7 +216,7 @@ class MyAppWebViewClient extends WebViewClient {
         }
         Log.d("WebSettings", myCustomWebSettings.toString());
         //Map<String, Object> defaultSettings = MyReflectUtility.getValues(webSettings);
-        myDefaultWebSettings = MyReflectUtility.getValues(webSettings);
+        Map<String, Object> myDefaultWebSettings = MyReflectUtility.getValues(webSettings);
         //mySavedStateModel.setValue("web_settings", defaultSettings);
         //Log.d("WebView", "WebSettings: " + defaultSettings.toString());
         for (String key: myCustomWebSettings.keySet()) {
@@ -303,26 +306,39 @@ class MyAppWebViewClient extends WebViewClient {
         if (!path.contains("/")) {
             path += "/";
         }
-        Log.d("Intent", "Path: " + host + path);
+        Log.d("AppLink", "Path: " + host + path);
+        //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
+        //final List<String> linkList = Arrays.asList(linkNames);
         String myUrl;
-        // mywebview://
-        if (host.isEmpty()) {
-            myUrl = domainUrl + activity.getString(R.string.start_uri);
-        // mywebview://web/...
-        } else if (host.equals("web")) {
-            myUrl = domainUrl + "assets/" + host + path;
-        // mywebview://local/...
-        } else if (host.equals("local")) {
-            myUrl = domainUrl + "assets/" + host + path;
-        // mywebview://sites/...
-        } else if (host.equals("sites")) {
-            // check for missing trailing / if index.html is not specified
-            if (path.length() > 1 && path.indexOf("/", 1) < 0) {
-                path += "/";
-            }
-            myUrl = domainUrl + host + path;
-        } else {
-            myUrl = domainUrl + "assets/local/404.jsp?link=" + host + path;
+        switch (host) {
+            // mywebview://web/...
+            // mywebview://local/...
+            case "web":
+            case "local":
+                myUrl = domainUrl + "assets/" + host + path;
+                break;
+            // mywebview://sites/...
+            case "sites":
+                // check for missing trailing / if index.html is not specified
+                if (path.length() > 1 && path.indexOf("/", 1) < 0) {
+                    path += "/";
+                }
+                myUrl = domainUrl + host + path;
+                break;
+            // mywebview://
+            case "":
+                myUrl = domainUrl + activity.getString(R.string.start_uri);
+                break;
+            // mywebview://files/...
+            //case "files":
+            //    myUrl = domainUrl + host + path;
+            //    break;
+            // mywebview://root/...
+            //case "root":
+            //    myUrl = domainUrl + "assets" + path;
+            //    break;
+            default:
+                myUrl = domainUrl + "assets/local/404.jsp?link=" + host + path;
         }
         return myUrl;
     }
@@ -460,6 +476,7 @@ class MyAppWebViewClient extends WebViewClient {
         // InputStream localStream = assetMgr.open(path);
         // return new WebResourceResponse((url.contains(".js") ? "text/javascript" : "text/css"), "UTF-8", localStream);
         // Note: we could also have used the Javascript interface, but then this might be available for all sites
+        // See also UriMatcher https://developer.android.com/reference/android/content/UriMatcher.html
         if (path.equals("/assets/web/fake_post.jsp")) {
             return handleUpdateSettings(uri);
         } else if (path.equals("/assets/local/get_config.jsp")) {
@@ -520,12 +537,12 @@ class MyAppWebViewClient extends WebViewClient {
         }
         if (!extFile.exists() || extFile.isDirectory()) {
             Log.d("File Request", extFile + " exists: " + extFile.exists());
-            return null;
+            return handleFileNotFound(Uri.parse(fileName));
         }
         String type = getMimeType(extFile.getName());
         if (type.equals("TODO")) {
             Log.d("File Request", extFile + " type: " + type);
-            return null;
+            return handleFileNotFound(Uri.parse(fileName));
         }
         try {
             InputStream targetStream = new FileInputStream(extFile);
@@ -538,7 +555,7 @@ class MyAppWebViewClient extends WebViewClient {
         } catch (Exception e) {
             Log.e("File Request", extFile.getAbsolutePath(), e);
         }
-        return null;
+        return handleFileNotFound(Uri.parse(fileName));
     }
 
     public WebResourceResponse handleIntentRequest(WebView view, Uri uri) {
@@ -554,11 +571,10 @@ class MyAppWebViewClient extends WebViewClient {
 
     private String getIntentPrefixFromUri(Uri uri) {
         //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
-        final String[] intentNames = {"intent", "view", "send", "pick"};
         final List<String> intentList = Arrays.asList(intentNames);
         String[] parts = uri.getPath().split("/", 3);
         if (intentList.contains(parts[1])) {
-            return "/" + parts[1];
+            return parts[1];
         }
         return null;
     }
@@ -575,60 +591,147 @@ class MyAppWebViewClient extends WebViewClient {
         return null;
     }
 
+    private Uri getContentUriFromPath(String path) {
+        File extFile = getExternalFileFromPath(path);
+        if (extFile == null) {
+            Log.d("Intent", "File Not Found: " + path);
+            return null;
+        }
+        Uri contentUri;
+        try {
+            contentUri = FileProvider.getUriForFile(activity, "net.mikespub.mywebview.fileprovider", extFile);
+            MyContentUtility.showContent(activity, contentUri);
+        } catch (Exception e) {
+            Log.e("Intent", "getUriForFile: " + extFile.getAbsolutePath(), e);
+            contentUri = Uri.fromFile(extFile);
+        }
+        return contentUri;
+    }
+
     public Boolean handleIntentUri(WebView view, Uri uri) {
         Log.d("WebResource Intent", uri.toString());
         String prefix = getIntentPrefixFromUri(uri);
         if (prefix == null) {
             return false;
         }
-        String path = uri.getPath().substring(prefix.length());
-        File extFile = getExternalFileFromPath(path);
-        if (extFile == null) {
-            Log.d("Intent", "File Not Found");
-            return false;
-        }
-        Log.d("Intent", "File: " + extFile.getAbsolutePath());
+        String path = uri.getPath().substring(prefix.length() + 1);
+        Intent intent;
         Uri contentUri;
-        try {
-            contentUri = FileProvider.getUriForFile(activity, "net.mikespub.mywebview.fileprovider", extFile);
-            MyContentUtility.showContent(activity, contentUri);
-        } catch (Exception e) {
-            Log.e("Intent", extFile.getAbsolutePath(), e);
-            contentUri = Uri.fromFile(extFile);
+        String type;
+        // See also http://www.openintents.org/intentsregistry/
+        switch (prefix) {
+            case "view":
+                contentUri = getContentUriFromPath(path);
+                if (contentUri == null) {
+                    return false;
+                }
+                //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(extFile));
+                intent = new Intent(Intent.ACTION_VIEW);
+                //intent.setDataAndType(Uri.fromFile(extFile), getMimeType(extFile.getName()));
+                intent.setDataAndType(contentUri, getMimeType(path));
+                // Grant temporary read permission to the content URI
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                //view.getContext().startActivity(intent);
+                // Create intent to show chooser
+                String title = uri.toString() + "\n\nOpen with";
+                Intent chooser = Intent.createChooser(intent, title);
+                view.getContext().startActivity(chooser);
+                break;
+            case "pick":
+                intent = new Intent(Intent.ACTION_PICK);
+                type = "";
+                if (path.equals("/")) {
+                    type = "*/*";
+                } else if (path.indexOf("/", 1) < 0) {
+                    type = path.substring(1) + "/*";
+                } else if (path.startsWith("//")) {
+                    // { action=android.app.action.PICK data=content://com.google.provider.NotePad/notes }
+                    path = "content:" + path;
+                    intent.setData(Uri.parse(path));
+                    Log.d("Intent", "Pick Data: " + path);
+                } else {
+                    type = path.substring(1);
+                }
+                if (!type.isEmpty()) {
+                    intent.setType(type);
+                    Log.d("Intent", "Pick Type: " + type);
+                }
+                //intent.addCategory(Intent.CATEGORY_OPENABLE);
+                activity.startActivityForResult(intent, 1);
+                break;
+            case "get":
+                intent = new Intent(Intent.ACTION_GET_CONTENT);
+                type = "";
+                if (path.equals("/")) {
+                    type = "*/*";
+                } else if (path.indexOf("/", 1) < 0) {
+                    type = path.substring(1) + "/*";
+                } else if (path.startsWith("//")) {
+                    path = "content:" + path;
+                    intent.setData(Uri.parse(path));
+                    Log.d("Intent", "Get Data: " + path);
+                } else {
+                    // { action=android.app.action.GET_CONTENT type=vnd.android.cursor.item/vnd.google.note }
+                    type = path.substring(1);
+                }
+                if (!type.isEmpty()) {
+                    intent.setType(type);
+                    Log.d("Intent", "Get Type: " + type);
+                }
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                activity.startActivityForResult(intent, 2);
+                break;
+            case "open":
+                intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                //intent.addCategory(Intent.CATEGORY_OPENABLE);
+                //intent.putExtra("android.provider.extra.INITIAL_URI", initialUri); // android.net.Uri
+                activity.startActivityForResult(intent, 3);
+                break;
+            case "tree":
+                if (Build.VERSION.SDK_INT < 21) {
+                    return false;
+                }
+                intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                // intent.putExtra("android.provider.extra.INITIAL_URI", initialUri); // android.net.Uri
+                activity.startActivityForResult(intent, 4);
+                break;
+            case "create":
+                intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                activity.startActivityForResult(intent, 5);
+                break;
+            case "edit":
+                intent = new Intent(Intent.ACTION_EDIT);
+                //intent.setData(dataUri); // data to be edited
+                if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                    activity.startActivity(intent);
+                }
+                break;
+            case "delete":
+                intent = new Intent(Intent.ACTION_DELETE);
+                //intent.setData(dataUri); // Data to be deleted.
+                if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                    activity.startActivity(intent);
+                }
+                break;
+            case "send":
+            default:
+                contentUri = getContentUriFromPath(path);
+                if (contentUri == null) {
+                    return false;
+                }
+                intent = new Intent(Intent.ACTION_SEND);
+                intent.setDataAndType(contentUri, getMimeType(path));
+                // Grant temporary read permission to the content URI
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                view.getContext().startActivity(intent);
+                // Create intent to show chooser
+                //String title = uri.toString() + "\n\nOpen with";
+                //Intent chooser = Intent.createChooser(intent, title);
+                //view.getContext().startActivity(chooser);
+                break;
         }
-        /*
-        */
-        if (prefix.equals("/view")) {
-            //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(extFile));
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            //intent.setDataAndType(Uri.fromFile(extFile), getMimeType(extFile.getName()));
-            intent.setDataAndType(contentUri, getMimeType(extFile.getName()));
-            // Grant temporary read permission to the content URI
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.putExtra(Intent.EXTRA_STREAM, contentUri);
-            //view.getContext().startActivity(intent);
-            // Create intent to show chooser
-            String title = uri.toString() + "\n\nOpen with";
-            Intent chooser = Intent.createChooser(intent, title);
-            view.getContext().startActivity(chooser);
-            return true;
-        }
-        if (prefix.equals("/pick")) {
-            //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(extFile));
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            activity.startActivityForResult(intent, 1);
-            return true;
-        }
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setDataAndType(contentUri, getMimeType(extFile.getName()));
-        // Grant temporary read permission to the content URI
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.putExtra(Intent.EXTRA_STREAM, contentUri);
-        view.getContext().startActivity(intent);
-        // Create intent to show chooser
-        //String title = uri.toString() + "\n\nOpen with";
-        //Intent chooser = Intent.createChooser(intent, title);
-        //view.getContext().startActivity(chooser);
         return true;
     }
 
