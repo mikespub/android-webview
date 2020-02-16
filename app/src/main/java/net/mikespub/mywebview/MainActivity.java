@@ -4,14 +4,12 @@ import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.UriPermission;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
-import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -22,18 +20,17 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProvider;
 
 import net.mikespub.myutils.MyContentUtility;
+import net.mikespub.myutils.MyDocumentUtility;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Main Activity for Android App
@@ -73,23 +70,8 @@ public class MainActivity extends AppCompatActivity {
         // Some other options - https://github.com/codepath/android_guides/wiki/Working-with-the-WebView
         // webSettings.setUseWideViewPort(true);
         // webSettings.setLoadWithOverviewMode(true);
-        //MyContentUtility.showMyDownloadFiles(this, true);
+        //MyDownloadUtility.showMyDownloadFiles(this, true);
         //MyContentUtility.showContent(this, Uri.parse("content://media/external/file/86"));
-        /*
-        // From https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/provider/Downloads.java
-        String COLUMN_NOTIFICATION_PACKAGE = "notificationpackage";
-        String COLUMN_NOTIFICATION_CLASS = "notificationclass";
-        Uri CONTENT_URI =
-                Uri.parse("content://downloads/my_downloads");
-        String QUERY_WHERE_CLAUSE = Impl.COLUMN_NOTIFICATION_PACKAGE + "=? AND "
-            + Impl.COLUMN_NOTIFICATION_CLASS + "=?";
-
-        public static final void removeAllDownloadsByPackage(
-            Context context, String notification_package, String notification_class) {
-            context.getContentResolver().delete(Impl.CONTENT_URI, QUERY_WHERE_CLAUSE,
-                    new String[] { notification_package, notification_class });
-        }
-         */
         //MyContentUtility.showContentFiles(this,"content://net.mikespub.mywebview.fileprovider/root/");
         //String parentDoc = this.getContentResolver().getType(Uri.parse("content://net.mikespub.mywebview.fileprovider/root/"));
         //Log.d("Parent", parentDoc);
@@ -367,45 +349,23 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " Uri: " + returnUri + " Extras: " + returnExtras);
         }
+        if (requestCode == MyRequestHandler.REQUEST_TREE) {
+            // Downloads = content://com.android.providers.downloads.documents/tree/downloads
+            // Virtual SD Card = content://com.android.externalstorage.documents/tree/primary%3A
+            // Downloads via SD Card = content://com.android.externalstorage.documents/tree/primary%3ADownload
+            if (MyDocumentUtility.checkTreeUri(returnUri)) {
+                MyDocumentUtility.savePermissions(this, returnIntent);
+                MyDocumentUtility.showPermissions(this);
+                MyDocumentUtility.showTreeFiles(this, returnUri);
+            } else {
+                Log.d("Activity Result", "Not a tree?");
+            }
+            return;
+        }
         try {
             MyContentUtility.showContent(this, returnUri);
         } catch (Exception e) {
             Log.e("Activity Result", "Content Error: " + returnUri, e);
-            // Downloads = content://com.android.providers.downloads.documents/tree/downloads
-            // Virtual SD Card = content://com.android.externalstorage.documents/tree/primary%3A
-            // Downloads via SD Card = content://com.android.externalstorage.documents/tree/primary%3ADownload
-            if (Build.VERSION.SDK_INT >= 24) {
-                if (DocumentsContract.isTreeUri(returnUri)) {
-                    final int takeFlags = returnIntent.getFlags()
-                            & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    getContentResolver().takePersistableUriPermission(returnUri, takeFlags);
-                    List<UriPermission> outPerms = getContentResolver().getOutgoingPersistedUriPermissions();
-                    for (UriPermission perm: outPerms) {
-                        Log.d("Permissions OUT", perm.toString());
-                    }
-                    /*
-                    Permissions IN: UriPermission {uri=content://com.android.providers.downloads.documents/tree/downloads, modeFlags=3, persistedTime=1581805900986}
-                    Permissions IN: UriPermission {uri=content://com.android.externalstorage.documents/tree/primary%3ADownload, modeFlags=3, persistedTime=1581806457493}
-                    Permissions IN: UriPermission {uri=content://com.android.externalstorage.documents/tree/primary%3A, modeFlags=3, persistedTime=1581806397717}
-                    Permissions IN: UriPermission {uri=content://com.android.externalstorage.documents/tree/primary%3APictures, modeFlags=3, persistedTime=1581808051284}
-                     */
-                    List<UriPermission> inPerms = getContentResolver().getPersistedUriPermissions();
-                    for (UriPermission perm: inPerms) {
-                        Log.d("Permissions IN", perm.toString());
-                    }
-                    //String treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri);
-                    // https://developer.android.com/reference/androidx/documentfile/provider/DocumentFile?hl=en
-                    DocumentFile pickedDir = DocumentFile.fromTreeUri(this, returnUri);
-                    // List all existing files inside picked directory
-                    for (DocumentFile file : pickedDir.listFiles()) {
-                        Log.d("Activity Result", "Found file " + file.getName() + " with size " + file.length());
-                    }
-                } else {
-                    Log.d("Activity Result", "Not a tree?");
-                }
-                //Uri childUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, "downloads");
-                //Log.d("Activity Result", "Child Uri: " + childUri);
-            }
             return;
         }
         /*
@@ -421,8 +381,7 @@ public class MainActivity extends AppCompatActivity {
              */
             inputPFD = getContentResolver().openFileDescriptor(returnUri, "r");
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            Log.e("MainActivity", "File not found.");
+            Log.e(TAG, "Result File not found.", e);
             return;
         }
         // Get a regular file descriptor for the file
@@ -431,7 +390,7 @@ public class MainActivity extends AppCompatActivity {
             FileInputStream inputStream = new FileInputStream(fd);
             inputStream.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Result File Error", e);
         }
         //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
     }

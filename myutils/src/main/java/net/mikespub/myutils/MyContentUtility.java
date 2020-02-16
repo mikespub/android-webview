@@ -2,7 +2,6 @@ package net.mikespub.myutils;
 
 import android.app.DownloadManager;
 import android.content.ContentUris;
-import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
@@ -14,6 +13,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Content Utility Methods
@@ -52,7 +52,7 @@ public class MyContentUtility {
     Content: 21 name: _size type: 1 value: 6313
      */
     public static void showContent(AppCompatActivity activity, Uri uri) {
-        HashMap<String, Object> cursorInfo = getContent(activity, uri);
+        Map<String, Object> cursorInfo = getContent(activity, uri);
         if (cursorInfo != null) {
             try {
                 Log.d(TAG, MyJsonUtility.toJsonString(cursorInfo));
@@ -64,10 +64,13 @@ public class MyContentUtility {
         }
     }
 
-    public static HashMap<String, Object> getContent(AppCompatActivity activity, Uri uri) {
+    public static Map<String, Object> getContent(AppCompatActivity activity, Uri uri) {
         Log.d(TAG, "URI: " + uri);
         Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
-        HashMap<String, Object> cursorInfo = null;
+        if (cursor == null) {
+            return null;
+        }
+        Map<String, Object> cursorInfo = null;
         if (cursor.moveToFirst()) {
             cursorInfo = getCursorInfo(cursor, uri);
         }
@@ -80,7 +83,7 @@ public class MyContentUtility {
      *
      * @param cursor    current cursor
      */
-    private static HashMap<String, Object> getCursorInfo(Cursor cursor, Uri parentUri) {
+    private static Map<String, Object> getCursorInfo(Cursor cursor, Uri parentUri) {
         //String local_uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
         //Log.d(TAG, "Local URI: " + local_uri);
         //String[] columns = cursor.getColumnNames();
@@ -88,7 +91,7 @@ public class MyContentUtility {
         //Uri contentUri = ContentUris.withAppendedId(uri, cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_ID)));
         //String id = DocumentsContract.getDocumentId(contentUri);
         //Log.d(TAG, "Current URI: " + contentUri + " Document Id: " + id);
-        HashMap<String, Object> cursorInfo = new HashMap<>();
+        Map<String, Object> cursorInfo = new HashMap<>();
         for (int i=0; i < cursor.getColumnCount(); i++) {
             switch (cursor.getType(i)) {
                 case Cursor.FIELD_TYPE_NULL:
@@ -129,38 +132,20 @@ public class MyContentUtility {
     }
 
     /**
-     * Show app downloads via content provider
-     *
-     * @param activity  current Activity context
-     * @param cleanUp   clean up download content provider
-     */
-    public static void showMyDownloadFiles(AppCompatActivity activity, boolean cleanUp) {
-        //static android.provider.Downloads.Impl.ALL_DOWNLOADS_CONTENT_URI;
-        //ALL_DOWNLOADS_CONTENT_URI
-        //Uri uri = Uri.parse("content://downloads/my_downloads");
-        //Uri uri = Uri.parse("content://downloads/public_downloads");
-        //Uri uri = Uri.parse("content://downloads/all_downloads");
-        //activity.grantUriPermission(activity.getPackageName(),uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        // MediaStore.Downloads.EXTERNAL_CONTENT_URI
-        // Also see https://android.googlesource.com/platform/packages/providers/DownloadProvider.git/+/refs/heads/master/src/com/android/providers/downloads/DownloadProvider.java
-        showContentFiles(activity, "content://downloads/my_downloads", cleanUp);
-    }
-
-    /**
      * Show content via content provider
      *
      * @param activity     current Activity context
      * @param contentUri   content uri to show
-     * @param cleanUp      clean up download content provider
+     * @param cleanUp      clean up content provider (for downloads)
      */
     public static void showContentFiles(AppCompatActivity activity, String contentUri, boolean cleanUp) {
         Uri uri = Uri.parse(contentUri);
         Log.d(TAG, "Uri: " + uri.toString());
         Log.d(TAG, "Authority: " + uri.getAuthority());
         Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
-        HashMap<String, Object> cursorInfo;
-        HashMap<String, Long> mediaLastMods = new HashMap<>();
-        HashMap<String, Long> mediaContentIds = new HashMap<>();
+        Map<String, Object> cursorInfo;
+        Map<String, Long> mediaLastMods = new HashMap<>();
+        Map<String, Long> mediaContentIds = new HashMap<>();
         while (cursor.moveToNext()) {
             cursorInfo = getCursorInfo(cursor, uri);
             if (cursorInfo.containsKey(DownloadManager.COLUMN_MEDIAPROVIDER_URI)) {
@@ -245,13 +230,19 @@ public class MyContentUtility {
          */
         cursor.close();
     }
-    public static List<HashMap<String, Object>> getContentItems(AppCompatActivity activity, Uri contentUri) {
-        List<HashMap<String, Object>> contentItems = new ArrayList<>();
+
+    /**
+     * @param activity     current Activity context
+     * @param contentUri   content uri to get items for
+     * @return content items
+     */
+    public static List<Map<String, Object>> getContentItems(AppCompatActivity activity, Uri contentUri) {
+        List<Map<String, Object>> contentItems = new ArrayList<>();
         Cursor cursor = activity.getContentResolver().query(contentUri,null,null,null,null);
         if (cursor == null) {
             return contentItems;
         }
-        HashMap<String, Object> cursorInfo;
+        Map<String, Object> cursorInfo;
         while (cursor.moveToNext()) {
             cursorInfo = getCursorInfo(cursor, contentUri);
             contentItems.add(cursorInfo);
@@ -259,49 +250,4 @@ public class MyContentUtility {
         cursor.close();
         return contentItems;
     }
-
-    /**
-     * Get DownloadManager service
-     *
-     * @param activity  current Activity context
-     * @return          download manager
-     */
-    static DownloadManager getDownloadManager(AppCompatActivity activity) {
-        return (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
-    }
-
-    /**
-     * Get download status for a download id
-     *
-     * @param activity      current Activity context
-     * @param downloadId    download id
-     * @return              current status
-     */
-    public static int getDownloadStatus(AppCompatActivity activity, int downloadId) {
-        DownloadManager mDownloadManager = getDownloadManager(activity);
-        // query download status
-        Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
-        if (cursor.moveToFirst()) {
-            int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-            if(status == DownloadManager.STATUS_SUCCESSFUL){
-                // download is successful
-                //String uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                //File file = new File(Uri.parse(uri).getPath());
-                Uri uri = mDownloadManager.getUriForDownloadedFile(downloadId);
-                if (uri != null) {
-                    Log.d(TAG, "URI: " + uri);
-                    //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
-                }
-            }
-            else {
-                // download is assumed cancelled
-            }
-            return status;
-        }
-        else {
-            // download is assumed cancelled
-            return DownloadManager.STATUS_FAILED;
-        }
-    }
-
 }

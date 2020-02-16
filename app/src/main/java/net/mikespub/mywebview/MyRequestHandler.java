@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
@@ -21,10 +22,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.webkit.WebViewAssetLoader;
 
 import net.mikespub.myutils.MyAssetUtility;
 import net.mikespub.myutils.MyContentUtility;
+import net.mikespub.myutils.MyDocumentUtility;
+import net.mikespub.myutils.MyDownloadUtility;
 import net.mikespub.myutils.MyJsonUtility;
 
 import java.io.ByteArrayInputStream;
@@ -42,9 +46,14 @@ import java.util.Map;
  */
 class MyRequestHandler {
     private static final String TAG = "Request";
-    static final String[] linkNames = {"sites", "files", "web", "local", "root", "content", "media", "refresh"};
+    static final String[] linkNames = {"sites", "files", "web", "local", "root", "content", "media", "document", "refresh"};
     static final String[] mediaNames = {"files", "images", "audio", "video", "downloads"};
     static final String[] intentNames = {"intent", "view", "send", "pick", "get", "open", "tree", "create", "edit", "delete"};
+    static final int REQUEST_PICK = 1;
+    static final int REQUEST_GET = 2;
+    static final int REQUEST_OPEN = 3;
+    static final int REQUEST_TREE = 4;
+    static final int REQUEST_CREATE = 5;
     private final MyAppWebViewClient webViewClient;
     private final MainActivity activity;
     private final String domainUrl;
@@ -82,7 +91,8 @@ class MyRequestHandler {
      */
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
     WebResourceResponse handleRequest(WebView view, Uri uri) {
-        String path = uri.getPath();
+        //String path = uri.getPath();
+        String path = uri.getEncodedPath();
         Log.d(TAG, "Path: " + path);
         // ByteArrayInputStream str = new ByteArrayInputStream(message.getBytes());
         // return new WebResourceResponse("text/plain", "utf-8", str);
@@ -114,6 +124,8 @@ class MyRequestHandler {
             return handleContentRequest(uri);
         } else if (path.startsWith("/media/")) {
             return handleMediaRequest(uri);
+        } else if (path.startsWith("/document/")) {
+            return handleTreeRequest(uri);
         } else if (path.startsWith("/refresh/")) {
             MyLocalConfigRepository.refreshDemoSite(activity);
             return handleLocalSiteRequest(Uri.parse(domainUrl + "sites/demo/test.html"));
@@ -211,7 +223,7 @@ class MyRequestHandler {
             return handleFileRequest(Environment.DIRECTORY_DOCUMENTS, "demo/test.html");
         }
         Uri contentUri = Uri.parse("content://" + contentName);
-        List<HashMap<String, Object>> contentItems;
+        List<Map<String, Object>> contentItems;
         try {
             contentItems = MyContentUtility.getContentItems(activity, contentUri);
         } catch (Exception e) {
@@ -300,7 +312,7 @@ class MyRequestHandler {
         //Uri contentUri = Uri.parse("content://" + mediaName);
         //Uri contentUri = MediaStore.getDocumentUri(activity, mediaUri); // API level 29
         Uri contentUri = mediaUri;
-        List<HashMap<String, Object>> contentItems;
+        List<Map<String, Object>> contentItems;
         try {
             contentItems = MyContentUtility.getContentItems(activity, contentUri);
         } catch (Exception e) {
@@ -317,6 +329,130 @@ class MyRequestHandler {
             }
         } else {
             output = "No Media Found: " + mediaName.replace("<", "&lt;");
+        }
+        // use template file for response here
+        return createResultResponse("local/result.html", output);
+    }
+
+    WebResourceResponse handleTreeRequest(Uri uri) {
+        //String treeName = uri.getPath().substring("/document/".length());
+        String treeName = uri.getEncodedPath().substring("/document/".length());
+        if (treeName.isEmpty()) {
+            // use template file for response here
+            List<Uri> treeUris = MyDocumentUtility.getPermittedTreeUris(activity);
+            StringBuilder builder = new StringBuilder();
+            builder.append("Available Trees:");
+            builder.append("<ul>");
+            for (Uri treeUri: treeUris) {
+                builder.append("<li><a href=\"/document/" + treeUri.getEncodedAuthority() + treeUri.getEncodedPath() + "\">" + treeUri.getLastPathSegment() + "</a> [" + treeUri.getAuthority() + "]</li>");
+            }
+            builder.append("</ul>");
+            return createResultResponse("local/result.html", builder.toString());
+        }
+        Uri contentUri = Uri.parse("content://" + treeName);
+        if (DocumentsContract.isDocumentUri(activity, contentUri)) {
+            Log.d(TAG, "Document Uri: " + contentUri.toString());
+        } else if (MyDocumentUtility.checkTreeUri(contentUri)) {
+            Log.d(TAG, "Tree Uri: " + contentUri.toString());
+            StringBuilder builder = new StringBuilder();
+            builder.append("Tree: " + contentUri.getLastPathSegment() + "\n");
+            builder.append("Authority: " + contentUri.getAuthority() + "\n");
+            builder.append("Uri: " + contentUri.toString() + "\n");
+            builder.append("Available Documents:");
+            builder.append("<ul>");
+            if (Build.VERSION.SDK_INT >= 21) {
+                //MyDocumentUtility.showTreeFiles(activity, contentUri);
+                List<Map<String, Object>> treeItems = MyDocumentUtility.getTreeContentItems(activity, contentUri);
+                for (Map<String, Object> childInfo: treeItems) {
+                    Uri fileUri = (Uri) childInfo.get("[uri]");
+                    String fileId = DocumentsContract.getDocumentId(fileUri);
+                    String fileName = (String) childInfo.get(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
+                        Uri newUri = fileUri;
+                        builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " New: " + newUri.toString() + "</li>");
+                    } else {
+                        builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
+                    }
+                }
+            } else {
+                List<DocumentFile> treeFiles = MyDocumentUtility.getTreeDocumentFiles(activity, contentUri);
+                for (DocumentFile file: treeFiles) {
+                    Uri fileUri = file.getUri();
+                    String fileId = DocumentsContract.getDocumentId(fileUri);
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
+                        Uri newUri = fileUri;
+                        builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + file.getName() + "</a>: " + fileId + " New: " + newUri.toString() + "</li>");
+                    } else {
+                        builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + file.getName() + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
+                    }
+                }
+            }
+            builder.append("</ul>");
+            return createResultResponse("local/result.html", builder.toString());
+        } else {
+            Log.d(TAG, "Other Uri: " + contentUri.toString());
+        }
+        /*
+        List<Map<String, Object>> contentItems;
+        try {
+            contentItems = MyContentUtility.getContentItems(activity, contentUri);
+        } catch (Exception e) {
+            Log.e(TAG, "Content Uri: " + contentUri.toString(), e);
+            // use template file for response here
+            return createResultResponse("local/result.html", "Uri: " + contentUri.toString() + "\nException: " + e.toString());
+        }
+        String output;
+        if (contentItems != null) {
+            try {
+                output = MyJsonUtility.toJsonString(contentItems);
+            } catch (Exception e) {
+                output = contentItems.toString();
+            }
+        } else {
+            output = "No Tree Found: " + treeName.replace("<", "&lt;");
+        }
+         */
+        Map<String, Object> cursorInfo = MyDocumentUtility.getTreeContent(activity, contentUri);
+        String output;
+        if (cursorInfo != null) {
+            if (cursorInfo.containsKey("[children]")) {
+                // list children instead of content
+                StringBuilder builder = new StringBuilder();
+                builder.append("Dir: " + contentUri.getLastPathSegment() + "\n");
+                builder.append("Authority: " + contentUri.getAuthority() + "\n");
+                builder.append("Uri: " + contentUri.toString() + "\n");
+                builder.append("Available Documents:");
+                builder.append("<ul>");
+                for (Map<String, Object> childInfo: (List<Map<String, Object>>) cursorInfo.get("[children]")) {
+                    Uri fileUri = (Uri) childInfo.get("[uri]");
+                    String fileId = DocumentsContract.getDocumentId(fileUri);
+                    String fileName = (String) childInfo.get(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
+                        Uri newUri = fileUri;
+                        builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " New: " + newUri.toString() + "</li>");
+                    } else {
+                        builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
+                    }
+                }
+                builder.append("</ul>");
+                try {
+                    builder.append(MyJsonUtility.toJsonString(cursorInfo));
+                } catch (Exception e) {
+                    builder.append(cursorInfo.toString());
+                }
+                output = builder.toString();
+            } else {
+                try {
+                    output = MyJsonUtility.toJsonString(cursorInfo);
+                } catch (Exception e) {
+                    output = cursorInfo.toString();
+                }
+            }
+        } else {
+            output = "No Document Found: " + contentUri.toString();
         }
         // use template file for response here
         return createResultResponse("local/result.html", output);
@@ -423,7 +559,7 @@ class MyRequestHandler {
                     Log.d(TAG, "Intent No activity for " + intent.toString());
                     return false;
                 }
-                activity.startActivityForResult(intent, 1);
+                activity.startActivityForResult(intent, REQUEST_PICK);
                 break;
             case "get":
                 intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -449,7 +585,7 @@ class MyRequestHandler {
                     Log.d(TAG, "Intent No activity for " + intent.toString());
                     return false;
                 }
-                activity.startActivityForResult(intent, 2);
+                activity.startActivityForResult(intent, REQUEST_GET);
                 break;
             case "open":
                 intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -461,7 +597,7 @@ class MyRequestHandler {
                     Log.d(TAG, "Intent No activity for " + intent.toString());
                     return false;
                 }
-                activity.startActivityForResult(intent, 3);
+                activity.startActivityForResult(intent, REQUEST_OPEN);
                 break;
             case "tree":
                 if (Build.VERSION.SDK_INT < 21) {
@@ -477,7 +613,7 @@ class MyRequestHandler {
                     Log.d(TAG, "Intent No activity for " + intent.toString());
                     return false;
                 }
-                activity.startActivityForResult(intent, 4);
+                activity.startActivityForResult(intent, REQUEST_TREE);
                 break;
             case "create":
                 intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -485,7 +621,7 @@ class MyRequestHandler {
                     Log.d(TAG, "Intent No activity for " + intent.toString());
                     return false;
                 }
-                activity.startActivityForResult(intent, 5);
+                activity.startActivityForResult(intent, REQUEST_CREATE);
                 break;
             case "edit":
                 intent = new Intent(Intent.ACTION_EDIT);
@@ -615,7 +751,7 @@ class MyRequestHandler {
 
     WebResourceResponse handleCleanUpDownloads(Uri uri) {
         try {
-            MyContentUtility.showMyDownloadFiles(activity, true);
+            MyDownloadUtility.showMyDownloadFiles(activity, true);
         } catch (Exception e) {
             Log.e(TAG, "Cleanup", e);
         }
