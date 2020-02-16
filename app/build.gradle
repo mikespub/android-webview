@@ -61,6 +61,7 @@ dependencies {
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation 'androidx.documentfile:documentfile:1.0.1'
 }
 
 // based on https://gist.github.com/delor/f70560f14674b322dcd2

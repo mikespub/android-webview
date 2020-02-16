@@ -11,7 +11,9 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Content Utility Methods
@@ -50,18 +52,27 @@ public class MyContentUtility {
     Content: 21 name: _size type: 1 value: 6313
      */
     public static void showContent(AppCompatActivity activity, Uri uri) {
-        Log.d(TAG, "URI: " + uri);
-        Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
-        HashMap<String, Object> cursorInfo;
-        if (cursor.moveToFirst()) {
-            cursorInfo = getCursorInfo(cursor, uri);
+        HashMap<String, Object> cursorInfo = getContent(activity, uri);
+        if (cursorInfo != null) {
             try {
                 Log.d(TAG, MyJsonUtility.toJsonString(cursorInfo));
             } catch (Exception e) {
                 Log.e(TAG, cursorInfo.toString(), e);
             }
+        } else {
+            Log.d(TAG, "No Content Found: " + uri.toString());
+        }
+    }
+
+    public static HashMap<String, Object> getContent(AppCompatActivity activity, Uri uri) {
+        Log.d(TAG, "URI: " + uri);
+        Cursor cursor = activity.getContentResolver().query(uri,null,null,null,null);
+        HashMap<String, Object> cursorInfo = null;
+        if (cursor.moveToFirst()) {
+            cursorInfo = getCursorInfo(cursor, uri);
         }
         cursor.close();
+        return cursorInfo;
     }
 
     /**
@@ -233,6 +244,20 @@ public class MyContentUtility {
         }
          */
         cursor.close();
+    }
+    public static List<HashMap<String, Object>> getContentItems(AppCompatActivity activity, Uri contentUri) {
+        List<HashMap<String, Object>> contentItems = new ArrayList<>();
+        Cursor cursor = activity.getContentResolver().query(contentUri,null,null,null,null);
+        if (cursor == null) {
+            return contentItems;
+        }
+        HashMap<String, Object> cursorInfo;
+        while (cursor.moveToNext()) {
+            cursorInfo = getCursorInfo(cursor, contentUri);
+            contentItems.add(cursorInfo);
+        }
+        cursor.close();
+        return contentItems;
     }
 
     /**

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <base href="https://appassets.androidplatform.net/sites/demo/">
     <!-- No complains about missing favicon.ico from https requests. -->
     <link rel="icon" href="data:,">
     <title>Demo Local Site</title>
@@ -89,7 +90,52 @@
                     <li>
                         <a href="/tree/sites/demo/index.html">Open Document Tree for Something</a>
                     </li>
+                    <li>
+                        Current tree permissions: see getContentResolver().getPersistedUriPermissions()
+                    </li>
                 </ul>
+            </li>
+            <li>
+                Standard Chrome intent:// support
+                <ul>
+                    <li>
+                        <a href="https://developer.chrome.com/multidevice/android/intents">https://developer.chrome.com/multidevice/android/intents</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                Content:
+                <ul>
+                    <li>
+                        <a href="/content/">Any Content</a>
+                    </li>
+                    <li>
+                        <a href="/content/downloads/my_downloads">My Downloads</a>
+                    </li>
+                    <li>
+                        <a href="/content/downloads/my_downloads/47">My Download 47</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                Media:
+                <ul>
+                    <li>
+                        <a href="/media/">Any Media</a>
+                    </li>
+                    <li>
+                        <a href="/media/files/47">File Media 47</a>
+                    </li>
+                    <li>
+                        <a href="/media/audio">Audio Media ?</a>
+                    </li>
+                    <li>
+                        <a href="/media/audio/123">Audio Media 123 ?</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="/refresh/">Refresh Demo Site</a>
             </li>
         </ul>
         <p><a href="/assets/local/sites.html">Manage Local Websites</a></p>

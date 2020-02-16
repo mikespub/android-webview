@@ -47,7 +47,7 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
         HashMap<String, Object> localConfig = loadJsonFile(activity, fileName, dirName);
         HashMap<String, String> localSites = (HashMap<String, String>) localConfig.get("sites");
         //MyAssetUtility.showMyExternalFiles(activity, Environment.DIRECTORY_DOWNLOADS, false);
-        checkDemoSite(activity);
+        checkDemoSite(activity, 0);
         boolean hasAdded = updateLocalSites(activity, localSites);
         //List<String> localBundles = (ArrayList<String>) localConfig.get("bundles");
         localConfig.put("bundles", findAvailableBundles(activity));
@@ -57,14 +57,19 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
         return localConfig;
     }
 
-    static void checkDemoSite(AppCompatActivity activity) {
+    static void refreshDemoSite(AppCompatActivity activity) {
+        long lastUpdated = System.currentTimeMillis();
+        checkDemoSite(activity, lastUpdated);
+    }
+
+    static void checkDemoSite(AppCompatActivity activity, long lastUpdated) {
         File extDir = activity.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
         if (!extDir.exists() && !extDir.mkdirs()) {
             Log.e(TAG, "Dir Create: FAIL " + extDir.getAbsolutePath());
             return;
         }
         File extFile = new File(extDir, ".installed");
-        if (extFile.exists()) {
+        if (extFile.exists() && lastUpdated < 1) {
             Log.d(TAG, "The demo site was installed once already");
             return;
         }
@@ -76,7 +81,7 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
         }
         String dirName = "demo";
         File targetDir = new File(extDir, dirName);
-        MyAssetUtility.copyAssetDir(activity, dirName, targetDir, 0);
+        MyAssetUtility.copyAssetDir(activity, dirName, targetDir, lastUpdated);
     }
 
     static boolean updateLocalSites(AppCompatActivity activity, HashMap<String, String> localSites) {

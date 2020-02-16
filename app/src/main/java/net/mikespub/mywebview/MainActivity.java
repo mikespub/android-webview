@@ -4,11 +4,14 @@ import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.UriPermission;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -19,6 +22,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -28,6 +32,8 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Main Activity for Android App
@@ -35,6 +41,7 @@ import java.io.IOException;
 // See also Chrome Custom Tabs https://developer.chrome.com/multidevice/android/customtabs
 // and Android Browser Helper https://github.com/GoogleChrome/android-browser-helper
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
 
     // SavedStateViewModel see https://github.com/googlecodelabs/android-lifecycles/blob/master/app/src/main/java/com/example/android/lifecycles/step6_solution/SavedStateActivity.java
     // or with AndroidViewModel see https://github.com/husaynhakeem/Androidx-SavedState-Playground/blob/master/app/src/main/java/com/husaynhakeem/savedstateplayground/AndroidViewModelWithSavedState.kt
@@ -332,13 +339,75 @@ public class MainActivity extends AppCompatActivity {
         // If the selection didn't work
         if (resultCode != RESULT_OK) {
             // Exit without doing anything else
-            Log.d("Activity Result", "Not OK");
+            if (returnIntent != null) {
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent.toString());
+            } else {
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent);
+            }
+            return;
+        }
+        if (returnIntent == null) {
+            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent);
             return;
         }
         // Get the file's content URI from the incoming Intent
         Uri returnUri = returnIntent.getData();
-        Log.d("Activity Result", returnUri.toString());
-        MyContentUtility.showContent(this, returnUri);
+        Bundle returnExtras = returnIntent.getExtras();
+        if (returnUri == null) {
+            // Pick text - Samsung Notes
+            if (returnExtras != null) {
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " No Uri: " + returnIntent.toUri(0) + " Extras: " + returnExtras.toString());
+            } else {
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " No Uri: " + returnIntent.toUri(0) + " Extras: " + returnExtras);
+            }
+            return;
+        }
+        if (returnExtras != null) {
+            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " Uri: " + returnUri + " Extras: " + returnExtras.toString());
+        } else {
+            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " Uri: " + returnUri + " Extras: " + returnExtras);
+        }
+        try {
+            MyContentUtility.showContent(this, returnUri);
+        } catch (Exception e) {
+            Log.e("Activity Result", "Content Error: " + returnUri, e);
+            // Downloads = content://com.android.providers.downloads.documents/tree/downloads
+            // Virtual SD Card = content://com.android.externalstorage.documents/tree/primary%3A
+            // Downloads via SD Card = content://com.android.externalstorage.documents/tree/primary%3ADownload
+            if (Build.VERSION.SDK_INT >= 24) {
+                if (DocumentsContract.isTreeUri(returnUri)) {
+                    final int takeFlags = returnIntent.getFlags()
+                            & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    getContentResolver().takePersistableUriPermission(returnUri, takeFlags);
+                    List<UriPermission> outPerms = getContentResolver().getOutgoingPersistedUriPermissions();
+                    for (UriPermission perm: outPerms) {
+                        Log.d("Permissions OUT", perm.toString());
+                    }
+                    /*
+                    Permissions IN: UriPermission {uri=content://com.android.providers.downloads.documents/tree/downloads, modeFlags=3, persistedTime=1581805900986}
+                    Permissions IN: UriPermission {uri=content://com.android.externalstorage.documents/tree/primary%3ADownload, modeFlags=3, persistedTime=1581806457493}
+                    Permissions IN: UriPermission {uri=content://com.android.externalstorage.documents/tree/primary%3A, modeFlags=3, persistedTime=1581806397717}
+                    Permissions IN: UriPermission {uri=content://com.android.externalstorage.documents/tree/primary%3APictures, modeFlags=3, persistedTime=1581808051284}
+                     */
+                    List<UriPermission> inPerms = getContentResolver().getPersistedUriPermissions();
+                    for (UriPermission perm: inPerms) {
+                        Log.d("Permissions IN", perm.toString());
+                    }
+                    //String treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri);
+                    // https://developer.android.com/reference/androidx/documentfile/provider/DocumentFile?hl=en
+                    DocumentFile pickedDir = DocumentFile.fromTreeUri(this, returnUri);
+                    // List all existing files inside picked directory
+                    for (DocumentFile file : pickedDir.listFiles()) {
+                        Log.d("Activity Result", "Found file " + file.getName() + " with size " + file.length());
+                    }
+                } else {
+                    Log.d("Activity Result", "Not a tree?");
+                }
+                //Uri childUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, "downloads");
+                //Log.d("Activity Result", "Child Uri: " + childUri);
+            }
+            return;
+        }
         /*
          * Try to open the file for "read" access using the
          * returned URI. If the file isn't found, write to the
@@ -366,6 +435,35 @@ public class MainActivity extends AppCompatActivity {
         }
         //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
     }
+
+    // See https://developer.android.com/training/permissions/requesting
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d("Activity", "Request permission result for " + requestCode + " Permissions: " + Arrays.toString(permissions) + " Grant: " + Arrays.toString(grantResults));
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Log.d("Activity", "Permission granted");
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Log.d("Activity", "Permission denied");
+                }
+                return;
+            }
+
+            default:
+                // other 'case' lines to check for other
+                // permissions this app might request.
+                Log.d("Activity", "Other Permission?");
+        }
+    }
+
     /**
      *
      */

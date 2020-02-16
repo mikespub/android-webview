@@ -27,6 +27,9 @@ public class MyFileProvider extends FileProvider {
     @Override
     public void attachInfo(@NonNull Context context, @NonNull ProviderInfo info) {
         super.attachInfo(context, info);
+        // See also https://stackoverflow.com/questions/586363/why-is-super-super-method-not-allowed-in-java
+        //info.exported = true;
+        //super.super.attachInfo(context, info);
     }
 
     @Override

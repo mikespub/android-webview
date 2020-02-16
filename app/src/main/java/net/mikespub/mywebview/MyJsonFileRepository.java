@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 class MyJsonFileRepository {
-    static final String TAG = "JsonFileRepository";
+    static final String TAG = "JsonFileRepo";
     private static final String timeZone = "UTC";
     private static final String dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
