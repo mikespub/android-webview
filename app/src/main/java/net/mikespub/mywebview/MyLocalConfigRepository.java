@@ -1,6 +1,14 @@
 package net.mikespub.mywebview;
 
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.AdaptiveIconDrawable;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
@@ -79,10 +87,114 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
             Log.e(TAG, "File Error: " + extFile.getAbsolutePath(), e);
             return;
         }
+        // save icon to Pictures?
+        saveIconToMedia(activity);
         String dirName = "demo";
         File targetDir = new File(extDir, dirName);
         MyAssetUtility.copyAssetDir(activity, dirName, targetDir, lastUpdated);
     }
+
+    static void saveIconToMedia(AppCompatActivity activity) {
+        Bitmap bitmap = null;
+        try {
+            PackageManager pm = activity.getPackageManager();
+            Drawable icon = pm.getApplicationIcon(activity.getPackageName());
+            // https://stackoverflow.com/questions/44447056/convert-adaptiveicondrawable-to-bitmap-in-android-o-preview/46018816#46018816
+            if (icon instanceof  BitmapDrawable) {
+                bitmap = ((BitmapDrawable) icon).getBitmap();
+            } else if (Build.VERSION.SDK_INT >= 26) {
+                Drawable backgroundDr = ((AdaptiveIconDrawable) icon).getBackground();
+                Drawable foregroundDr = ((AdaptiveIconDrawable) icon).getForeground();
+
+                Drawable[] drr = new Drawable[2];
+                drr[0] = backgroundDr;
+                drr[1] = foregroundDr;
+
+                LayerDrawable layerDrawable = new LayerDrawable(drr);
+
+                int width = layerDrawable.getIntrinsicWidth();
+                int height = layerDrawable.getIntrinsicHeight();
+
+                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+                Canvas canvas = new Canvas(bitmap);
+
+                layerDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+                layerDrawable.draw(canvas);
+                //return bitmap;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Icon", e);
+        }
+        //Bitmap bitmap = BitmapFactory.decodeResource(activity.getResources(), R.mipmap.ic_launcher);
+        if (bitmap != null) {
+            Log.d(TAG, "Bitmap: " + bitmap.toString());
+            File extDir = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            if (!extDir.exists() && !extDir.mkdirs()) {
+                Log.e(TAG, "Dir Create: FAIL " + extDir.getAbsolutePath());
+                return;
+            }
+            File extFile = new File(extDir, "ic_launcher.png");
+            try (OutputStream out = new FileOutputStream(extFile)) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 80, out);
+            } catch (IOException e) {
+                Log.e(TAG, "File Error: " + extFile.getAbsolutePath(), e);
+                return;
+            } catch (Exception e) {
+                Log.e(TAG, "Bitmap Error: " + extFile.getAbsolutePath(), e);
+                return;
+            }
+            //insertImage(activity.getContentResolver(), extFile);
+            //Uri contentUri = Uri.fromFile(extFile);
+            //Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            //mediaScanIntent.setData(contentUri);
+            //activity.sendBroadcast(mediaScanIntent);
+            //MediaScannerConnection.scanFile(activity, new String[] {extFile.getAbsolutePath()}, new String[] {"image/png"}, new MediaScannerConnection.OnScanCompletedListener() {
+            //    @Override
+            //    public void onScanCompleted(String path, Uri uri) {
+            //        Log.i("TAG", "Finished scanning " + path + " Uri: " + uri);
+            //    }
+            //});
+            // https://proandroiddev.com/working-with-scoped-storage-8a7e7cafea3
+            /*
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, "ic_launcher.png");
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            //values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/$bucketName/");
+            Uri contentUri = MediaStore.Images.Media.getContentUri("external");
+            Log.d(TAG, "Content URI: " + contentUri);
+            Uri imageUri = activity.getContentResolver().insert(contentUri, values);
+            Log.d(TAG, "Image URI: " + imageUri);
+            try (OutputStream out = activity.getContentResolver().openOutputStream(imageUri)) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+            } catch (Exception e) {
+                Log.e(TAG, "Bitmap Error", e);
+            }
+             */
+        } else {
+            Log.d(TAG, "Bitmap: null");
+        }
+    }
+    /*
+    // https://android.googlesource.com/platform/packages/apps/DevCamera/+/refs/tags/android-7.1.1_r25/src/com/android/devcamera/MediaSaver.java
+    // We use this instead of MediaStore.Images.Media.insertImage() because we want to add date metadata
+    public static void insertImage(ContentResolver cr, File file) {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.TITLE, file.getName());
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, file.getName());
+        values.put(MediaStore.Images.Media.DESCRIPTION, file.getName());
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+        values.put(MediaStore.Images.Media.DATA, file.getAbsolutePath());
+        // Add the date meta data to ensure the image is added at the front of the gallery
+        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
+        values.put(MediaStore.Images.Media.DATE_TAKEN, file.lastModified());
+        try {
+            cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        } catch (Exception e) {
+            Log.w(TAG, "Error updating media store for  " + file, e);
+        }
+    }
+     */
 
     static boolean updateLocalSites(AppCompatActivity activity, HashMap<String, String> localSites) {
         HashMap<String, String> siteMap = findLocalSites(activity);

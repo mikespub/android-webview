@@ -246,6 +246,7 @@ class MyRequestHandler {
     }
 
     // files/47 - /media/ part is already removed here
+    // or images/media/49
     Uri getMediaUriFromName(String mediaName) {
         //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
         final List<String> mediaList = Arrays.asList(mediaNames);
@@ -274,8 +275,19 @@ class MyRequestHandler {
             default:
                 mediaUri = null;
         }
-        if (mediaUri != null && parts.length > 1 && !parts[1].isEmpty()) {
-            mediaUri = ContentUris.withAppendedId(mediaUri, Long.valueOf(parts[1]));
+        if (mediaUri != null && parts.length > 1 && !parts[parts.length - 1].isEmpty()) {
+            // handle images/media/49 too
+            /*
+            if (parts.length > 2) {
+                Uri.Builder builder = mediaUri.buildUpon();
+                for (int i = 1; i < parts.length - 1; i++) {
+                    String part = parts[i];
+                    builder.appendPath(part);
+                }
+                mediaUri = builder.build();
+            }
+             */
+            mediaUri = ContentUris.withAppendedId(mediaUri, Long.valueOf(parts[parts.length - 1]));
         }
         Log.d(TAG, "Media Name: " + mediaName + " Parts: " + Arrays.toString(parts) + " Uri: " + mediaUri);
         return mediaUri;
@@ -311,14 +323,36 @@ class MyRequestHandler {
         // what's the right Uri for media?
         //Uri contentUri = Uri.parse("content://" + mediaName);
         //Uri contentUri = MediaStore.getDocumentUri(activity, mediaUri); // API level 29
-        Uri contentUri = mediaUri;
         List<Map<String, Object>> contentItems;
         try {
-            contentItems = MyContentUtility.getContentItems(activity, contentUri);
+            contentItems = MyContentUtility.getContentItems(activity, mediaUri);
         } catch (Exception e) {
-            Log.e(TAG, "Content Uri: " + contentUri.toString(), e);
+            Log.e(TAG, "Media Uri: " + mediaUri.toString(), e);
+            if (Build.VERSION.SDK_INT >= 26) {
+                try {
+                    // if we already opened this media via OPEN_DOCUMENT before...
+                    Uri documentUri = MediaStore.getDocumentUri(activity, mediaUri);
+                    Log.d(TAG, "Document Uri: " + documentUri.toString());
+                    contentItems = MyContentUtility.getContentItems(activity, documentUri);
+                    String output;
+                    if (contentItems != null) {
+                        try {
+                            output = MyJsonUtility.toJsonString(contentItems);
+                        } catch (Exception g) {
+                            Log.e(TAG, "Document Uri: " + documentUri.toString(), g);
+                            output = contentItems.toString();
+                        }
+                    } else {
+                        output = "No Media Found: " + mediaName.replace("<", "&lt;") + "\nMedia Uri: " + mediaUri.toString() + "\nDocument Uri: " + documentUri.toString();
+                    }
+                    // use template file for response here
+                    return createResultResponse("local/result.html", output);
+                } catch (Exception f) {
+                    Log.e(TAG, "Document Uri Failed", f);
+                }
+            }
             // use template file for response here
-            return createResultResponse("local/result.html", "Uri: " + contentUri.toString() + "\nException: " + e.toString());
+            return createResultResponse("local/result.html", "Uri: " + mediaUri.toString() + "\nException: " + e.toString());
         }
         String output;
         if (contentItems != null) {
@@ -591,7 +625,23 @@ class MyRequestHandler {
                 intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 //intent.addCategory(Intent.CATEGORY_OPENABLE);
                 initialUri = Uri.parse("content://downloads/my_downloads");
-                intent.setType("application/*");
+                if (path.equals("/")) {
+                    type = "*/*";
+                } else if (path.indexOf("/", 1) < 0) {
+                    type = path.substring(1) + "/*";
+                //} else if (path.startsWith("//")) {
+                //    path = "content:" + path;
+                //    intent.setData(Uri.parse(path));
+                //    Log.d(TAG, "Intent Get Data: " + path);
+                } else {
+                    // { action=android.app.action.OPEN_DOCUMENT type=text/html }
+                    type = path.substring(1);
+                }
+                if (!type.isEmpty()) {
+                    intent.setType(type);
+                    Log.d(TAG, "Intent Open Type: " + type);
+                }
+                //intent.setType("application/*");
                 intent.putExtra("android.provider.extra.INITIAL_URI", initialUri); // android.net.Uri
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
                     Log.d(TAG, "Intent No activity for " + intent.toString());

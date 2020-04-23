@@ -362,11 +362,20 @@ public class MainActivity extends AppCompatActivity {
             }
             return;
         }
-        try {
-            MyContentUtility.showContent(this, returnUri);
-        } catch (Exception e) {
-            Log.e("Activity Result", "Content Error: " + returnUri, e);
-            return;
+        if (requestCode == MyRequestHandler.REQUEST_OPEN) {
+            try {
+                MyDocumentUtility.showDocument(this, returnUri);
+            } catch (Exception e) {
+                Log.e("Activity Result", "Document Error: " + returnUri, e);
+                return;
+            }
+        } else {
+            try {
+                MyContentUtility.showContent(this, returnUri);
+            } catch (Exception e) {
+                Log.e("Activity Result", "Content Error: " + returnUri, e);
+                return;
+            }
         }
         /*
          * Try to open the file for "read" access using the

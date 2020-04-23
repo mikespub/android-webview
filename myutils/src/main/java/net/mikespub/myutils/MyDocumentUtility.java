@@ -5,6 +5,7 @@ import android.content.UriPermission;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -68,27 +69,15 @@ public class MyDocumentUtility {
 
     public static boolean checkTreeUri(Uri treeUri) {
         if (Build.VERSION.SDK_INT >= 24) {
-            if (DocumentsContract.isTreeUri(treeUri)) {
-                return true;
-            } else {
-                return false;
-            }
+            return DocumentsContract.isTreeUri(treeUri);
         } else if (Build.VERSION.SDK_INT >= 21) {
             try {
                 String treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri);
-                if (!treeDocumentId.isEmpty()) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return !treeDocumentId.isEmpty();
             } catch (Exception e) {
                 return false;
             }
-        } else if (treeUri.getPath().startsWith("/tree/")){
-            return true;
-        } else {
-            return false;
-        }
+        } else return treeUri.getPath().startsWith("/tree/");
     }
 
     public static void showTreeFiles(AppCompatActivity activity, Uri treeUri) {
@@ -146,6 +135,19 @@ public class MyDocumentUtility {
         }
     }
 
+    public static void showDocument(AppCompatActivity activity, Uri uri) {
+        Map<String, Object> cursorInfo = getTreeContent(activity, uri);
+        if (cursorInfo != null) {
+            try {
+                Log.d(TAG, MyJsonUtility.toJsonString(cursorInfo));
+            } catch (Exception e) {
+                Log.e(TAG, cursorInfo.toString(), e);
+            }
+        } else {
+            Log.d(TAG, "No Content Found: " + uri.toString());
+        }
+    }
+
     public static Map<String, Object> getTreeContent(AppCompatActivity activity, Uri contentUri) {
         Map<String, Object> cursorInfo = MyContentUtility.getContent(activity, contentUri);
         if (cursorInfo != null) {
@@ -153,8 +155,21 @@ public class MyDocumentUtility {
                 String type = (String) cursorInfo.get(DocumentsContract.Document.COLUMN_MIME_TYPE);
                 if (type != null && type.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
                     //MyDocumentUtility.showTreeFiles(activity, contentUri);
-                    cursorInfo.put("[children]", getTreeContentItems(activity, contentUri));
+                    try {
+                        cursorInfo.put("[children]", getTreeContentItems(activity, contentUri));
+                    } catch (Exception e) {
+                        Log.e(TAG, "Children: " + contentUri.toString(), e);
+                    }
                 }
+            }
+        }
+        if (Build.VERSION.SDK_INT >= 29) {
+            try {
+                Uri mediaUri = MediaStore.getMediaUri(activity, contentUri);
+                Log.d(TAG, "Media Uri: " + mediaUri.toString());
+                cursorInfo.put("[media_uri]", mediaUri.toString());
+            } catch (Exception e) {
+                Log.d(TAG, "No equivalent Media Uri");
             }
         }
         return cursorInfo;
