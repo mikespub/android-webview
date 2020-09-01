@@ -35,7 +35,7 @@ android {
 }
 
 dependencies {
-    //def appCompatVersion = "1.1.0"
+    //def appCompatVersion = "1.2.0"
     def lifeCycleVersion = "2.2.0"
     //def savedStateVersion = "1.0.0"
 
@@ -46,8 +46,8 @@ dependencies {
     implementation "androidx.appcompat:appcompat:${rootProject.ext.appCompatVersion}"
     // For loading and tinting drawables on older versions of the platform
     // implementation "androidx.appcompat:appcompat-resources:${rootProject.ext.appCompatVersion}"
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation "androidx.webkit:webkit:1.2.0"
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
+    implementation "androidx.webkit:webkit:1.3.0"
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel:$lifeCycleVersion"
     // LiveData
@@ -59,8 +59,8 @@ dependencies {
     // alternately - if using Java8, use the following instead of lifecycle-compiler
     // implementation "androidx.lifecycle:lifecycle-common-java8:$lifeCycleVersion"
     testImplementation 'junit:junit:4.13'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'androidx.documentfile:documentfile:1.0.1'
 }
 

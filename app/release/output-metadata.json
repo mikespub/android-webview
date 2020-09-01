@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "net.mikespub.mywebview",
+  "variantName": "release",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "properties": [],
+      "versionCode": 17,
+      "versionName": "1.16",
+      "enabled": true,
+      "outputFile": "app-release.apk"
+    }
+  ]
+}
