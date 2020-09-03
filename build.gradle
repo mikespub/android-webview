@@ -34,7 +34,7 @@ ext {
     buildToolsVersion = "29.0.3"
     minSdkVersion = 19
     targetSdkVersion = 29
-    versionCode = 17
-    versionName = "1.16"
+    versionCode = 18
+    versionName = "1.17"
     appCompatVersion = "1.2.0"
 }
