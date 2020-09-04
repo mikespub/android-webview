@@ -1,3 +1,4 @@
+apply plugin: 'maven-publish' // Apply this plugin at the top of your library build.gradle
 apply plugin: 'com.android.library'
 
 // https://developer.android.com/studio/build/gradle-tips#configure-project-wide-properties
@@ -42,4 +43,41 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'androidx.documentfile:documentfile:1.0.1'
+}
+
+//def githubProperties = new Properties()
+//githubProperties.load(new FileInputStream(rootProject.file("github.properties"))) //Set env variable GPR_USER & GPR_API_KEY if not adding a properties file
+
+publishing {
+    publications {
+        bar(MavenPublication) {
+            //groupId 'com.enefce.libraries' // Replace with group ID
+            groupId 'net.mikespub'
+            artifactId 'myutils'
+            //artifactId getArtificatId()
+            //version getVersionName()
+            version rootProject.ext.versionName
+            artifact("$buildDir/outputs/aar/${artifactId}-release.aar")
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            /** Configure path of your package repository on Github
+             ** Replace GITHUB_USERID with your/organisation Github userID
+             ** and REPOSITORY with the repository name on GitHub
+             */
+            url = uri("https://maven.pkg.github.com/mikespub/android-webview")
+            credentials {
+                /** Create github.properties in root project folder file with
+                 ** gpr.usr=GITHUB_USER_ID & gpr.key=PERSONAL_ACCESS_TOKEN
+                 ** Set env variable GPR_USER & GPR_API_KEY if not adding a properties file**/
+                //username = githubProperties['gpr.usr'] ?: System.getenv("GPR_USER")
+                //password = githubProperties['gpr.key'] ?: System.getenv("GPR_API_KEY")
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
+        }
+    }
 }

@@ -14,6 +14,13 @@ buildscript {
     }
 }
 
+// https://docs.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-gradle-for-use-with-github-packages
+/*
+plugins {
+    id("maven-publish")
+}
+ */
+
 allprojects {
     repositories {
         google()
@@ -38,3 +45,27 @@ ext {
     versionName = "1.17"
     appCompatVersion = "1.2.0"
 }
+
+// Because the components are created only during the afterEvaluate phase, you must
+// configure your publications using the afterEvaluate() lifecycle method.
+/*
+afterEvaluate {
+    publishing {
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/mikespub/android-webview")
+                credentials {
+                    username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                    password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+                }
+            }
+        }
+        publications {
+            gpr(MavenPublication) {
+                from(components.java)
+            }
+        }
+    }
+}
+ */
