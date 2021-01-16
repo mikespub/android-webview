@@ -68,7 +68,7 @@ Verify that your new settings are still there
 10. Click on the Local Websites link and specify a .zip file in Download Bundle from trusted site (v1.16+)
 
 For testing, you could download a bootstrap template from https://bootstrapmade.com/ and put it on your site,
-e.g. https://owncloud.mikespub.net/eBusiness.zip
+e.g. https://owncloud.mikespub.net/Moderna.zip
 
 <img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/site_bundle.png" width="200">
 
@@ -87,8 +87,8 @@ If you don't use Local Websites much and you unchecked the option to manage Loca
 
 10. Click on the Update Settings link and specify a .zip file in Update Assets from trusted site (v1.15+)
 
-If the .zip file contains a homepage at eBusiness/index.html, also change the Other: field to
-https://appassets.androidplatform.net/sites/eBusiness/index.html (or http://localhost/sites/eBusiness/index.html)
+If the .zip file contains a homepage at Moderna/index.html, also change the Other: field to
+https://appassets.androidplatform.net/sites/Moderna/index.html (or http://localhost/sites/Moderna/index.html)
 to go to the local site in your app after the update.
 
 <img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/update_assets.png" width="200">
