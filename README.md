@@ -18,7 +18,7 @@ Adapt [assets/web/](app/src/main/assets/web/) and [res/values/strings.xml](app/s
 
 Check the [latest release](https://github.com/mikespub/android-webview/releases) for [app-release.apk](app/release/app-release.apk)
 
-Note: steps 10-12 are ~~new for release v1.15~~updated for release v1.16
+Note: steps 10-12 are updated for release v1.16
 
 <img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/index.png" width="200">
 
@@ -82,6 +82,7 @@ Verify that your local website is in the Site List now, and click the link to te
 
 <img src="https://github.com/mikespub/android-webview/raw/master/app/release/screenshots/local_site.png" width="200">
 
+## Testing without Manage Local Websites
 
 If you don't use Local Websites much and you unchecked the option to manage Local Websites separately, you can also:
 
