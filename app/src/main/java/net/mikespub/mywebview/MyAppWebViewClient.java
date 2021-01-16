@@ -5,14 +5,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.webkit.WebViewAssetLoader;
 
 import net.mikespub.myutils.MyAssetUtility;
@@ -338,6 +341,21 @@ class MyAppWebViewClient extends WebViewClient {
      * Check if we need to override a particular url and/or create an Intent for it
      *
      * @param view  current WebView context
+     * @param request   web resource request to check for override
+     * @return      decision to override or not
+     */
+    // https://stackoverflow.com/questions/41972463/android-web-view-shouldoverrideurlloading-deprecated-alternative/41973017
+    @RequiresApi(Build.VERSION_CODES.N)
+    @Override
+    public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+        String url = request.getUrl().toString();
+        return testOverrideUrlLoading(view, url);
+    }
+
+    /**
+     * Check if we need to override a particular url and/or create an Intent for it
+     *
+     * @param view  current WebView context
      * @param url   url to check for override
      * @return      decision to override or not
      */
@@ -345,6 +363,17 @@ class MyAppWebViewClient extends WebViewClient {
     @SuppressWarnings("deprecation")
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        return testOverrideUrlLoading(view, url);
+    }
+
+    /**
+     * Check if we need to override a particular url and/or create an Intent for it
+     *
+     * @param view  current WebView context
+     * @param url   url to check for override
+     * @return      decision to override or not
+     */
+    private boolean testOverrideUrlLoading(WebView view, String url) {
         Log.d("Web Override", url);
         if(url.startsWith(domainUrl) || url.startsWith("http://localhost/") ) {
             // should be handled here already or not?
@@ -445,12 +474,39 @@ class MyAppWebViewClient extends WebViewClient {
      * Check if we need to intercept a particular request and handle it ourselves
      *
      * @param view  current WebView context
+     * @param request   web resource request to check for intercept
+     * @return      WebResourceResponse or null
+     */
+    // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+        String url = request.getUrl().toString();
+        return testInterceptRequest(view, url);
+    }
+    /**
+     * Check if we need to intercept a particular request and handle it ourselves
+     *
+     * @param view  current WebView context
      * @param url   url to check for intercept
      * @return      WebResourceResponse or null
      */
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
+    @SuppressWarnings("deprecation")
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+        return testInterceptRequest(view, url);
+    }
+
+    /**
+     * Check if we need to intercept a particular request and handle it ourselves
+     *
+     * @param view  current WebView context
+     * @param url   url to check for intercept
+     * @return      WebResourceResponse or null
+     */
+    // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
+    private WebResourceResponse testInterceptRequest(WebView view, String url) {
         Log.d("Web Intercept", url);
         // if we put deep links in web, local or sites pages and don't reload above, we'll have CORS issues et al. here
         if (url.startsWith(activity.getString(R.string.link_scheme) + "://")) {
