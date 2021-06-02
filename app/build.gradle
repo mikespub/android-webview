@@ -61,7 +61,7 @@ dependencies {
     implementation project(":myutils")
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "androidx.appcompat:appcompat:${rootProject.ext.appCompatVersion}"
+    implementation "androidx.appcompat:appcompat:${appCompatVersion}"
     // For loading and tinting drawables on older versions of the platform
     // implementation "androidx.appcompat:appcompat-resources:${rootProject.ext.appCompatVersion}"
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'

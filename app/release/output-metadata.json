@@ -5,13 +5,13 @@
     "kind": "Directory"
   },
   "applicationId": "net.mikespub.mywebview",
-  "variantName": "processReleaseResources",
+  "variantName": "release",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
-      "versionCode": 19,
-      "versionName": "1.18",
+      "versionCode": 20,
+      "versionName": "1.19",
       "outputFile": "app-release.apk"
     }
   ]
