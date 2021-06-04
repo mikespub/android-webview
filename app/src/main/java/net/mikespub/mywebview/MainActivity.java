@@ -409,6 +409,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.d("Activity", "Request permission result for " + requestCode + " Permissions: " + Arrays.toString(permissions) + " Grant: " + Arrays.toString(grantResults));
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case 1: {
                 // If request is cancelled, the result arrays are empty.
