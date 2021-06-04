@@ -77,26 +77,24 @@ public class MyDownloadUtility {
         // query download status
         Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
         if (cursor.moveToFirst()) {
-            int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-            if(status == DownloadManager.STATUS_SUCCESSFUL){
-                // download is successful
-                //String uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                //File file = new File(Uri.parse(uri).getPath());
-                Uri uri = mDownloadManager.getUriForDownloadedFile(downloadId);
-                if (uri != null) {
-                    Log.d(TAG, "URI: " + uri);
-                    //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
+            int colIdx = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+            if (colIdx > -1) {
+                int status = cursor.getInt(colIdx);
+                if(status == DownloadManager.STATUS_SUCCESSFUL){
+                    // download is successful
+                    //String uri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                    //File file = new File(Uri.parse(uri).getPath());
+                    Uri uri = mDownloadManager.getUriForDownloadedFile(downloadId);
+                    if (uri != null) {
+                        Log.d(TAG, "URI: " + uri);
+                        //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
+                    }
                 }
+                return status;
             }
-            else {
-                // download is assumed cancelled
-            }
-            return status;
         }
-        else {
-            // download is assumed cancelled
-            return DownloadManager.STATUS_FAILED;
-        }
+        // download is assumed cancelled
+        return DownloadManager.STATUS_FAILED;
     }
 
 }
