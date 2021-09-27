@@ -64,7 +64,7 @@ dependencies {
     implementation "androidx.appcompat:appcompat:${appCompatVersion}"
     // For loading and tinting drawables on older versions of the platform
     // implementation "androidx.appcompat:appcompat-resources:${rootProject.ext.appCompatVersion}"
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
     implementation "androidx.webkit:webkit:1.4.0"
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel:${lifeCycleVersion}"
