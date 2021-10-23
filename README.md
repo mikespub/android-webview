@@ -102,10 +102,6 @@ Verify that your changes are shown in the result page (json format)
 
 Verify that your local website is in the Other: field, and press Go to test it.
 
-## Deep Links
+## Try out Deep Links
 
-- <a href="mywebview://sites/demo">Local Demo Site</a>: mywebview://sites/demo
-- <a href="mywebview://sites/">Site List</a>: mywebview://sites/
-- <a href="mywebview://local/">Local Websites</a>: mywebview://local/
-- <a href="mywebview://">My WebView</a>: mywebview://
-- [My WebView (web link)](http://mikespub.net/mywebview/): http://mikespub.net/mywebview/
+See [Deep Links](deeplinks.html)
