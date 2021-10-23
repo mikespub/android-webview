@@ -104,8 +104,8 @@ Verify that your local website is in the Other: field, and press Go to test it.
 
 ## Deep Links
 
-- [Local Demo Site](mywebview://sites/demo)
-- [Site List](mywebview://sites/)
-- [Local Websites](mywebview://local/)
-- [My WebView](mywebview://)
-- [My WebView (web link)](http://mikespub.net/mywebview/)
+- [Local Demo Site](mywebview://sites/demo): mywebview://sites/demo
+- [Site List](mywebview://sites/): mywebview://sites/
+- [Local Websites](mywebview://local/): mywebview://local/
+- [My WebView](mywebview://): mywebview://
+- [My WebView (web link)](http://mikespub.net/mywebview/): http://mikespub.net/mywebview/
