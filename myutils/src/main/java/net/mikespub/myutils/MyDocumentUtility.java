@@ -28,9 +28,14 @@ public class MyDocumentUtility {
     public static void savePermissions(AppCompatActivity activity, Intent returnIntent) {
         Uri returnUri = returnIntent.getData();
         if (checkTreeUri(returnUri)) {
-            int takeFlags = returnIntent.getFlags()
-                    & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            activity.getContentResolver().takePersistableUriPermission(returnUri, takeFlags);
+            int takeFlags = returnIntent.getFlags();
+            //        & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            // activity.getContentResolver().takePersistableUriPermission(returnUri, takeFlags);
+            if ((takeFlags & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0) {
+                activity.getContentResolver().takePersistableUriPermission(returnUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } else {
+                activity.getContentResolver().takePersistableUriPermission(returnUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
         } else {
             Log.d(TAG, "Not a tree Uri: " + returnUri);
         }

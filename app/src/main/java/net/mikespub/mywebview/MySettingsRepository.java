@@ -92,13 +92,13 @@ class MySettingsRepository extends MyJsonFileRepository {
     static void getMapFromValues(HashMap<String, Object> hashMap, SavedStateHandle mState) {
         String source = mState.get("source");
         hashMap.put("source", source);
-        List<HashMap<String, String>> sites = (ArrayList) mState.get("sites");
+        List<HashMap<String, String>> sites = mState.get("sites");
         hashMap.put("sites", sites);
         String other = mState.get("other");
         hashMap.put("other", other);
-        List<List<String>> match = (ArrayList) mState.get("match");
+        List<List<String>> match = mState.get("match");
         hashMap.put("match", match);
-        List<List<String>> skip = (ArrayList) mState.get("skip");
+        List<List<String>> skip = mState.get("skip");
         hashMap.put("skip", skip);
         Boolean remote_debug = mState.get("remote_debug");
         hashMap.put("remote_debug", remote_debug);

@@ -57,7 +57,7 @@ class MyRequestHandler {
     private final MyAppWebViewClient webViewClient;
     private final MainActivity activity;
     private final String domainUrl;
-    private String providerAuthority;
+    private final String providerAuthority;
     private WebViewAssetLoader assetLoader;
 
     MyRequestHandler(MyAppWebViewClient webViewClient) {
@@ -742,11 +742,7 @@ class MyRequestHandler {
             // start download request - https://medium.com/@trionkidnapper/android-webview-downloading-images-f0ec21ac75d2
             Uri updateUri = Uri.parse(updateZip);
             if (updateUri != null && URLUtil.isHttpsUrl(updateUri.toString())) {
-                if (extract != null && extract.equals("true")) {
-                    requestUriDownload(updateUri, true);
-                } else {
-                    requestUriDownload(updateUri, false);
-                }
+                requestUriDownload(updateUri, extract != null && extract.equals("true"));
             }
         }
         // use template file for response here

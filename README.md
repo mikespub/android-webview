@@ -101,3 +101,11 @@ Verify that your changes are shown in the result page (json format)
 12. Press the My WebView link or Back until you get to the first page (v1.15+)
 
 Verify that your local website is in the Other: field, and press Go to test it.
+
+## Deep Links
+
+- [Local Demo Site](mywebview://sites/demo)
+- [Site List](mywebview://sites/)
+- [Local Websites](mywebview://local/)
+- [My WebView](mywebview://)
+- [My WebView (web link)](http://mikespub.net/mywebview/)

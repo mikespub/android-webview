@@ -360,7 +360,6 @@ class MyAppWebViewClient extends WebViewClient {
      * @return      decision to override or not
      */
     // https://stackoverflow.com/questions/41972463/android-web-view-shouldoverrideurlloading-deprecated-alternative/41973017
-    @SuppressWarnings("deprecation")
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         return testOverrideUrlLoading(view, url);
