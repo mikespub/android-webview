@@ -104,4 +104,4 @@ Verify that your local website is in the Other: field, and press Go to test it.
 
 ## Try out Deep Links
 
-See [Deep Links](deeplinks.html)
+See [Deep Links](docs/deeplinks.html)
