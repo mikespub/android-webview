@@ -18,6 +18,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.SavedStateViewModelFactory;
@@ -47,6 +51,85 @@ public class MainActivity extends AppCompatActivity {
     // https://developer.chrome.com/multidevice/webview/gettingstarted
     protected WebView myWebView;
     BroadcastReceiver onDownloadComplete;
+
+    // https://developer.android.com/training/basics/intents/result#launch
+    // GetContent creates an ActivityResultLauncher<String> to allow you to pass
+    // in the mime type you'd like to allow the user to select
+    ActivityResultLauncher<String> mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
+        new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri returnUri) {
+                // Handle the returned Uri
+                if (!showContentUri(returnUri)) {
+                    return;
+                }
+                readReturnUri(returnUri);
+            }
+        });
+
+    // @checkme why is this a string array?
+    ActivityResultLauncher<String[]> mOpenDocument = registerForActivityResult(new ActivityResultContracts.OpenDocument(),
+        new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri returnUri) {
+                // Handle the returned Uri
+                if (!showDocumentUri(returnUri)) {
+                    return;
+                }
+                readReturnUri(returnUri);
+            }
+        });
+
+    ActivityResultLauncher<Uri> mOpenDocumentTree = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
+        new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri returnUri) {
+                // Handle the returned Uri
+                showDocumentTree(returnUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+        });
+
+    // https://developer.android.com/training/basics/intents/result#custom
+    // If you do not need a custom contract, you can use the StartActivityForResult contract.
+    // This is a generic contract that takes any Intent as an input and returns an ActivityResult,
+    // allowing you to extract the resultCode and Intent as part of your callback
+    ActivityResultLauncher<Intent> mPickForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+        new ActivityResultCallback<ActivityResult>() {
+            @Override
+            public void onActivityResult(ActivityResult result) {
+                /*
+                if (result.getResultCode() == RESULT_OK) {
+                    Intent intent = result.getData();
+                    // Handle the Intent
+                }
+                 */
+                int requestCode = MyRequestHandler.REQUEST_PICK;
+                int resultCode = result.getResultCode();
+                Intent returnIntent = result.getData();
+                // Get the file's content URI from the incoming Intent
+                Uri returnUri = getActivityResultUri(requestCode, resultCode, returnIntent);
+                if (returnUri == null) {
+                    return;
+                }
+                if (!showContentUri(returnUri)) {
+                    return;
+                }
+                readReturnUri(returnUri);
+            }
+        });
+
+    ActivityResultLauncher<String> mCreateDocument = registerForActivityResult(new ActivityResultContracts.CreateDocument(),
+        new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri returnUri) {
+                // Handle the returned Uri
+                if (!showContentUri(returnUri)) {
+                    return;
+                }
+                readReturnUri(returnUri);
+            }
+        });
+
 
     /**
      * @param savedInstanceState    saved instance state
@@ -318,19 +401,34 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent returnIntent) {
         super.onActivityResult(requestCode, resultCode, returnIntent);
-        // If the selection didn't work
-        if (resultCode != RESULT_OK) {
-            // Exit without doing anything else
-            if (returnIntent != null) {
-                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent.toString());
-            } else {
-                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent);
-            }
+        // Get the file's content URI from the incoming Intent
+        Uri returnUri = getActivityResultUri(requestCode, resultCode, returnIntent);
+        if (returnUri == null) {
             return;
         }
-        if (returnIntent == null) {
-            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent);
+        /*
+        if (requestCode == MyRequestHandler.REQUEST_TREE) {
+            int takeFlags = returnIntent.getFlags();
+            showDocumentTree(returnUri, takeFlags);
             return;
+        }
+        if (requestCode == MyRequestHandler.REQUEST_OPEN) {
+            if (!showDocumentUri(returnUri)) {
+                return;
+            }
+        } else {
+            if (!showContentUri(returnUri)) {
+                return;
+            }
+        }
+        readReturnUri(returnUri);
+         */
+    }
+
+    private Uri getActivityResultUri(int requestCode, int resultCode, Intent returnIntent) {
+        // If the selection didn't work
+        if (!checkActivityResult(requestCode, resultCode, returnIntent)) {
+            return null;
         }
         // Get the file's content URI from the incoming Intent
         Uri returnUri = returnIntent.getData();
@@ -342,52 +440,88 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " No Uri: " + returnIntent.toUri(0) + " Extras: " + returnExtras);
             }
-            return;
+            return null;
         }
         if (returnExtras != null) {
             Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " Uri: " + returnUri + " Extras: " + returnExtras.toString());
         } else {
             Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " Uri: " + returnUri + " Extras: " + returnExtras);
         }
-        if (requestCode == MyRequestHandler.REQUEST_TREE) {
-            // Downloads = content://com.android.providers.downloads.documents/tree/downloads
-            // Virtual SD Card = content://com.android.externalstorage.documents/tree/primary%3A
-            // Downloads via SD Card = content://com.android.externalstorage.documents/tree/primary%3ADownload
-            if (MyDocumentUtility.checkTreeUri(returnUri)) {
-                MyDocumentUtility.savePermissions(this, returnIntent);
-                MyDocumentUtility.showPermissions(this);
-                MyDocumentUtility.showTreeFiles(this, returnUri);
+        return returnUri;
+    }
+
+    private boolean checkActivityResult(int requestCode, int resultCode, Intent returnIntent) {
+        // If the selection didn't work
+        if (resultCode != RESULT_OK) {
+            // Exit without doing anything else
+            if (returnIntent != null) {
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent.toString());
             } else {
-                Log.d("Activity Result", "Not a tree?");
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent);
             }
+            return false;
+        }
+        if (returnIntent == null) {
+            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent);
+            return false;
+        }
+        return true;
+    }
+
+    private void showDocumentTree(Uri returnUri, int takeFlags) {
+        if (returnUri == null) {
             return;
         }
-        if (requestCode == MyRequestHandler.REQUEST_OPEN) {
-            try {
-                MyDocumentUtility.showDocument(this, returnUri);
-            } catch (Exception e) {
-                Log.e("Activity Result", "Document Error: " + returnUri, e);
-                return;
-            }
+        // Downloads = content://com.android.providers.downloads.documents/tree/downloads
+        // Virtual SD Card = content://com.android.externalstorage.documents/tree/primary%3A
+        // Downloads via SD Card = content://com.android.externalstorage.documents/tree/primary%3ADownload
+        if (MyDocumentUtility.checkTreeUri(returnUri)) {
+            MyDocumentUtility.savePermissions(this, returnUri, takeFlags);
+            MyDocumentUtility.showPermissions(this);
+            MyDocumentUtility.showTreeFiles(this, returnUri);
         } else {
-            try {
-                MyContentUtility.showContent(this, returnUri);
-            } catch (Exception e) {
-                Log.e("Activity Result", "Content Error: " + returnUri, e);
-                return;
-            }
+            Log.d("Activity Result", "Not a tree?");
         }
+    }
+
+    private boolean showDocumentUri(Uri returnUri) {
+        if (returnUri == null) {
+            return false;
+        }
+        try {
+            MyDocumentUtility.showDocument(this, returnUri);
+        } catch (Exception e) {
+            Log.e("Activity Result", "Document Error: " + returnUri, e);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean showContentUri(Uri returnUri) {
+        if (returnUri == null) {
+            return false;
+        }
+        try {
+            MyContentUtility.showContent(this, returnUri);
+        } catch (Exception e) {
+            Log.e("Activity Result", "Content Error: " + returnUri, e);
+            return false;
+        }
+        return true;
+    }
+
+    /*
+     * Try to open the file for "read" access using the
+     * returned URI. If the file isn't found, write to the
+     * error log and return.
+     */
+    private void readReturnUri(Uri returnUri) {
         /*
-         * Try to open the file for "read" access using the
-         * returned URI. If the file isn't found, write to the
-         * error log and return.
+         * Get the content resolver instance for this context, and use it
+         * to get a ParcelFileDescriptor for the file.
          */
         ParcelFileDescriptor inputPFD;
         try {
-            /*
-             * Get the content resolver instance for this context, and use it
-             * to get a ParcelFileDescriptor for the file.
-             */
             inputPFD = getContentResolver().openFileDescriptor(returnUri, "r");
         } catch (FileNotFoundException e) {
             Log.e(TAG, "Result File not found.", e);

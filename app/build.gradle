@@ -1,3 +1,4 @@
+apply plugin: 'maven-publish' // Apply this plugin at the top of your library build.gradle
 apply plugin: 'com.android.application'
 
 // https://developer.android.com/studio/build/gradle-tips#configure-project-wide-properties
@@ -114,4 +115,45 @@ task createPom {
         }
     }.writeTo("$rootDir/pom.xml")
 }
-*/
+ */
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            // Configure the publication here
+            groupId 'net.mikespub'
+            artifactId 'mywebview'
+            //artifactId getArtificatId()
+            //version getVersionName()
+            version rootProject.ext.versionName
+            pom {
+                packaging ''
+            }
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                configurations.implementation.allDependencies.each { dependency ->
+                    if (dependency.group != null && dependency.name != null) {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (dependency.group == project.group) {
+                            dependencyNode.appendNode('groupId', 'net.mikespub')
+                            dependencyNode.appendNode('artifactId', dependency.name)
+                            dependencyNode.appendNode('version', versionName)
+                        } else {
+                            dependencyNode.appendNode('groupId', dependency.group)
+                            dependencyNode.appendNode('artifactId', dependency.name)
+                            dependencyNode.appendNode('version', dependency.version)
+                        }
+                    }
+                }
+            }
+            //pom.writeTo("$rootDir/pom.xml")
+        }
+    }
+    // http://sorcersoft.org/project/site/gradle/userguide/publishing_maven.html
+    model {
+        tasks.generatePomFileForReleasePublication {
+            destination = file("$rootDir/pom.xml")
+        }
+    }
+}

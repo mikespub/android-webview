@@ -25,10 +25,8 @@ public class MyDocumentUtility {
     // Virtual SD Card = content://com.android.externalstorage.documents/tree/primary%3A
     // Downloads via SD Card = content://com.android.externalstorage.documents/tree/primary%3ADownload
 
-    public static void savePermissions(AppCompatActivity activity, Intent returnIntent) {
-        Uri returnUri = returnIntent.getData();
+    public static void savePermissions(AppCompatActivity activity, Uri returnUri, int takeFlags) {
         if (checkTreeUri(returnUri)) {
-            int takeFlags = returnIntent.getFlags();
             //        & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             // activity.getContentResolver().takePersistableUriPermission(returnUri, takeFlags);
             if ((takeFlags & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0) {

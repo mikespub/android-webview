@@ -2,6 +2,7 @@ package net.mikespub.mywebview;
 
 import android.Manifest;
 import android.app.DownloadManager;
+import android.content.ActivityNotFoundException;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -517,6 +518,10 @@ class MyRequestHandler {
             String dirName = Environment.DIRECTORY_DOCUMENTS;
             String fileName = path.substring("/sites/".length());
             return new File(activity.getExternalFilesDir(dirName), fileName);
+        } else if (path.startsWith("/files/")) {
+            String dirName = Environment.DIRECTORY_DOWNLOADS;
+            String fileName = path.substring("/files/".length());
+            return new File(activity.getExternalFilesDir(dirName), fileName);
         }
         return null;
     }
@@ -551,6 +556,7 @@ class MyRequestHandler {
         Uri initialUri;
         // See also http://www.openintents.org/intentsregistry/
         switch (prefix) {
+            // IntentRequest: /view/sites/demo/index.html
             case "view":
                 contentUri = getContentUriFromPath(path);
                 if (contentUri == null) {
@@ -564,11 +570,21 @@ class MyRequestHandler {
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.putExtra(Intent.EXTRA_STREAM, contentUri);
                 //view.getContext().startActivity(intent);
+                if (intent.resolveActivity(activity.getPackageManager()) == null) {
+                    Log.d(TAG, "Intent No activity for " + intent.toString());
+                    intent.setDataAndType(contentUri, "text/*");
+                }
                 // Create intent to show chooser
                 String title = uri.toString() + "\n\nOpen with";
                 Intent chooser = Intent.createChooser(intent, title);
-                view.getContext().startActivity(chooser);
+                try {
+                    view.getContext().startActivity(chooser);
+                }  catch (ActivityNotFoundException e) {
+                    Log.d(TAG, "Intent Start activity failed for " + intent.toString());
+                    return false;
+                }
                 break;
+            // IntentRequest: /pick/<type>
             case "pick":
                 intent = new Intent(Intent.ACTION_PICK);
                 type = "";
@@ -593,10 +609,12 @@ class MyRequestHandler {
                     Log.d(TAG, "Intent No activity for " + intent.toString());
                     return false;
                 }
-                activity.startActivityForResult(intent, REQUEST_PICK);
+                //activity.startActivityForResult(intent, REQUEST_PICK);
+                activity.mPickForResult.launch(intent);
                 break;
+            // IntentRequest: /get/<type>
             case "get":
-                intent = new Intent(Intent.ACTION_GET_CONTENT);
+                //intent = new Intent(Intent.ACTION_GET_CONTENT);
                 type = "";
                 if (path.equals("/")) {
                     type = "*/*";
@@ -604,27 +622,29 @@ class MyRequestHandler {
                     type = path.substring(1) + "/*";
                 } else if (path.startsWith("//")) {
                     path = "content:" + path;
-                    intent.setData(Uri.parse(path));
+                    //intent.setData(Uri.parse(path));
                     Log.d(TAG, "Intent Get Data: " + path);
                 } else {
                     // { action=android.app.action.GET_CONTENT type=vnd.android.cursor.item/vnd.google.note }
                     type = path.substring(1);
                 }
-                if (!type.isEmpty()) {
-                    intent.setType(type);
-                    Log.d(TAG, "Intent Get Type: " + type);
-                }
+                //if (!type.isEmpty()) {
+                //    intent.setType(type);
+                //    Log.d(TAG, "Intent Get Type: " + type);
+                //}
                 //intent.addCategory(Intent.CATEGORY_OPENABLE);
-                if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
-                    return false;
-                }
-                activity.startActivityForResult(intent, REQUEST_GET);
+                //if (intent.resolveActivity(activity.getPackageManager()) == null) {
+                //    Log.d(TAG, "Intent No activity for " + intent.toString());
+                //    return false;
+                //}
+                //activity.startActivityForResult(intent, REQUEST_GET);
+                activity.mGetContent.launch(type);
                 break;
+            // IntentRequest: /open/<type>
             case "open":
-                intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                //intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 //intent.addCategory(Intent.CATEGORY_OPENABLE);
-                initialUri = Uri.parse("content://downloads/my_downloads");
+                //initialUri = Uri.parse("content://downloads/my_downloads");
                 if (path.equals("/")) {
                     type = "*/*";
                 } else if (path.indexOf("/", 1) < 0) {
@@ -637,45 +657,68 @@ class MyRequestHandler {
                     // { action=android.app.action.OPEN_DOCUMENT type=text/html }
                     type = path.substring(1);
                 }
-                if (!type.isEmpty()) {
-                    intent.setType(type);
-                    Log.d(TAG, "Intent Open Type: " + type);
-                }
+                //if (!type.isEmpty()) {
+                //    intent.setType(type);
+                //    Log.d(TAG, "Intent Open Type: " + type);
+                //}
                 //intent.setType("application/*");
-                intent.putExtra("android.provider.extra.INITIAL_URI", initialUri); // android.net.Uri
-                if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
-                    return false;
-                }
-                activity.startActivityForResult(intent, REQUEST_OPEN);
+                //intent.putExtra("android.provider.extra.INITIAL_URI", initialUri); // android.net.Uri
+                //if (intent.resolveActivity(activity.getPackageManager()) == null) {
+                //    Log.d(TAG, "Intent No activity for " + intent.toString());
+                //    return false;
+                //}
+                //activity.startActivityForResult(intent, REQUEST_OPEN);
+                // @checkme why is this a string array?
+                String[] typeArray = new String[] { type };
+                activity.mOpenDocument.launch(typeArray);
                 break;
+            // IntentRequest: /tree/sites/demo/index.html
             case "tree":
-                if (Build.VERSION.SDK_INT < 21) {
-                    return false;
-                }
-                intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                //if (Build.VERSION.SDK_INT < 21) {
+                //    return false;
+                //}
+                //intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                 initialUri = Uri.parse("content://downloads/my_downloads");
-                intent.putExtra("android.provider.extra.INITIAL_URI", initialUri); // android.net.Uri
-                if (Build.VERSION.SDK_INT >= 19) {
-                    intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-                }
-                if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
-                    return false;
-                }
-                activity.startActivityForResult(intent, REQUEST_TREE);
+                //intent.putExtra("android.provider.extra.INITIAL_URI", initialUri); // android.net.Uri
+                //if (Build.VERSION.SDK_INT >= 19) {
+                //    intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                //}
+                //if (intent.resolveActivity(activity.getPackageManager()) == null) {
+                //    Log.d(TAG, "Intent No activity for " + intent.toString());
+                //    return false;
+                //}
+                //activity.startActivityForResult(intent, REQUEST_TREE);
+                activity.mOpenDocumentTree.launch(initialUri);
                 break;
+            // IntentRequest: /create/readme.txt
             case "create":
-                intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
+                //intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                //if (intent.resolveActivity(activity.getPackageManager()) == null) {
+                //    Log.d(TAG, "Intent No activity for " + intent.toString());
+                //    return false;
+                //}
+                //activity.startActivityForResult(intent, REQUEST_CREATE);
+                if (path.equals("/")) {
+                    path = "README.txt";
+                } else if (path.indexOf(".", 1) < 0) {
+                    path = path.substring(1) + ".txt";
+                } else {
+                    // { action=android.app.action.CREATE_DOCUMENT path=index.html }
+                    path = path.substring(1);
+                }
+                activity.mCreateDocument.launch(path);
+                break;
+            // IntentRequest: /edit/sites/demo/index.html
+            case "edit":
+                contentUri = getContentUriFromPath(path);
+                if (contentUri == null) {
                     return false;
                 }
-                activity.startActivityForResult(intent, REQUEST_CREATE);
-                break;
-            case "edit":
                 intent = new Intent(Intent.ACTION_EDIT);
-                //intent.setData(dataUri); // data to be edited
+                intent.setDataAndType(contentUri, getMimeType(path));
+                // Grant temporary read permission to the content URI
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.putExtra(Intent.EXTRA_STREAM, contentUri);
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
                     return false;
                 }
@@ -690,6 +733,7 @@ class MyRequestHandler {
                 }
                 activity.startActivity(intent);
                 break;
+            // IntentRequest: /send/sites/demo/index.html
             case "send":
             default:
                 contentUri = getContentUriFromPath(path);
