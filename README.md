@@ -105,3 +105,7 @@ Verify that your local website is in the Other: field, and press Go to test it.
 ## Try out Deep Links
 
 See [Deep Links](https://github.mikespub.net/android-webview/deeplinks.html)
+
+## Privacy Policy
+
+See [Privacy Policy](https://github.mikespub.net/android-webview/privacy.html)
