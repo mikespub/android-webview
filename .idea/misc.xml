@@ -10,6 +10,7 @@
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" value="$PROJECT_DIR$/javadoc" />
     <option name="OPTION_SCOPE" value="package" />
+    <option name="OTHER_OPTIONS" value="-sourcepath &quot;C:\Local\Android\Sdk\platforms\android-31\android.jar&quot;" />
   </component>
   <component name="NullableNotNullManager">
     <option name="myDefaultNullable" value="androidx.annotation.Nullable" />

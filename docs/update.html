@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- No complains about missing favicon.ico from https requests. -->
+    <link rel="icon" href="data:,">
+    <title>My WebView Settings</title>
+    <!--
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    -->
+    <style>
+/* Style inputs */
+  input[type=text], input[type=url], select {
+  width: 100%;
+  padding: 4px 4px;
+  margin: 2px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Style inputs */
+  input[class=title] {
+  width: 40%;
+}
+
+/* Style inputs */
+  input[class=url] {
+  width: 60%;
+}
+
+/* Style inputs */
+  input[class=compare], select {
+  width: 33%;
+}
+
+/* Style the submit button */
+input[type=submit] {
+  width: 100%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media screen and (min-width: 600px) {
+  #main {
+    max-width: 600px;
+    margin: auto;
+  }
+}
+    </style>
+    <script type="text/javascript">
+        // https://www.w3schools.com/jsref/met_select_add.asp
+        function addSiteInput(frag, idx, url, title)
+        {
+            var input = document.createElement('input');
+            input.setAttribute("type", "text");
+            input.setAttribute("class", "title");
+            input.setAttribute("id", "title_" + idx);
+            input.setAttribute("name", "title[]");
+            input.setAttribute("value", title);
+            input.setAttribute("placeholder", "Google Search");
+            frag.appendChild(input);
+            var input = document.createElement('input');
+            input.setAttribute("type", "url");
+            input.setAttribute("class", "url");
+            input.setAttribute("id", "url_" + idx);
+            input.setAttribute("name", "url[]");
+            input.setAttribute("value", url);
+            input.setAttribute("placeholder", "https://www.google.com/");
+            frag.appendChild(input);
+        }
+
+        function addSiteList(sites) {
+            // https://devdocs.io/dom/document/createdocumentfragment
+            var fragment = document.createDocumentFragment();
+            var idx = 1;
+            sites.forEach(function(site) {
+                addSiteInput(fragment, idx, site["url"], site["title"]);
+                idx += 1;
+            });
+            addSiteInput(fragment, idx, "", "");
+            // get reference to fieldset element
+            var sitelist = document.getElementById("sitelist");
+            sitelist.appendChild(fragment);
+        }
+
+        function addMatchInput(frag, idx, match)
+        {
+            var input = document.createElement('input');
+            input.setAttribute("type", "text");
+            input.setAttribute("class", "compare");
+            input.setAttribute("id", "match0_" + idx);
+            input.setAttribute("name", "match0[]");
+            input.setAttribute("value", match[0]);
+            //input.setAttribute("list", "what_list");
+            //input.setAttribute("pattern", "(host|path|query|url)");
+            input.setAttribute("title", "Use host, path, query or url");
+            input.setAttribute("placeholder", "host");
+            frag.appendChild(input);
+            var input = document.createElement('input');
+            input.setAttribute("type", "text");
+            input.setAttribute("class", "compare");
+            input.setAttribute("id", "match1_" + idx);
+            input.setAttribute("name", "match1[]");
+            input.setAttribute("value", match[1]);
+            //input.setAttribute("list", "how_list");
+            //input.setAttribute("pattern", "(contains|endsWith|equals|startsWith)");
+            input.setAttribute("title", "Use contains, endsWith, equals or startsWith");
+            input.setAttribute("placeholder", "equals");
+            frag.appendChild(input);
+            var input = document.createElement('input');
+            input.setAttribute("type", "text");
+            input.setAttribute("class", "compare");
+            input.setAttribute("id", "match2_" + idx);
+            input.setAttribute("name", "match2[]");
+            input.setAttribute("value", match[2]);
+            input.setAttribute("placeholder", "www.google.com");
+            frag.appendChild(input);
+        }
+
+        function addMatchList(matches) {
+            // https://devdocs.io/dom/document/createdocumentfragment
+            var fragment = document.createDocumentFragment();
+            var idx = 1;
+            matches.forEach(function(match) {
+                addMatchInput(fragment, idx, match);
+                idx += 1;
+            });
+            addMatchInput(fragment, idx, ["", "", ""]);
+            // get reference to ul element
+            var matchlist = document.getElementById("matchlist");
+            matchlist.appendChild(fragment);
+        }
+
+        function addSkipInput(frag, idx, skip)
+        {
+            var input = document.createElement('input');
+            input.setAttribute("type", "text");
+            input.setAttribute("class", "compare");
+            input.setAttribute("id", "skip0_" + idx);
+            input.setAttribute("name", "skip0[]");
+            input.setAttribute("value", skip[0]);
+            //input.setAttribute("list", "what_list");
+            //input.setAttribute("pattern", "(host|path|query|url)");
+            input.setAttribute("title", "Use host, path, query or url");
+            input.setAttribute("placeholder", "path");
+            frag.appendChild(input);
+            var input = document.createElement('input');
+            input.setAttribute("type", "text");
+            input.setAttribute("class", "compare");
+            input.setAttribute("id", "skip1_" + idx);
+            input.setAttribute("name", "skip1[]");
+            input.setAttribute("value", skip[1]);
+            //input.setAttribute("list", "how_list");
+            //input.setAttribute("pattern", "(contains|endsWith|equals|startsWith)");
+            input.setAttribute("title", "Use contains, endsWith, equals or startsWith");
+            input.setAttribute("placeholder", "endsWith");
+            frag.appendChild(input);
+            var input = document.createElement('input');
+            input.setAttribute("type", "text");
+            input.setAttribute("class", "compare");
+            input.setAttribute("id", "skip2_" + idx);
+            input.setAttribute("name", "skip2[]");
+            input.setAttribute("value", skip[2]);
+            frag.appendChild(input);
+        }
+
+        function addSkipList(skips) {
+            // https://devdocs.io/dom/document/createdocumentfragment
+            var fragment = document.createDocumentFragment();
+            var idx = 1;
+            skips.forEach(function(skip) {
+                addSkipInput(fragment, idx, skip);
+                idx += 1;
+            });
+            addSkipInput(fragment, idx, ["", "", ""]);
+            // get reference to ul element
+            var skiplist = document.getElementById("skiplist");
+            skiplist.appendChild(fragment);
+        }
+
+    </script>
+</head>
+<body onload="loadSites()">
+<div id="main">
+    <h1><a href="index.html">My WebView</a></h1>
+    <h2>Update Settings</h2>
+    <!-- we need to use GET here, webview doesn't get POST data -->
+    <form action="fake_post.jsp" method="GET">
+        <fieldset id="sitelist">
+            <legend><label for="title_1">Websites</label></legend>
+            <!-- input id="title_1" type="text" name="title[]" value="" -->
+        </fieldset>
+
+        <fieldset>
+            <legend><label for="other">Other URL</label></legend>
+            <input id="other" class="single" type="url" name="other" value="" placeholder="https://www.google.com/">
+        </fieldset>
+        <!--
+        <datalist id="what_list">
+            <item>host</item>
+            <item>path</item>
+            <item>query</item>
+            <item>url</item>
+        </datalist>
+        -->
+        <!--
+        <datalist id="how_list">
+            <item>contains</item>
+            <item>endsWith</item>
+            <item>equals</item>
+            <item>startsWith</item>
+        </datalist>
+        -->
+        <fieldset id="matchlist">
+            <legend><label for="match0_1">Matches</label></legend>
+            <!-- input id="match0_1" type="text" name="match0[]" value="" -->
+        </fieldset>
+
+        <fieldset id="skiplist">
+            <legend><label for="skip0_1">Skips</label></legend>
+            <!-- input id="skip0_1" type="text" name="skip0[]" value="" -->
+        </fieldset>
+
+        <fieldset id="options">
+            <legend>Advanced Options (requires app restart)</legend>
+            <input id="remote_debug" type="checkbox" name="remote_debug" value="true"> <label for="remote_debug">Enable debugging of web contents</label><br>
+            <input id="console_log" type="checkbox" name="console_log" value="true"> <label for="console_log">Show console log messages</label><br>
+            <input id="js_interface" type="checkbox" name="js_interface" value="true"> <label for="js_interface">Javascript Interface for local assets</label><br>
+            <input id="context_menu" type="checkbox" name="context_menu" value="true"> <label for="context_menu">Context Menu for links and images</label><br>
+            <input id="not_matching" type="checkbox" name="not_matching" value="true"> <label for="not_matching">Open non-matching links via browser</label>
+        </fieldset>
+
+        <fieldset id="update">
+            <legend><label for="update_zip">Update Assets from trusted site</label></legend>
+            <input id="update_zip" type="url" name="update_zip" value="" placeholder="https://my.trusted.site/download/sitebundle.zip">
+            <input id="local_sites" type="checkbox" name="local_sites" value="true"> <label for="local_sites">Manage <a href="/assets/local/sites.html">Local Websites</a> separately</label>
+        </fieldset>
+
+        <!--
+        <label for="source">Source</label>
+        <input id="source" type="text" name="source" value="">
+
+        <label for="timestamp">Timestamp</label>
+        <input id="timestamp" type="text" name="timestamp" value="">
+        -->
+        <input type="hidden" name="csrf" value="">
+        <input id="submit" type="submit" value="Update Settings">
+    </form>
+    <script>
+    function loadSites() {
+        // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+        fetch('settings.json')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then((myJson) => {
+            var settings = myJson;
+            addSiteList(settings["sites"]);
+            addMatchList(settings["match"]);
+            addSkipList(settings["skip"]);
+            var other = document.getElementById("other");
+            other.value = settings["other"];
+            var source = document.getElementById("source");
+            if (source) {
+                source.value = settings["source"];
+            }
+            var remote_debug = document.getElementById("remote_debug");
+            if (remote_debug && settings["remote_debug"]) {
+                remote_debug.checked = true;
+            }
+            var console_log = document.getElementById("console_log");
+            if (console_log && settings["console_log"]) {
+                console_log.checked = true;
+            }
+            var js_interface = document.getElementById("js_interface");
+            if (js_interface && settings["js_interface"]) {
+                js_interface.checked = true;
+            }
+            var context_menu = document.getElementById("context_menu");
+            if (context_menu && settings["context_menu"]) {
+                context_menu.checked = true;
+            }
+            var not_matching = document.getElementById("not_matching");
+            if (not_matching && settings["not_matching"]) {
+                not_matching.checked = true;
+            }
+            var local_sites = document.getElementById("local_sites");
+            if (local_sites && settings["local_sites"]) {
+                local_sites.checked = true;
+            }
+            //var update_zip = document.getElementById("update_zip");
+            //if (update_zip) {
+            //    update_zip.value = settings["update_zip"];
+            //}
+            var timestamp = document.getElementById("timestamp");
+            if (timestamp) {
+                timestamp.value = settings["timestamp"];
+            }
+        })
+        .catch((error) => {
+            console.error('There has been a problem with your fetch operation:', error);
+        });
+    }
+    </script>
+</div>
+</body>
+</html>
