@@ -197,7 +197,7 @@
     <p>Timestamp: <span id="timestamp">Loading...</span></p>
     <div id="local_sites" hidden>
         <hr>
-        <h2><a href="/assets/local/index.html">Local Websites</a></h2>
+        <h2><a href="local/index.html">Local Websites</a></h2>
     </div>
     <hr>
     <h2><a href="deeplinks.html">Deep Links</a></h2>
@@ -208,7 +208,7 @@
     <script>
     function loadSites() {
         // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-        fetch('/assets/settings.json')
+        fetch('settings.json')
         .then((response) => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');

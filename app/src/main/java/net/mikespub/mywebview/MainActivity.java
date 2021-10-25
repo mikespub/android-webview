@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     // https://developer.android.com/training/basics/intents/result#launch
     // GetContent creates an ActivityResultLauncher<String> to allow you to pass
     // in the mime type you'd like to allow the user to select
-    ActivityResultLauncher<String> mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
+    final ActivityResultLauncher<String> mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
         new ActivityResultCallback<Uri>() {
             @Override
             public void onActivityResult(Uri returnUri) {
@@ -63,12 +63,13 @@ public class MainActivity extends AppCompatActivity {
                 if (!showContentUri(returnUri)) {
                     return;
                 }
+                showUriToast(returnUri);
                 readReturnUri(returnUri);
             }
         });
 
     // @checkme why is this a string array?
-    ActivityResultLauncher<String[]> mOpenDocument = registerForActivityResult(new ActivityResultContracts.OpenDocument(),
+    final ActivityResultLauncher<String[]> mOpenDocument = registerForActivityResult(new ActivityResultContracts.OpenDocument(),
         new ActivityResultCallback<Uri>() {
             @Override
             public void onActivityResult(Uri returnUri) {
@@ -76,16 +77,18 @@ public class MainActivity extends AppCompatActivity {
                 if (!showDocumentUri(returnUri)) {
                     return;
                 }
+                showUriToast(returnUri);
                 readReturnUri(returnUri);
             }
         });
 
-    ActivityResultLauncher<Uri> mOpenDocumentTree = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
+    final ActivityResultLauncher<Uri> mOpenDocumentTree = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(),
         new ActivityResultCallback<Uri>() {
             @Override
             public void onActivityResult(Uri returnUri) {
                 // Handle the returned Uri
-                showDocumentTree(returnUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                showDocumentTree(returnUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                showUriToast(returnUri);
             }
         });
 
@@ -93,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
     // If you do not need a custom contract, you can use the StartActivityForResult contract.
     // This is a generic contract that takes any Intent as an input and returns an ActivityResult,
     // allowing you to extract the resultCode and Intent as part of your callback
-    ActivityResultLauncher<Intent> mPickForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+    final ActivityResultLauncher<Intent> mPickForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
         new ActivityResultCallback<ActivityResult>() {
             @Override
             public void onActivityResult(ActivityResult result) {
@@ -114,11 +117,12 @@ public class MainActivity extends AppCompatActivity {
                 if (!showContentUri(returnUri)) {
                     return;
                 }
+                showUriToast(returnUri);
                 readReturnUri(returnUri);
             }
         });
 
-    ActivityResultLauncher<String> mCreateDocument = registerForActivityResult(new ActivityResultContracts.CreateDocument(),
+    final ActivityResultLauncher<String> mCreateDocument = registerForActivityResult(new ActivityResultContracts.CreateDocument(),
         new ActivityResultCallback<Uri>() {
             @Override
             public void onActivityResult(Uri returnUri) {
@@ -126,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!showContentUri(returnUri)) {
                     return;
                 }
+                showUriToast(returnUri);
                 readReturnUri(returnUri);
             }
         });
@@ -466,6 +471,14 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    private void showUriToast(Uri returnUri) {
+        Toast toast = Toast.makeText(
+                this,
+                returnUri.toString(),
+                Toast.LENGTH_LONG);
+        toast.show();
     }
 
     private void showDocumentTree(Uri returnUri, int takeFlags) {

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- No complains about missing favicon.ico from https requests. -->
+    <link rel="icon" href="data:,">
+    <title>My WebView</title>
+    <!--
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    -->
+    <style>
+        @media screen and (min-width: 600px) {
+          #main {
+            max-width: 600px;
+            margin: auto;
+          }
+        }
+    </style>
+    <script>
+		function addSiteLi(frag, url, title)
+		{
+			var li = document.createElement('li');
+			li.innerHTML = '<a href="/sites/' + url + '">' + title + '</a>';
+			frag.appendChild(li);
+		}
+
+		function addSiteList(sites) {
+			// get reference to select element
+			//var select = document.getElementById("website");
+			// https://devdocs.io/dom/document/createdocumentfragment
+			var fragment = document.createDocumentFragment();
+			//for (var url in sites) {
+			Object.keys(sites).sort().forEach(function(url) {
+				//addSiteOption(select, url, sites[url]);
+				addSiteLi(fragment, url, sites[url]);
+            });
+			// get reference to ul element
+			var weblist = document.getElementById("sitelist");
+			weblist.appendChild(fragment);
+		}
+
+    </script>
+</head>
+<body onload="loadSites()">
+    <div id="main">
+        <h1><a href="../index.html">My WebView</a></h1>
+        <h2><a href="sites.html">Local Websites</a></h2>
+        Current Site List:
+        <ul id="sitelist">
+        </ul>
+        <p><a href="sites.html">Manage Local Websites</a></p>
+        <p><label for="link">Deep Links</label>:<br>
+            <span id="link">mywebview://sites/[site]</span></p>
+    </div>
+
+    <script>
+    function loadSites() {
+        // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+        fetch('config.json')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then((myJson) => {
+            var config = myJson;
+            //var prefix = document.getElementById("prefix");
+            //prefix.innerHTML = config["prefix"];
+            addSiteList(config["sites"]);
+        })
+        .catch((error) => {
+            console.error('There has been a problem with your fetch operation:', error);
+        });
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "sites": {
+    "demo/index.html": "Local Demo Site"
+  },
+  "bundles": [],
+  "prefix": "https://appassets.androidplatform.net/sites/"
+}

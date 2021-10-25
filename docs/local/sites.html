@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- No complains about missing favicon.ico from https requests. -->
+    <link rel="icon" href="data:,">
+    <title>My WebView</title>
+    <!--
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    -->
+    <style>
+        /* Style inputs */
+        input[type=text], input[type=url], span {
+          width: 100%;
+          padding: 4px 4px;
+          margin: 2px 0;
+          display: inline-block;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+        }
+
+        input[class=title] {
+          width: 40%;
+        }
+
+        span[class=url] {
+          width: 60%;
+          border: none;
+        }
+
+        /* Style the submit button */
+        input[type=submit] {
+          width: 100%;
+          background-color: #4CAF50;
+          color: white;
+          padding: 14px 20px;
+          margin: 8px 0;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        @media screen and (min-width: 600px) {
+          #main {
+            max-width: 600px;
+            margin: auto;
+          }
+        }
+    </style>
+    <script>
+		function addSiteInput(frag, idx, url, title)
+		{
+			var p = document.createElement('p');
+			p.innerHTML = '<input type="text" class="title" name="title[]" value="' + title + '" size="12"><span class="url"><input type="hidden" name="url[]" value="' + url + '"><a href="/sites/' + url + '">' + url + '</a></span>';
+			frag.appendChild(p);
+		}
+
+		function addSiteList(sites) {
+			// get reference to select element
+			//var select = document.getElementById("website");
+			// https://devdocs.io/dom/document/createdocumentfragment
+			var fragment = document.createDocumentFragment();
+            var idx = 1;
+			//for (var url in sites) {
+			Object.keys(sites).sort().forEach(function(url) {
+				//addSiteOption(select, url, sites[url]);
+				addSiteInput(fragment, idx, url, sites[url]);
+                idx += 1;
+            });
+			// get reference to ul element
+			var weblist = document.getElementById("sitelist");
+			weblist.appendChild(fragment);
+		}
+
+		function addBundleLi(frag, url, title)
+		{
+			var li = document.createElement('li');
+			li.innerHTML = '<a href="extract.jsp?bundle=' + url + '">Extract</a> <a href="delete.jsp?bundle=' + url + '">Delete</a> ' + title;
+			frag.appendChild(li);
+		}
+
+		function addBundleList(bundles) {
+			// https://devdocs.io/dom/document/createdocumentfragment
+			var fragment = document.createDocumentFragment();
+			for (var i in bundles) {
+				addBundleLi(fragment, bundles[i], bundles[i]);
+            }
+			// get reference to ul element
+			var bundlelist = document.getElementById("bundlelist");
+			bundlelist.appendChild(fragment);
+		}
+
+    </script>
+</head>
+<body onload="loadSites()">
+    <div id="main">
+        <h1><a href="../index.html">My WebView</a></h1>
+        <h2>Local Websites</h2>
+        <form action="update.jsp" method="GET">
+            <fieldset id="sitelist">
+                <legend><a href="/sites/">Current Site List</a></legend>
+            </fieldset>
+            <input type="hidden" name="csrf" value="">
+            <input id="action" type="submit" value="Update Site List">
+        </form>
+        <form>
+            <fieldset id="bundles">
+                <legend>Available Site Bundles</legend>
+                <ul id="bundlelist">
+                </ul>
+            </fieldset>
+        </form>
+        <form action="download.jsp" method="GET">
+            <fieldset id="update">
+                <legend><label for="update_zip">Download Bundle from trusted site</label></legend>
+                <input id="update_zip" type="url" name="update_zip" value="" placeholder="https://my.trusted.site/download/sitebundle.zip">
+                <input id="extract" type="checkbox" name="extract" value="true" checked> <label for="extract">Extract site from bundle after download</label>
+            </fieldset>
+
+            <input type="hidden" name="csrf" value="">
+            <input id="submit" type="submit" value="Download Bundle">
+        </form>
+        <p><label for="prefix">URL Base</label>:<br>
+        <span id="prefix">https://appassets.androidplatform.net/sites/</span></p>
+        <p><label for="path">File Path</label>:<br>
+        <span id="path">/Android/data/net.mikespub.mywebview/files/Documents/</span></p>
+        <p><label for="link">Deep Link</label>:<br>
+            <span id="link">mywebview://sites/[site]</span></p>
+    </div>
+
+    <script>
+    function loadSites() {
+        // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+        fetch('config.json')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then((myJson) => {
+            var config = myJson;
+            var prefix = document.getElementById("prefix");
+            prefix.innerHTML = config["prefix"];
+            addSiteList(config["sites"]);
+            addBundleList(config["bundles"]);
+        })
+        .catch((error) => {
+            console.error('There has been a problem with your fetch operation:', error);
+        });
+    }
+    </script>
+</body>
+</html>

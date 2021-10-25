@@ -1,0 +1,38 @@
+{
+  "sites": [
+    {
+      "url": "https://github.com/mikespub/android-webview/blob/master/README.md#Testing",
+      "title": "README on Github"
+    },
+    {
+      "url": "http://beta.html5test.com/",
+      "title": "HTML5 Test Site"
+    },
+    {
+      "url": "http://192.168.2.127/cops/",
+      "title": "Books Catalog on NAS"
+    }
+  ],
+  "other": "http://192.168.2.127/",
+  "match": [
+    ["host", "equals", "github.com"],
+    ["host", "endsWith", "html5test.com"],
+    ["host", "equals", "192.168.2.127"]
+  ],
+  "skip": [
+    ["path", "endsWith", ".epub"],
+    ["query", "contains", "type=epub"]
+  ],
+  "remote_debug": true,
+  "console_log": false,
+  "js_interface": false,
+  "context_menu": false,
+  "not_matching": false,
+  "local_sites": true,
+  "update_zip": "",
+  "web_settings": {
+    "JavaScriptEnabled": true
+  },
+  "source": "assets",
+  "timestamp": "2020-02-12T14:01:00Z"
+}

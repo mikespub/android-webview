@@ -270,9 +270,13 @@ class MyRequestHandler {
             case "video":
                 mediaUri = MediaStore.Video.Media.getContentUri("external");
                 break;
-            //case "downloads":
-            //    mediaUri = MediaStore.Downloads.getContentUri("external");
-            //    break;
+            case "downloads":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    mediaUri = MediaStore.Downloads.getContentUri("external");
+                } else {
+                    mediaUri = null;
+                }
+                break;
             default:
                 mediaUri = null;
         }
@@ -300,22 +304,24 @@ class MyRequestHandler {
             // requires android.permission.READ_EXTERNAL_STORAGE, or grantUriPermission()
             // See https://developer.android.com/training/permissions/requesting
             // https://www.geeksforgeeks.org/android-how-to-request-permissions-in-android-application/
-            if (!checkExternalStoragePermission()) {
-                // use template file for response here
-                StringBuilder builder = new StringBuilder();
-                builder.append("No Permission");
-                builder.append("<ul>");
-                for (String name: mediaNames) {
-                    builder.append("<li><a href=\"/media/" + name + "/\">" + name + "</a></li>");
-                }
-                builder.append("</ul>");
-                return createResultResponse("local/result.html", builder.toString());
+            // use template file for response here
+            StringBuilder builder = new StringBuilder();
+            builder.append("<ul>");
+            for (String name: mediaNames) {
+                builder.append("<li><a href=\"/media/" + name + "/\">" + name + "</a></li>");
             }
-            Uri contentUri = MediaStore.Files.getContentUri("external");
-            Log.d(TAG, "Media Uri: " + contentUri.toString());
-            MyContentUtility.showContentFiles(activity, contentUri.toString(), false);
+            builder.append("</ul>");
+            if (!checkExternalStoragePermission()) {
+                builder.append("No Permission");
+            } else {
+                builder.append("OK Permission");
+            }
+            //Uri contentUri = MediaStore.Files.getContentUri("external");
+            //Log.d(TAG, "Media Uri: " + contentUri.toString());
+            //MyContentUtility.showContentFiles(activity, contentUri.toString(), false);
             // show demo test page
-            return handleFileRequest(Environment.DIRECTORY_DOCUMENTS, "demo/test.html");
+            //return handleFileRequest(Environment.DIRECTORY_DOCUMENTS, "demo/test.html");
+            return createResultResponse("local/result.html", builder.toString());
         }
         Uri mediaUri = getMediaUriFromName(mediaName);
         if (mediaUri == null) {
@@ -717,7 +723,7 @@ class MyRequestHandler {
                 intent = new Intent(Intent.ACTION_EDIT);
                 intent.setDataAndType(contentUri, getMimeType(path));
                 // Grant temporary read permission to the content URI
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.putExtra(Intent.EXTRA_STREAM, contentUri);
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
                     return false;

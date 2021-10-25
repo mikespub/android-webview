@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- No complains about missing favicon.ico from https requests. -->
+    <link rel="icon" href="data:,">
+    <title>My WebView - Deep Links</title>
+    <!--
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    -->
+    <style>
+        @media screen and (min-width: 600px) {
+          #main {
+            max-width: 600px;
+            margin: auto;
+          }
+        }
+    </style>
+</head>
+<body>
+<div id="main">
+    <h1><a href="index.html">My WebView</a></h1>
+    <h2>Deep Links</h2>
+    The following deep links allow you to go directly to a particular section in My WebView, from your browser on Android:
+    <ul id="linklist">
+        <li><a href="mywebview://sites/demo/">Local Demo Site</a>: mywebview://sites/demo/</li>
+        <li><a href="mywebview://sites/">Local Site List</a>: mywebview://sites/</li>
+        <li><a href="mywebview://local/sites.html">Local Websites</a>: mywebview://local/sites.html</li>
+        <li><a href="mywebview://">My WebView</a>: mywebview://</li>
+        <li><a href="http://mikespub.net/mywebview/">My WebView (via web link)</a>: http://mikespub.net/mywebview/</li>
+    </ul>
+</div>
+</body>
+</html>
