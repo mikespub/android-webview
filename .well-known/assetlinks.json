@@ -1,0 +1,5 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "net.mikespub.mywebview",
+    "sha256_cert_fingerprints": ["33:24:F2:F4:FE:7F:76:25:61:93:AC:09:AC:2E:2F:B2:4E:80:C7:72:35:FF:31:00:F2:C3:43:45:11:B4:4D:58"] }
+}]
