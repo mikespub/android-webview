@@ -5,16 +5,16 @@ apply plugin: 'com.android.application'
 // Use the following syntax to access properties you define at the project level:
 // rootProject.ext.property_name
 android {
-    //compileSdkVersion 29
-    //buildToolsVersion "29.0.3"
+    //compileSdkVersion 31
+    //buildToolsVersion "31.0.0"
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
         applicationId "net.mikespub.mywebview"
-        //minSdkVersion 21
-        //targetSdkVersion 29
-        //versionCode 19
-        //versionName '1.18'
+        //minSdkVersion 23
+        //targetSdkVersion 30
+        //versionCode 21
+        //versionName '1.20'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.versionCode
@@ -55,8 +55,7 @@ android {
 
 dependencies {
     //def appCompatVersion = "1.4.0"
-    def lifeCycleVersion = '2.3.1'
-    //def savedStateVersion = "1.1.0"
+    def lifeCycleVersion = '2.4.0'
 
     // https://developer.android.com/studio/projects/android-library
     implementation project(":myutils")
@@ -64,19 +63,29 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "androidx.appcompat:appcompat:${appCompatVersion}"
     // For loading and tinting drawables on older versions of the platform
-    // implementation "androidx.appcompat:appcompat-resources:${rootProject.ext.appCompatVersion}"
+    // implementation "androidx.appcompat:appcompat-resources:${appCompatVersion}"
     implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
     implementation "androidx.webkit:webkit:1.4.0"
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel:${lifeCycleVersion}"
     // LiveData
     implementation "androidx.lifecycle:lifecycle-livedata:${lifeCycleVersion}"
+    // Lifecycles only (without ViewModel or LiveData)
+    //implementation "androidx.lifecycle:lifecycle-runtime:${lifeCycleVersion}"
     // Saved state module for ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:${lifeCycleVersion}"
     // Annotation processor
     //annotationProcessor "androidx.lifecycle:lifecycle-compiler:$lifeCycleVersion"
     // alternately - if using Java8, use the following instead of lifecycle-compiler
     implementation "androidx.lifecycle:lifecycle-common-java8:${lifeCycleVersion}"
+    // optional - helpers for implementing LifecycleOwner in a Service
+    //implementation "androidx.lifecycle:lifecycle-service:${lifeCycleVersion}"
+    // optional - ProcessLifecycleOwner provides a lifecycle for the whole application process
+    //implementation "androidx.lifecycle:lifecycle-process:${lifeCycleVersion}"
+    // optional - ReactiveStreams support for LiveData
+    //implementation "androidx.lifecycle:lifecycle-reactivestreams:${lifeCycleVersion}"
+    // optional - Test helpers for LiveData
+    //testImplementation "androidx.arch.core:core-testing:$arch_version"
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
