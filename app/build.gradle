@@ -55,7 +55,7 @@ android {
 
 dependencies {
     //def appCompatVersion = "1.4.0"
-    def lifeCycleVersion = '2.3.1'
+    def lifeCycleVersion = '2.4.0'
     //def savedStateVersion = "1.1.0"
 
     // https://developer.android.com/studio/projects/android-library
