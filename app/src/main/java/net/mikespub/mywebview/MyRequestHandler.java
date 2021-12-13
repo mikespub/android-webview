@@ -10,6 +10,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
@@ -22,7 +23,6 @@ import android.webkit.WebView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.webkit.WebViewAssetLoader;
 
@@ -30,6 +30,7 @@ import net.mikespub.myutils.MyAssetUtility;
 import net.mikespub.myutils.MyContentUtility;
 import net.mikespub.myutils.MyDocumentUtility;
 import net.mikespub.myutils.MyDownloadUtility;
+import net.mikespub.myutils.MyFileProvider;
 import net.mikespub.myutils.MyJsonUtility;
 
 import java.io.ByteArrayInputStream;
@@ -50,11 +51,11 @@ class MyRequestHandler {
     static final String[] linkNames = {"sites", "files", "web", "local", "root", "content", "media", "document", "refresh"};
     static final String[] mediaNames = {"files", "images", "audio", "video", "downloads"};
     static final String[] intentNames = {"intent", "view", "send", "pick", "get", "open", "tree", "create", "edit", "delete"};
-    static final int REQUEST_PICK = 1;
-    static final int REQUEST_GET = 2;
-    static final int REQUEST_OPEN = 3;
-    static final int REQUEST_TREE = 4;
-    static final int REQUEST_CREATE = 5;
+    //static final int REQUEST_PICK = 1;
+    //static final int REQUEST_GET = 2;
+    //static final int REQUEST_OPEN = 3;
+    //static final int REQUEST_TREE = 4;
+    //static final int REQUEST_CREATE = 5;
     private final MyAppWebViewClient webViewClient;
     private final MainActivity activity;
     private final String domainUrl;
@@ -121,6 +122,8 @@ class MyRequestHandler {
         //} else if (path.startsWith("/sites/")) {
             // handle local sites if not already under /assets/...
             return handleLocalSiteRequest(uri);
+        } else if (path.startsWith("/files/")) {
+            return handleGenericFileRequest(uri);
         } else if (path.startsWith("/content/")) {
             return handleContentRequest(uri);
         } else if (path.startsWith("/media/")) {
@@ -155,6 +158,43 @@ class MyRequestHandler {
             return handleFileRequest(null, "local/index.html");
         }
         return handleFileRequest(Environment.DIRECTORY_DOCUMENTS, fileName);
+    }
+
+    WebResourceResponse handleGenericFileRequest(Uri uri) {
+        String fileName = uri.getPath().substring("/files/".length());
+        if (fileName.isEmpty() || fileName.endsWith("/")) {
+            File extDir = new File(activity.getExternalFilesDir(null), fileName);
+            Log.d(TAG, "External Dir: " + extDir.getAbsolutePath());
+            // use template file for response here
+            StringBuilder builder = new StringBuilder();
+            builder.append("Dir: <a href=\"/files/" + fileName + "../\">/files/" + fileName + "</a>\n");
+            builder.append("<ul>");
+            for (File file: extDir.listFiles()) {
+                if (file.isDirectory()) {
+                    builder.append("<li><a href=\"/files/" + fileName + file.getName() + "/\">" + file.getName() + "/</a></li>");
+                    Log.d(TAG, "Dir: " + file.getAbsolutePath());
+                } else {
+                    String mimeType = getMimeType(file.getName());
+                    Log.d(TAG, "File: " + file.getAbsolutePath());
+                    String contentPath = "";
+                    try {
+                        Uri contentUri = MyFileProvider.getUriForFile(activity, providerAuthority, file);
+                        contentPath = contentUri.toString().substring("content://".length());
+                        //MyContentUtility.showContent(activity, contentUri);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Content getUriForFile: " + file.getAbsolutePath(), e);
+                    }
+                    if (contentPath.isEmpty()) {
+                        builder.append("<li><a href=\"/files/" + fileName + file.getName() + "\">" + file.getName() + "</a> " + mimeType + " </li>");
+                    } else {
+                        builder.append("<li><a href=\"/files/" + fileName + file.getName() + "\">" + file.getName() + "</a> " + mimeType + " <a href=\"/content/" + contentPath + "\">content</a></li>");
+                    }
+                }
+            }
+            builder.append("</ul>");
+            return createResultResponse("local/result.html", builder.toString());
+        }
+        return handleFileRequest(null, fileName);
     }
 
     WebResourceResponse handleFileRequest(@Nullable String dirName, @NonNull String fileName) {
@@ -209,19 +249,28 @@ class MyRequestHandler {
     }
 
     WebResourceResponse createResultResponse(String templateName, String output) {
+        return createResultResponse(templateName, output, 200);
+    }
+
+    WebResourceResponse createResultResponse(String templateName, String output, Integer statusCode) {
         // use template file for response here
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("output", output);
         String message = MyAssetUtility.getTemplateFile(activity, templateName, valuesMap);
         ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        if (Build.VERSION.SDK_INT >= 21 && statusCode == 404) {
+            return new WebResourceResponse("text/html", "UTF-8", 404, "Not Found", null, targetStream);
+        }
         return new WebResourceResponse("text/html", "UTF-8", targetStream);
     }
 
     WebResourceResponse handleContentRequest(Uri uri) {
-        String contentName = uri.getPath().substring("/content/".length());
+        //String contentName = uri.getPath().substring("/content/".length());
+        String contentName = uri.getEncodedPath().substring("/content/".length());
         if (contentName.isEmpty()) {
             // show demo test page
-            return handleFileRequest(Environment.DIRECTORY_DOCUMENTS, "demo/test.html");
+            //return handleFileRequest(Environment.DIRECTORY_DOCUMENTS, "demo/test.html");
+            return handleFileNotFound(uri);
         }
         Uri contentUri = Uri.parse("content://" + contentName);
         List<Map<String, Object>> contentItems;
@@ -234,6 +283,33 @@ class MyRequestHandler {
         }
         String output;
         if (contentItems != null) {
+            if (contentUri.getAuthority().equals(providerAuthority)) {
+                Log.d(TAG, "TODO: add File-specific info to contentItems?");
+                //for (Map<String, Object> cursorInfo: contentItems) {
+                for (int i = 0; i < contentItems.size(); i++) {
+                    Map<String, Object> cursorInfo = contentItems.get(i);
+                    Log.d(TAG, cursorInfo.toString());
+                    if (!cursorInfo.containsKey("[extras]")) {
+                        cursorInfo.put("[extras]", new Bundle());
+                    }
+                    Bundle extras = new Bundle((Bundle) cursorInfo.get("[extras]"));
+                    Log.d(TAG, "Bundle: " + extras.toString());
+                    try {
+                        File file = MyFileProvider.getFileForUri(activity, providerAuthority, contentUri);
+                        Log.d(TAG, "File: " + file.getAbsolutePath());
+                        if (file.isFile()) {
+                            extras.putString("name", file.getName());
+                            extras.putString("path", file.getPath());
+                            extras.putLong("length", file.length());
+                            extras.putLong("lastModified", file.lastModified());
+                            cursorInfo.put("[extras]", extras);
+                            contentItems.set(i, cursorInfo);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "getFileForUri", e);
+                    }
+                }
+            }
             try {
                 output = MyJsonUtility.toJsonString(contentItems);
             } catch (Exception e) {
@@ -405,7 +481,7 @@ class MyRequestHandler {
                 //MyDocumentUtility.showTreeFiles(activity, contentUri);
                 List<Map<String, Object>> treeItems = MyDocumentUtility.getTreeContentItems(activity, contentUri);
                 for (Map<String, Object> childInfo: treeItems) {
-                    Uri fileUri = (Uri) childInfo.get("[uri]");
+                    Uri fileUri = (Uri) childInfo.get("[document_uri]");
                     String fileId = DocumentsContract.getDocumentId(fileUri);
                     String fileName = (String) childInfo.get(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
                     if (Build.VERSION.SDK_INT >= 21) {
@@ -467,7 +543,7 @@ class MyRequestHandler {
                 builder.append("Available Documents:");
                 builder.append("<ul>");
                 for (Map<String, Object> childInfo: (List<Map<String, Object>>) cursorInfo.get("[children]")) {
-                    Uri fileUri = (Uri) childInfo.get("[uri]");
+                    Uri fileUri = (Uri) childInfo.get("[document_uri]");
                     String fileId = DocumentsContract.getDocumentId(fileUri);
                     String fileName = (String) childInfo.get(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
                     if (Build.VERSION.SDK_INT >= 21) {
@@ -511,6 +587,9 @@ class MyRequestHandler {
         final List<String> intentList = Arrays.asList(intentNames);
         String[] parts = uri.getPath().split("/", 3);
         if (intentList.contains(parts[1])) {
+            if (parts[1].equals("intent") && intentList.contains(parts[2])) {
+                return parts[2];
+            }
             return parts[1];
         }
         return null;
@@ -540,7 +619,7 @@ class MyRequestHandler {
         }
         Uri contentUri;
         try {
-            contentUri = FileProvider.getUriForFile(activity, providerAuthority, extFile);
+            contentUri = MyFileProvider.getUriForFile(activity, providerAuthority, extFile);
             MyContentUtility.showContent(activity, contentUri);
         } catch (Exception e) {
             Log.e(TAG, "Content getUriForFile: " + extFile.getAbsolutePath(), e);
@@ -726,6 +805,7 @@ class MyRequestHandler {
                 intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.putExtra(Intent.EXTRA_STREAM, contentUri);
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
+                    Log.d(TAG, "Intent No activity for " + intent.toString());
                     return false;
                 }
                 activity.startActivity(intent);
@@ -797,18 +877,14 @@ class MyRequestHandler {
         }
         // use template file for response here
         String templateName = "local/result.html";
-        Map<String, String> valuesMap = new HashMap<>();
         Map<String, String> output = new HashMap<>();
         output.put("update_zip", updateZip);
         output.put("extract", extract);
         try {
-            valuesMap.put("output", MyJsonUtility.toJsonString(output));
+            return createResultResponse(templateName, MyJsonUtility.toJsonString(output));
         } catch (Exception e) {
-            valuesMap.put("output", e.toString());
+            return createResultResponse(templateName, e.toString());
         }
-        String message = MyAssetUtility.getTemplateFile(activity, templateName, valuesMap);
-        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
-        return new WebResourceResponse("text/html", "UTF-8", targetStream);
     }
 
     WebResourceResponse handleExtractBundle(Uri uri) {
@@ -861,18 +937,13 @@ class MyRequestHandler {
         String link = uri.getQueryParameter("link");
         // use template file for response here
         String templateName = "local/result.html";
-        Map<String, String> valuesMap = new HashMap<>();
+        String output;
         if (link != null) {
-            valuesMap.put("output", "File not found:" + link.replace("<", "&lt;"));
+            output = "File not found:" + link.replace("<", "&lt;");
         } else {
-            valuesMap.put("output", "File not found:" + uri.getPath().replace("<", "&lt;"));
+            output = "File not found:" + uri.getPath().replace("<", "&lt;");
         }
-        String message = MyAssetUtility.getTemplateFile(activity, templateName, valuesMap);
-        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
-        if (Build.VERSION.SDK_INT >= 21) {
-            return new WebResourceResponse("text/html", "UTF-8", 404, "Not Found", null, targetStream);
-        }
-        return new WebResourceResponse("text/html", "UTF-8", targetStream);
+        return createResultResponse(templateName, output, 404);
     }
 
     // move back to MyAppWebViewClient?
@@ -950,6 +1021,11 @@ class MyRequestHandler {
             type = "font/woff2";
         } else if (fileName.endsWith(".svg")) {
             type = "image/svg+xml";
+        } else if (fileName.endsWith(".map")) {
+            type = "application/json";
+        } else if (fileName.endsWith(".php")) {
+            //type = "application/x-httpd-php";
+            type = "text/plain";
         } else {
             type = "TODO";
             Log.d(TAG, "File: " + fileName + " extension: " + extension + " mimetype: " + type);

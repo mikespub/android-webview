@@ -54,7 +54,7 @@ android {
 }
 
 dependencies {
-    //def appCompatVersion = "1.2.0"
+    //def appCompatVersion = "1.4.0"
     def lifeCycleVersion = '2.3.1'
     //def savedStateVersion = "1.1.0"
 
@@ -65,7 +65,7 @@ dependencies {
     implementation "androidx.appcompat:appcompat:${appCompatVersion}"
     // For loading and tinting drawables on older versions of the platform
     // implementation "androidx.appcompat:appcompat-resources:${rootProject.ext.appCompatVersion}"
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
     implementation "androidx.webkit:webkit:1.4.0"
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel:${lifeCycleVersion}"

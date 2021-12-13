@@ -128,7 +128,7 @@ public class MyDocumentUtility {
             for (Map<String, Object> cursorInfo: treeItems) {
                 if (cursorInfo.containsKey(DocumentsContract.Document.COLUMN_DOCUMENT_ID)) {
                     String childId = (String) cursorInfo.get(DocumentsContract.Document.COLUMN_DOCUMENT_ID);
-                    cursorInfo.put("[uri]", DocumentsContract.buildDocumentUriUsingTree(treeUri, childId));
+                    cursorInfo.put("[document_uri]", DocumentsContract.buildDocumentUriUsingTree(treeUri, childId));
                 }
             }
             return treeItems;

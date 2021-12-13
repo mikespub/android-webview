@@ -360,10 +360,13 @@ class MyAppWebViewClient extends WebViewClient {
      * @return      decision to override or not
      */
     // https://stackoverflow.com/questions/41972463/android-web-view-shouldoverrideurlloading-deprecated-alternative/41973017
+    /*
+    @SuppressWarnings("deprecation")
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
         return testOverrideUrlLoading(view, url);
     }
+     */
 
     /**
      * Check if we need to override a particular url and/or create an Intent for it
@@ -477,7 +480,6 @@ class MyAppWebViewClient extends WebViewClient {
      * @return      WebResourceResponse or null
      */
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
         String url = request.getUrl().toString();
@@ -491,11 +493,13 @@ class MyAppWebViewClient extends WebViewClient {
      * @return      WebResourceResponse or null
      */
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
+    /*
     @SuppressWarnings("deprecation")
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
         return testInterceptRequest(view, url);
     }
+     */
 
     /**
      * Check if we need to intercept a particular request and handle it ourselves

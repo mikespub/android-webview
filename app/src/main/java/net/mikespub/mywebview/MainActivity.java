@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     // https://developer.chrome.com/multidevice/webview/gettingstarted
     protected WebView myWebView;
     BroadcastReceiver onDownloadComplete;
+    protected MyAppWebViewClient myWebViewClient;
 
     // https://developer.android.com/training/basics/intents/result#launch
     // GetContent creates an ActivityResultLauncher<String> to allow you to pass
@@ -63,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!showContentUri(returnUri)) {
                     return;
                 }
-                showUriToast(returnUri);
+                //showUriToast(returnUri);
                 readReturnUri(returnUri);
             }
         });
@@ -77,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!showDocumentUri(returnUri)) {
                     return;
                 }
-                showUriToast(returnUri);
+                //showUriToast(returnUri);
                 readReturnUri(returnUri);
             }
         });
@@ -88,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
             public void onActivityResult(Uri returnUri) {
                 // Handle the returned Uri
                 showDocumentTree(returnUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                showUriToast(returnUri);
+                //showUriToast(returnUri);
             }
         });
 
@@ -106,7 +108,8 @@ public class MainActivity extends AppCompatActivity {
                     // Handle the Intent
                 }
                  */
-                int requestCode = MyRequestHandler.REQUEST_PICK;
+                //int requestCode = MyRequestHandler.REQUEST_PICK;
+                int requestCode = 1;
                 int resultCode = result.getResultCode();
                 Intent returnIntent = result.getData();
                 // Get the file's content URI from the incoming Intent
@@ -117,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!showContentUri(returnUri)) {
                     return;
                 }
-                showUriToast(returnUri);
+                //showUriToast(returnUri);
                 readReturnUri(returnUri);
             }
         });
@@ -127,10 +130,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onActivityResult(Uri returnUri) {
                 // Handle the returned Uri
-                if (!showContentUri(returnUri)) {
+                if (!showDocumentUri(returnUri)) {
                     return;
                 }
-                showUriToast(returnUri);
+                //showUriToast(returnUri);
                 readReturnUri(returnUri);
             }
         });
@@ -178,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         // myWebView.setScrollbarFadingEnabled(false);
         //MyReflectUtility.showObject(myWebView);
         // Stop local links and redirects from opening in browser instead of WebView
-        MyAppWebViewClient myWebViewClient = new MyAppWebViewClient(this);
+        myWebViewClient = new MyAppWebViewClient(this);
         //MyReflectUtility.showObject(myWebViewClient);
         if (myWebViewClient.hasDebuggingEnabled()) {
             WebView.setWebContentsDebuggingEnabled(true);
@@ -221,6 +224,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public boolean onLongClick(View v) {
+                    //unregisterForContextMenu(myWebView);
                     WebView.HitTestResult hitTestResult = myWebView.getHitTestResult();
                     if (hitTestResult == null) {
                         return false;
@@ -402,8 +406,8 @@ public class MainActivity extends AppCompatActivity {
      * content URI of a selected file. The result code indicates if the
      * selection worked or not.
      */
-    @Override
-    public void onActivityResult(int requestCode, int resultCode,
+    //@Override
+    public void onActivityResult_Unused(int requestCode, int resultCode,
                                  Intent returnIntent) {
         super.onActivityResult(requestCode, resultCode, returnIntent);
         // Get the file's content URI from the incoming Intent
@@ -494,7 +498,11 @@ public class MainActivity extends AppCompatActivity {
             MyDocumentUtility.showTreeFiles(this, returnUri);
         } else {
             Log.d("Activity Result", "Not a tree?");
+            return;
         }
+        String contentName = returnUri.toString().substring("content://".length());
+        String myUrl = myWebViewClient.domainUrl + "document/" + contentName;
+        myWebView.loadUrl(myUrl);
     }
 
     private boolean showDocumentUri(Uri returnUri) {
@@ -507,6 +515,9 @@ public class MainActivity extends AppCompatActivity {
             Log.e("Activity Result", "Document Error: " + returnUri, e);
             return false;
         }
+        String contentName = returnUri.toString().substring("content://".length());
+        String myUrl = myWebViewClient.domainUrl + "document/" + contentName;
+        myWebView.loadUrl(myUrl);
         return true;
     }
 
@@ -514,12 +525,18 @@ public class MainActivity extends AppCompatActivity {
         if (returnUri == null) {
             return false;
         }
+        if (DocumentsContract.isDocumentUri(this, returnUri)) {
+            return showDocumentUri(returnUri);
+        }
         try {
             MyContentUtility.showContent(this, returnUri);
         } catch (Exception e) {
             Log.e("Activity Result", "Content Error: " + returnUri, e);
             return false;
         }
+        String contentName = returnUri.toString().substring("content://".length());
+        String myUrl = myWebViewClient.domainUrl + "content/" + contentName;
+        myWebView.loadUrl(myUrl);
         return true;
     }
 

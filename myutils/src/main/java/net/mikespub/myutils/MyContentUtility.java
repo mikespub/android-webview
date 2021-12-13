@@ -73,6 +73,9 @@ public class MyContentUtility {
         Map<String, Object> cursorInfo = null;
         if (cursor.moveToFirst()) {
             cursorInfo = getCursorInfo(cursor, uri);
+            if (!cursorInfo.containsKey("[content_uri]")) {
+                cursorInfo.put("[content_uri]", uri.toString());
+            }
         }
         cursor.close();
         return cursorInfo;
@@ -127,6 +130,24 @@ public class MyContentUtility {
             cursorInfo.put("[**extras**]", cursor.getExtras());
         } else {
             cursorInfo.put("[extras]", cursor.getExtras());
+        }
+        if (cursorInfo.containsKey(BaseColumns._ID) && !cursorInfo.containsKey("[content_uri]")) {
+            Long cursorId = (long) cursorInfo.get(BaseColumns._ID);
+            try {
+                Long parseId = ContentUris.parseId(parentUri);
+                if (parseId == cursorId) {
+                    cursorInfo.put("[content_uri]", parentUri.toString());
+                } else {
+                    Log.d(TAG, cursorInfo.toString());
+                }
+            } catch (Exception e) {
+                try {
+                    Uri curUri = ContentUris.withAppendedId(parentUri, cursorId);
+                    cursorInfo.put("[content_uri]", curUri.toString());
+                } catch (Exception e2) {
+                    Log.e(TAG, cursorInfo.toString(), e2);
+                }
+            }
         }
         return cursorInfo;
     }
@@ -242,9 +263,18 @@ public class MyContentUtility {
         if (cursor == null) {
             return contentItems;
         }
+        int numItems = cursor.getCount();
         Map<String, Object> cursorInfo;
         while (cursor.moveToNext()) {
             cursorInfo = getCursorInfo(cursor, contentUri);
+            if (!cursorInfo.containsKey("[content_uri]") && numItems == 1) {
+                cursorInfo.put("[content_uri]", contentUri.toString());
+            }
+            try {
+                Log.d(TAG, MyJsonUtility.toJsonString(cursorInfo));
+            } catch (Exception e) {
+                Log.e(TAG, cursorInfo.toString(), e);
+            }
             contentItems.add(cursorInfo);
         }
         cursor.close();

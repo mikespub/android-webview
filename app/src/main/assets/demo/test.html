@@ -3,18 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <base href="https://appassets.androidplatform.net/sites/demo/">
+    <base href="https://appassets.androidplatform.net/sites/demo/test.html">
     <!-- No complains about missing favicon.ico from https requests. -->
     <link rel="icon" href="data:,">
     <title>Demo Local Site</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="js/script.js"></script>
+    <script>
+		function startRequest() {
+			var intent = document.getElementById('intent').value;
+			var value = document.getElementById('value').value;
+			if (intent == '') {
+				return false;
+			}
+			var uri = '/' + intent + '/';
+			if (value != '') {
+				uri += value
+			}
+			window.location.href = uri;
+			return false;
+		}
+	</script>
 </head>
 <body>
     <div id="main">
         <h1>Local Demo Tester</h1>
+        <h2 id="test-intent">Test Intent - <a href="#test-access">Access</a> - <a href="#test-action">Action</a></h2>
         <ul>
-            <li>
+            <li id="intent-send">
                 SEND Intent:
                 <ul>
                     <li>
@@ -31,7 +47,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="intent-view">
                 VIEW Intent:
                 <ul>
                     <li>
@@ -48,7 +64,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="intent-pick">
                 PICK Intent:
                 <ul>
                     <li>
@@ -62,7 +78,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="intent-get_content">
                 GET_CONTENT Intent:
                 <ul>
                     <li>
@@ -76,7 +92,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="intent-open_document">
                 OPEN_DOCUMENT Intent:
                 <ul>
                     <li>
@@ -93,7 +109,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="intent-open_document_tree">
                 OPEN_DOCUMENT_TREE Intent:
                 <ul>
                     <li>
@@ -101,7 +117,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="intent-create_document">
                 CREATE_DOCUMENT Intent:
                 <ul>
                     <li>
@@ -112,7 +128,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="intent-edit">
                 EDIT Intent (TODO):
                 <ul>
                     <li>
@@ -126,7 +142,15 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="intent-delete">
+                DELETE Intent (TODO):
+                <ul>
+                    <li>
+                        <a href="/delete/sites/readme.txt">Delete Text Document</a>
+                    </li>
+                </ul>
+            </li>
+            <li id="intent-standard">
                 Standard Chrome intent:// support
                 <ul>
                     <li>
@@ -134,21 +158,60 @@
                     </li>
                 </ul>
             </li>
-            <li>
+        </ul>
+        <h2 id="test-access">Test <a href="#test-intent">Intent</a> - Access - <a href="#test-action">Action</a></h2>
+        <ul>
+            <li id="access-assets">
+                Assets:
+                <ul>
+                    <li>
+                        <a href="/assets/settings.json">Global Settings File</a>
+                    </li>
+                    <li>
+                        <a href="/assets/local/config.json">Local Config File</a>
+                    </li>
+                </ul>
+            </li>
+            <li id="access-sites">
+                Sites:
+                <ul>
+                    <li>
+                        <a href="/sites/demo/index.html">Local Demo HTML</a>
+                    </li>
+                    <li>
+                        <a href="/sites/demo/css/style.css">Local Demo CSS</a>
+                    </li>
+                    <li>
+                        <a href="/sites/demo/img/image.png">Local Demo Image</a>
+                    </li>
+                    <li>
+                        <a href="/sites/demo/js/script.js">Local Demo Javascript</a>
+                    </li>
+                </ul>
+            </li>
+            <li id="access-files">
+                Files:
+                <ul>
+                    <li>
+                        <a href="/files/">Files Root</a>
+                    </li>
+                </ul>
+            </li>
+            <li id="access-content">
                 Content (TODO):
                 <ul>
                     <li>
                         <a href="/content/">Any Content</a>
                     </li>
                     <li>
-                        <a href="/content/downloads/">My Downloads</a>
+                        <a href="/content/downloads/all_downloads/">All Downloads</a>
                     </li>
                     <li>
                         <a href="/content/downloads/my_downloads/47">My Download 47</a>
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="access-document">
                 Document:
                 <ul>
                     <li>
@@ -156,7 +219,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li id="access-media">
                 Media:
                 <ul>
                     <li>
@@ -182,11 +245,42 @@
                     </li>
                 </ul>
             </li>
-            <li>
+        </ul>
+        <h2 id="test-action">Test <a href="#test-intent">Intent</a> - <a href="#test-access">Access</a> - Action</h2>
+        <ul>
+            <li id="action-refresh">
                 <a href="/refresh/">Refresh Demo Site</a>
             </li>
+            <li id="action-manage">
+                <a href="/assets/local/sites.html">Manage Local Websites</a>
+            </li>
         </ul>
-        <p><a href="/assets/local/sites.html">Manage Local Websites</a></p>
+        <form id="request-send" action="" onsubmit="return startRequest()">
+            <fieldset id="sitelist">
+                <legend>Define Request</legend>
+				<select id="intent" name="intent">
+					<option value="intent">Intent</option>
+					<option value="send">SEND</option>
+					<option value="view">VIEW</option>
+					<option value="pick">PICK</option>
+					<option value="get">GET_CONTENT</option>
+					<option value="open">OPEN_DOCUMENT</option>
+					<option value="tree">OPEN_DOCUMENT_TREE</option>
+					<option value="create">CREATE_DOCUMENT</option>
+					<option value="edit">EDIT</option>
+					<option value="delete">DELETE</option>
+					<option value="assets">Assets</option>
+					<option value="sites">Sites</option>
+                    <option value="files">Files</option>
+					<option value="content">Content</option>
+					<option value="document">Document</option>
+					<option value="media">Media</option>
+				</select> / 
+				<input type="text" id="value" name="value" value="" size="20">
+				<input type="hidden" name="csrf" value="">
+				<input id="action" type="submit" value="Send">
+            </fieldset>
+        </form>
     </div>
 </body>
 </html>
