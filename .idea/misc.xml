@@ -4,6 +4,10 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Repos/AndroidStudioProjects/MyWebView/app/src/main/res/drawable/ic_launcher_background.xml" value="0.14322916666666666" />
+        <entry key="..\:/Repos/AndroidStudioProjects/MyWebView/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.15989583333333332" />
+        <entry key="..\:/Repos/AndroidStudioProjects/MyWebView/app/src/main/res/layout/activity_main.xml" value="0.14375" />
+        <entry key="..\:/Repos/AndroidStudioProjects/MyWebView/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.15989583333333332" />
+        <entry key="..\:/Repos/AndroidStudioProjects/MyWebView/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.15989583333333332" />
       </map>
     </option>
   </component>

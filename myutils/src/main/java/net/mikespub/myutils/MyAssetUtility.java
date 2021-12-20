@@ -202,6 +202,7 @@ public class MyAssetUtility {
     public static void unzipStream(InputStream inputStream, File targetDirectory, String[] skipNames) throws IOException {
         //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
         List<String> skipList = Arrays.asList(skipNames);
+        String canonicalDir = targetDirectory.getCanonicalPath();
         try (ZipInputStream zis = new ZipInputStream(
                 new BufferedInputStream(inputStream))) {
             ZipEntry ze;
@@ -215,6 +216,11 @@ public class MyAssetUtility {
                     continue;
                 }
                 File file = new File(targetDirectory, name);
+                String canonicalFile = file.getCanonicalPath();
+                if (!canonicalFile.startsWith(canonicalDir)) {
+                    Log.d(TAG, "Unzip: " + name + " invalid filename");
+                    continue;
+                }
                 File dir = ze.isDirectory() ? file : file.getParentFile();
                 if (!dir.isDirectory() && !dir.mkdirs())
                     throw new FileNotFoundException("Failed to ensure directory: " +
