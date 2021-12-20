@@ -9,11 +9,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: set up JDK 1.8
+    - name: set up JDK 1.11
       uses: actions/setup-java@v2.4.0
       with:
-        distribution: 'zulu'
-        java-version: '8'
+        distribution: 'adopt'
+        java-version: '11'
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
@@ -22,5 +22,5 @@ jobs:
       uses: actions/upload-artifact@v2.3.0
       with:
         name: lint-results
-        path: app/build/reports/lint-results.html
+        path: /home/runner/work/android-webview/android-webview/app/build/reports/lint-results-debug.html
  
