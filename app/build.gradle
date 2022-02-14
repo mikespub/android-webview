@@ -55,7 +55,7 @@ android {
 
 dependencies {
     //def appCompatVersion = "1.4.0"
-    def lifeCycleVersion = '2.4.0'
+    def lifeCycleVersion = '2.4.1'
 
     // https://developer.android.com/studio/projects/android-library
     implementation project(":myutils")
