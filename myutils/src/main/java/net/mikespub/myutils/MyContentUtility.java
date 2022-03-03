@@ -186,7 +186,7 @@ public class MyContentUtility {
                             Log.e(TAG, "Delete: " + curUri.toString(), e);
                         }
                          */
-                        Log.d(TAG, "Duplicate: " + curUri.toString());
+                        Log.d(TAG, "Duplicate: " + curUri);
                     }
                 }
                 mediaLastMods.put(mediaUri, lastMod);
@@ -200,7 +200,7 @@ public class MyContentUtility {
                         Log.d(TAG, "File: " + cursorInfo.get(DownloadManager.COLUMN_TITLE) + " != " + curFile.getName());
                         if (cleanUp) {
                             Uri curUri = ContentUris.withAppendedId(uri, (long) cursorInfo.get(BaseColumns._ID));
-                            Log.d(TAG, "TODO: " + curUri.toString());
+                            Log.d(TAG, "TODO: " + curUri);
                         }
                     }
                 } else if (cleanUp) {
@@ -208,9 +208,9 @@ public class MyContentUtility {
                     Uri curUri = ContentUris.withAppendedId(uri, (long) cursorInfo.get(BaseColumns._ID));
                     try {
                         activity.getContentResolver().delete(curUri, null, null);
-                        Log.d(TAG, "Delete: " + curUri.toString());
+                        Log.d(TAG, "Delete: " + curUri);
                     } catch (Exception e) {
-                        Log.e(TAG, "Delete: " + curUri.toString(), e);
+                        Log.e(TAG, "Delete: " + curUri, e);
                     }
                 } else {
                     Log.d(TAG, "File: ?");
@@ -221,9 +221,9 @@ public class MyContentUtility {
                     Uri curUri = ContentUris.withAppendedId(uri, (long) cursorInfo.get(BaseColumns._ID));
                     try {
                         activity.getContentResolver().delete(curUri, null, null);
-                        Log.d(TAG, "Delete: " + curUri.toString());
+                        Log.d(TAG, "Delete: " + curUri);
                     } catch (Exception e) {
-                        Log.e(TAG, "Delete: " + curUri.toString(), e);
+                        Log.e(TAG, "Delete: " + curUri, e);
                     }
                 } else {
                     Log.d(TAG, "Skip: " + cursorInfo.get(DownloadManager.COLUMN_TITLE));

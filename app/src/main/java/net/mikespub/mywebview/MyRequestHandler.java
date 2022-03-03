@@ -23,7 +23,6 @@ import android.webkit.WebView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.webkit.WebViewAssetLoader;
 
 import net.mikespub.myutils.MyAssetUtility;
@@ -258,7 +257,8 @@ class MyRequestHandler {
         valuesMap.put("output", output);
         String message = MyAssetUtility.getTemplateFile(activity, templateName, valuesMap);
         ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
-        if (Build.VERSION.SDK_INT >= 21 && statusCode == 404) {
+        //if (Build.VERSION.SDK_INT >= 21 && statusCode == 404) {
+        if (statusCode == 404) {
             return new WebResourceResponse("text/html", "UTF-8", 404, "Not Found", null, targetStream);
         }
         return new WebResourceResponse("text/html", "UTF-8", targetStream);
@@ -279,7 +279,7 @@ class MyRequestHandler {
         } catch (Exception e) {
             Log.e(TAG, "Content Uri: " + contentUri.toString(), e);
             // use template file for response here
-            return createResultResponse("local/result.html", "Uri: " + contentUri.toString() + "\nException: " + e.toString());
+            return createResultResponse("local/result.html", "Uri: " + contentUri + "\nException: " + e);
         }
         String output;
         if (contentItems != null) {
@@ -293,7 +293,7 @@ class MyRequestHandler {
                         cursorInfo.put("[extras]", new Bundle());
                     }
                     Bundle extras = new Bundle((Bundle) cursorInfo.get("[extras]"));
-                    Log.d(TAG, "Bundle: " + extras.toString());
+                    Log.d(TAG, "Bundle: " + extras);
                     try {
                         File file = MyFileProvider.getFileForUri(activity, providerAuthority, contentUri);
                         Log.d(TAG, "File: " + file.getAbsolutePath());
@@ -410,7 +410,7 @@ class MyRequestHandler {
         try {
             contentItems = MyContentUtility.getContentItems(activity, mediaUri);
         } catch (Exception e) {
-            Log.e(TAG, "Media Uri: " + mediaUri.toString(), e);
+            Log.e(TAG, "Media Uri: " + mediaUri, e);
             if (Build.VERSION.SDK_INT >= 26) {
                 try {
                     // if we already opened this media via OPEN_DOCUMENT before...
@@ -422,7 +422,7 @@ class MyRequestHandler {
                         try {
                             output = MyJsonUtility.toJsonString(contentItems);
                         } catch (Exception g) {
-                            Log.e(TAG, "Document Uri: " + documentUri.toString(), g);
+                            Log.e(TAG, "Document Uri: " + documentUri, g);
                             output = contentItems.toString();
                         }
                     } else {
@@ -435,7 +435,7 @@ class MyRequestHandler {
                 }
             }
             // use template file for response here
-            return createResultResponse("local/result.html", "Uri: " + mediaUri.toString() + "\nException: " + e.toString());
+            return createResultResponse("local/result.html", "Uri: " + mediaUri + "\nException: " + e);
         }
         String output;
         if (contentItems != null) {
@@ -474,38 +474,38 @@ class MyRequestHandler {
             StringBuilder builder = new StringBuilder();
             builder.append("Tree: " + contentUri.getLastPathSegment() + "\n");
             builder.append("Authority: " + contentUri.getAuthority() + "\n");
-            builder.append("Uri: " + contentUri.toString() + "\n");
+            builder.append("Uri: " + contentUri + "\n");
             builder.append("Available Documents:");
             builder.append("<ul>");
-            if (Build.VERSION.SDK_INT >= 21) {
-                //MyDocumentUtility.showTreeFiles(activity, contentUri);
-                List<Map<String, Object>> treeItems = MyDocumentUtility.getTreeContentItems(activity, contentUri);
-                for (Map<String, Object> childInfo: treeItems) {
-                    Uri fileUri = (Uri) childInfo.get("[document_uri]");
-                    String fileId = DocumentsContract.getDocumentId(fileUri);
-                    String fileName = (String) childInfo.get(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
-                    if (Build.VERSION.SDK_INT >= 21) {
-                        //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
-                        Uri newUri = fileUri;
-                        builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " New: " + newUri.toString() + "</li>");
-                    } else {
-                        builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
-                    }
-                }
-            } else {
-                List<DocumentFile> treeFiles = MyDocumentUtility.getTreeDocumentFiles(activity, contentUri);
-                for (DocumentFile file: treeFiles) {
-                    Uri fileUri = file.getUri();
-                    String fileId = DocumentsContract.getDocumentId(fileUri);
-                    if (Build.VERSION.SDK_INT >= 21) {
-                        //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
-                        Uri newUri = fileUri;
-                        builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + file.getName() + "</a>: " + fileId + " New: " + newUri.toString() + "</li>");
-                    } else {
-                        builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + file.getName() + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
-                    }
-                }
+            //if (Build.VERSION.SDK_INT >= 21) {
+            //MyDocumentUtility.showTreeFiles(activity, contentUri);
+            List<Map<String, Object>> treeItems = MyDocumentUtility.getTreeContentItems(activity, contentUri);
+            for (Map<String, Object> childInfo: treeItems) {
+                Uri fileUri = (Uri) childInfo.get("[document_uri]");
+                String fileId = DocumentsContract.getDocumentId(fileUri);
+                String fileName = (String) childInfo.get(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
+                //if (Build.VERSION.SDK_INT >= 21) {
+                //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
+                Uri newUri = fileUri;
+                builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " New: " + newUri + "</li>");
+                //} else {
+                //    builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
+                //}
             }
+            //} else {
+            //    List<DocumentFile> treeFiles = MyDocumentUtility.getTreeDocumentFiles(activity, contentUri);
+            //    for (DocumentFile file: treeFiles) {
+            //        Uri fileUri = file.getUri();
+            //        String fileId = DocumentsContract.getDocumentId(fileUri);
+            //        if (Build.VERSION.SDK_INT >= 21) {
+            //            //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
+            //            Uri newUri = fileUri;
+            //            builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + file.getName() + "</a>: " + fileId + " New: " + newUri.toString() + "</li>");
+            //        } else {
+            //            builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + file.getName() + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
+            //        }
+            //    }
+            //}
             builder.append("</ul>");
             return createResultResponse("local/result.html", builder.toString());
         } else {
@@ -539,26 +539,26 @@ class MyRequestHandler {
                 StringBuilder builder = new StringBuilder();
                 builder.append("Dir: " + contentUri.getLastPathSegment() + "\n");
                 builder.append("Authority: " + contentUri.getAuthority() + "\n");
-                builder.append("Uri: " + contentUri.toString() + "\n");
+                builder.append("Uri: " + contentUri + "\n");
                 builder.append("Available Documents:");
                 builder.append("<ul>");
                 for (Map<String, Object> childInfo: (List<Map<String, Object>>) cursorInfo.get("[children]")) {
                     Uri fileUri = (Uri) childInfo.get("[document_uri]");
                     String fileId = DocumentsContract.getDocumentId(fileUri);
                     String fileName = (String) childInfo.get(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
-                    if (Build.VERSION.SDK_INT >= 21) {
-                        //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
-                        Uri newUri = fileUri;
-                        builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " New: " + newUri.toString() + "</li>");
-                    } else {
-                        builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
-                    }
+                    //if (Build.VERSION.SDK_INT >= 21) {
+                    //Uri newUri = DocumentsContract.buildDocumentUriUsingTree(contentUri, fileId);
+                    Uri newUri = fileUri;
+                    builder.append("<li><a href=\"/document/" + newUri.getEncodedAuthority() + newUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " New: " + newUri + "</li>");
+                    //} else {
+                    //    builder.append("<li><a href=\"/document/" + fileUri.getEncodedAuthority() + fileUri.getEncodedPath() + "\">" + fileName + "</a>: " + fileId + " Old: " + fileUri.toString() + "</li>");
+                    //}
                 }
                 builder.append("</ul>");
                 try {
                     builder.append(MyJsonUtility.toJsonString(cursorInfo));
                 } catch (Exception e) {
-                    builder.append(cursorInfo.toString());
+                    builder.append(cursorInfo);
                 }
                 output = builder.toString();
             } else {
@@ -569,7 +569,7 @@ class MyRequestHandler {
                 }
             }
         } else {
-            output = "No Document Found: " + contentUri.toString();
+            output = "No Document Found: " + contentUri;
         }
         // use template file for response here
         return createResultResponse("local/result.html", output);
@@ -577,7 +577,7 @@ class MyRequestHandler {
 
     WebResourceResponse handleIntentRequest(WebView view, Uri uri) {
         Boolean isHandled = handleIntentUri(view, uri);
-        String output = "Intent: " + uri.toString() + "\nHandled: " + isHandled;
+        String output = "Intent: " + uri + "\nHandled: " + isHandled;
         // use template file for response here
         return createResultResponse("local/result.html", output);
     }
@@ -656,16 +656,16 @@ class MyRequestHandler {
                 intent.putExtra(Intent.EXTRA_STREAM, contentUri);
                 //view.getContext().startActivity(intent);
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
+                    Log.d(TAG, "Intent No activity for " + intent);
                     intent.setDataAndType(contentUri, "text/*");
                 }
                 // Create intent to show chooser
-                String title = uri.toString() + "\n\nOpen with";
+                String title = uri + "\n\nOpen with";
                 Intent chooser = Intent.createChooser(intent, title);
                 try {
                     view.getContext().startActivity(chooser);
                 }  catch (ActivityNotFoundException e) {
-                    Log.d(TAG, "Intent Start activity failed for " + intent.toString());
+                    Log.d(TAG, "Intent Start activity failed for " + intent);
                     return false;
                 }
                 break;
@@ -691,7 +691,7 @@ class MyRequestHandler {
                 }
                 //intent.addCategory(Intent.CATEGORY_OPENABLE);
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
+                    Log.d(TAG, "Intent No activity for " + intent);
                     return false;
                 }
                 //activity.startActivityForResult(intent, REQUEST_PICK);
@@ -805,7 +805,7 @@ class MyRequestHandler {
                 intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.putExtra(Intent.EXTRA_STREAM, contentUri);
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
+                    Log.d(TAG, "Intent No activity for " + intent);
                     return false;
                 }
                 activity.startActivity(intent);
@@ -814,7 +814,7 @@ class MyRequestHandler {
                 intent = new Intent(Intent.ACTION_DELETE);
                 //intent.setData(dataUri); // Data to be deleted.
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
+                    Log.d(TAG, "Intent No activity for " + intent);
                     return false;
                 }
                 activity.startActivity(intent);
@@ -832,7 +832,7 @@ class MyRequestHandler {
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent.putExtra(Intent.EXTRA_STREAM, contentUri);
                 if (intent.resolveActivity(activity.getPackageManager()) == null) {
-                    Log.d(TAG, "Intent No activity for " + intent.toString());
+                    Log.d(TAG, "Intent No activity for " + intent);
                     return false;
                 }
                 view.getContext().startActivity(intent);

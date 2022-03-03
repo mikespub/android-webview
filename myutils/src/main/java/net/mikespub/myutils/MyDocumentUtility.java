@@ -71,16 +71,16 @@ public class MyDocumentUtility {
     }
 
     public static boolean checkTreeUri(Uri treeUri) {
-        if (Build.VERSION.SDK_INT >= 24) {
-            return DocumentsContract.isTreeUri(treeUri);
-        } else if (Build.VERSION.SDK_INT >= 21) {
-            try {
-                String treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri);
-                return !treeDocumentId.isEmpty();
-            } catch (Exception e) {
-                return false;
-            }
-        } else return treeUri.getPath().startsWith("/tree/");
+        //if (Build.VERSION.SDK_INT >= 24) {
+        return DocumentsContract.isTreeUri(treeUri);
+        //} else if (Build.VERSION.SDK_INT >= 21) {
+        //    try {
+        //        String treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri);
+        //        return !treeDocumentId.isEmpty();
+        //    } catch (Exception e) {
+        //        return false;
+        //    }
+        //} else return treeUri.getPath().startsWith("/tree/");
     }
 
     public static void showTreeFiles(AppCompatActivity activity, Uri treeUri) {
@@ -99,43 +99,43 @@ public class MyDocumentUtility {
             //if (Build.VERSION.SDK_INT >= 21) {
             //    fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, fileId);
             //}
-            Log.d(TAG, "File: " + file.getName() + " id: " + fileId + " size: " + file.length() + " uri: " + fileUri + " doc: " + file.toString());
+            Log.d(TAG, "File: " + file.getName() + " id: " + fileId + " size: " + file.length() + " uri: " + fileUri + " doc: " + file);
         }
     }
 
     public static List<Map<String, Object>> getTreeContentItems(AppCompatActivity activity, Uri treeUri) {
-        if (Build.VERSION.SDK_INT >= 21) {
-            String treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri);
-            Log.d(TAG, "Tree Id: " + treeDocumentId + " Uri: " + treeUri.toString());
-            Uri documentUri;
-            Uri childrenUri;
-            try {
-                String documentId = DocumentsContract.getDocumentId(treeUri);
-                Log.d(TAG, "Document Id: " + documentId);
-                //documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, Uri.encode(documentId, ":"));
-                //childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, Uri.encode(documentId, ":"));
-                documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId);
-                childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, documentId);
-            } catch (Exception e) {
-                Log.d(TAG, "Document Id: null");
-                documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId);
-                childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, treeDocumentId);
-            }
-            Log.d(TAG, "Document Uri: " + documentUri.toString());
-            MyContentUtility.showContent(activity, documentUri);
-            Log.d(TAG, "Children Uri: " + childrenUri.toString());
-            List<Map<String, Object>> treeItems = MyContentUtility.getContentItems(activity, childrenUri);
-            for (Map<String, Object> cursorInfo: treeItems) {
-                if (cursorInfo.containsKey(DocumentsContract.Document.COLUMN_DOCUMENT_ID)) {
-                    String childId = (String) cursorInfo.get(DocumentsContract.Document.COLUMN_DOCUMENT_ID);
-                    cursorInfo.put("[document_uri]", DocumentsContract.buildDocumentUriUsingTree(treeUri, childId));
-                }
-            }
-            return treeItems;
-        } else {
-            Log.d(TAG, "Tree Uri: " + treeUri.toString());
-            return null;
+        //if (Build.VERSION.SDK_INT >= 21) {
+        String treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri);
+        Log.d(TAG, "Tree Id: " + treeDocumentId + " Uri: " + treeUri.toString());
+        Uri documentUri;
+        Uri childrenUri;
+        try {
+            String documentId = DocumentsContract.getDocumentId(treeUri);
+            Log.d(TAG, "Document Id: " + documentId);
+            //documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, Uri.encode(documentId, ":"));
+            //childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, Uri.encode(documentId, ":"));
+            documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId);
+            childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, documentId);
+        } catch (Exception e) {
+            Log.d(TAG, "Document Id: null");
+            documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId);
+            childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, treeDocumentId);
         }
+        Log.d(TAG, "Document Uri: " + documentUri.toString());
+        MyContentUtility.showContent(activity, documentUri);
+        Log.d(TAG, "Children Uri: " + childrenUri.toString());
+        List<Map<String, Object>> treeItems = MyContentUtility.getContentItems(activity, childrenUri);
+        for (Map<String, Object> cursorInfo: treeItems) {
+            if (cursorInfo.containsKey(DocumentsContract.Document.COLUMN_DOCUMENT_ID)) {
+                String childId = (String) cursorInfo.get(DocumentsContract.Document.COLUMN_DOCUMENT_ID);
+                cursorInfo.put("[document_uri]", DocumentsContract.buildDocumentUriUsingTree(treeUri, childId));
+            }
+        }
+        return treeItems;
+        //} else {
+        //    Log.d(TAG, "Tree Uri: " + treeUri.toString());
+        //    return null;
+        //}
     }
 
     public static void showDocument(AppCompatActivity activity, Uri uri) {

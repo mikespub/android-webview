@@ -43,7 +43,7 @@ class AppJavaScriptProxy {
             public void run() {
                 Uri uri = Uri.parse(myWebView.getUrl());
                 if(!uri.getHost().equals(myActivity.getString(R.string.app_host))){
-                    Log.d("WebView", "No Javascript Interface for " + uri.toString());
+                    Log.d("WebView", "No Javascript Interface for " + uri);
                     return;
                 }
 

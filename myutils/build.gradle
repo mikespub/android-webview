@@ -32,7 +32,7 @@ android {
 }
 
 dependencies {
-    //def appCompatVersion = "1.4.0"
+    //def appCompatVersion = "1.4.1"
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 

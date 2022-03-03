@@ -128,7 +128,7 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
         }
         //Bitmap bitmap = BitmapFactory.decodeResource(activity.getResources(), R.mipmap.ic_launcher);
         if (bitmap != null) {
-            Log.d(TAG, "Bitmap: " + bitmap.toString());
+            Log.d(TAG, "Bitmap: " + bitmap);
             File extDir = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
             if (!extDir.exists() && !extDir.mkdirs()) {
                 Log.e(TAG, "Dir Create: FAIL " + extDir.getAbsolutePath());
@@ -198,7 +198,7 @@ class MyLocalConfigRepository extends MyJsonFileRepository {
 
     static boolean updateLocalSites(AppCompatActivity activity, HashMap<String, String> localSites) {
         HashMap<String, String> siteMap = findLocalSites(activity);
-        Log.d(TAG, "Sites: " + siteMap.toString());
+        Log.d(TAG, "Sites: " + siteMap);
         boolean hasAdded = false;
         for (String url: siteMap.keySet()) {
             if (!localSites.containsKey(url)) {

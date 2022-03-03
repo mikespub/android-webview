@@ -1,5 +1,6 @@
 package net.mikespub.mywebview;
 
+import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -7,7 +8,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
@@ -142,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * @param savedInstanceState    saved instance state
      */
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -347,9 +348,9 @@ public class MainActivity extends AppCompatActivity {
     // https://stackoverflow.com/questions/41025200/android-view-inflateexception-error-inflating-class-android-webkit-webview
     @Override
     public void applyOverrideConfiguration(final Configuration overrideConfiguration) {
-        if (Build.VERSION.SDK_INT >= 21 && Build.VERSION.SDK_INT < 25) {
-            overrideConfiguration.uiMode &= ~Configuration.UI_MODE_NIGHT_MASK;
-        }
+        //if (Build.VERSION.SDK_INT >= 21 && Build.VERSION.SDK_INT < 25) {
+        //    overrideConfiguration.uiMode &= ~Configuration.UI_MODE_NIGHT_MASK;
+        //}
         super.applyOverrideConfiguration(overrideConfiguration);
     }
 
@@ -445,16 +446,16 @@ public class MainActivity extends AppCompatActivity {
         if (returnUri == null) {
             // Pick text - Samsung Notes
             if (returnExtras != null) {
-                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " No Uri: " + returnIntent.toUri(0) + " Extras: " + returnExtras.toString());
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent + " No Uri: " + returnIntent.toUri(0) + " Extras: " + returnExtras);
             } else {
-                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " No Uri: " + returnIntent.toUri(0) + " Extras: " + returnExtras);
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent + " No Uri: " + returnIntent.toUri(0) + " Extras: " + returnExtras);
             }
             return null;
         }
         if (returnExtras != null) {
-            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " Uri: " + returnUri + " Extras: " + returnExtras.toString());
+            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent + " Uri: " + returnUri + " Extras: " + returnExtras);
         } else {
-            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent.toString() + " Uri: " + returnUri + " Extras: " + returnExtras);
+            Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Intent: " + returnIntent + " Uri: " + returnUri + " Extras: " + returnExtras);
         }
         return returnUri;
     }
@@ -464,7 +465,7 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode != RESULT_OK) {
             // Exit without doing anything else
             if (returnIntent != null) {
-                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent.toString());
+                Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent);
             } else {
                 Log.d("Activity Result", "Request: " + requestCode + " Result: " + resultCode + " Not OK: " + returnIntent);
             }

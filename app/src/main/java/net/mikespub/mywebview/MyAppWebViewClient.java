@@ -435,7 +435,7 @@ class MyAppWebViewClient extends WebViewClient {
         if (isMatch && isSkip) {
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             // Create intent to show chooser
-            String title = uri.toString() + "\n\nOpen with";
+            String title = uri + "\n\nOpen with";
             Intent chooser = Intent.createChooser(intent, title);
             view.getContext().startActivity(chooser);
             return true;
@@ -444,11 +444,11 @@ class MyAppWebViewClient extends WebViewClient {
         if (hasNotMatching()) {
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             // Create intent to show chooser
-            String title = uri.toString() + "\n\nOpen with";
+            String title = uri + "\n\nOpen with";
             Intent chooser = Intent.createChooser(intent, title);
             view.getContext().startActivity(chooser);
         } else {
-            String message = uri.toString() + "\n\nLink not matching. You can allow opening via regular browser in Advanced Options.";
+            String message = uri + "\n\nLink not matching. You can allow opening via regular browser in Advanced Options.";
             Toast toast = Toast.makeText(
                     view.getContext().getApplicationContext(),
                     message,
