@@ -55,7 +55,7 @@ android {
 
 dependencies {
     //def appCompatVersion = "1.4.1"
-    def lifeCycleVersion = '2.4.1'
+    def lifeCycleVersion = '2.5.1'
     //def arch_version = '2.1.0'
 
     // https://developer.android.com/studio/projects/android-library
