@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">My WebView</string>
     <string name="app_host">appassets.androidplatform.net</string>
-    <string name="link_host">mikespub.net</string>
+    <string name="link_host">owncloud.mikespub.net</string>
     <string name="link_prefix">/mywebview/</string>
     <string name="link_scheme">mywebview</string>
     <string name="start_uri">assets/web/index.html</string>
