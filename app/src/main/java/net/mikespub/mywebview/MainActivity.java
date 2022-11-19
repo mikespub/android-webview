@@ -25,7 +25,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProvider;
 
 import net.mikespub.myutils.MyContentUtility;
@@ -125,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    // TODO: replace deprecated ActivityResultContracts.CreateDocument() with mimetype?
     final ActivityResultLauncher<String> mCreateDocument = registerForActivityResult(new ActivityResultContracts.CreateDocument(),
         new ActivityResultCallback<Uri>() {
             @Override
@@ -227,9 +227,9 @@ public class MainActivity extends AppCompatActivity {
                 public boolean onLongClick(View v) {
                     //unregisterForContextMenu(myWebView);
                     WebView.HitTestResult hitTestResult = myWebView.getHitTestResult();
-                    if (hitTestResult == null) {
-                        return false;
-                    }
+                    //if (hitTestResult == null) {
+                    //    return false;
+                    //}
                     int getType = hitTestResult.getType();
                     String extra = hitTestResult.getExtra();
                     if (extra == null || extra.equals("")) {
@@ -325,7 +325,8 @@ public class MainActivity extends AppCompatActivity {
      */
     // https://stackoverflow.com/questions/57838759/how-android-jetpack-savedstateviewmodelfactory-works
     public MySavedStateModel getSavedStateModel() {
-        return new ViewModelProvider(this, new SavedStateViewModelFactory(getApplication(), this)).get(MySavedStateModel.class);
+        //return new ViewModelProvider(this, new SavedStateViewModelFactory(getApplication(), this)).get(MySavedStateModel.class);
+        return new ViewModelProvider(this).get(MySavedStateModel.class);
     }
 
     /**
@@ -567,6 +568,11 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "Result File Error", e);
         }
         //InputStream inputStream = activity.getContentResolver().openInputStream(uri);
+        try {
+            inputPFD.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Result File Close", e);
+        }
     }
 
     // See https://developer.android.com/training/permissions/requesting
