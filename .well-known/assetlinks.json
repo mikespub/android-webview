@@ -1,5 +1,8 @@
 [{
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target" : { "namespace": "android_app", "package_name": "net.mikespub.mywebview",
-    "sha256_cert_fingerprints": ["50:CE:87:08:A5:58:D7:D8:D6:E8:7F:44:41:70:85:AD:0C:2D:5B:AD:EA:76:89:26:65:5A:45:87:0C:C6:AA:13"] }
+    "sha256_cert_fingerprints": [
+	  "50:CE:87:08:A5:58:D7:D8:D6:E8:7F:44:41:70:85:AD:0C:2D:5B:AD:EA:76:89:26:65:5A:45:87:0C:C6:AA:13",
+	  "33:24:F2:F4:FE:7F:76:25:61:93:AC:09:AC:2E:2F:B2:4E:80:C7:72:35:FF:31:00:F2:C3:43:45:11:B4:4D:58"
+	] }
 }]

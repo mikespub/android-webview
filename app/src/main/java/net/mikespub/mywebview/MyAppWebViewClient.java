@@ -22,6 +22,7 @@ import net.mikespub.myutils.MyAssetUtility;
 import net.mikespub.myutils.MyReflectUtility;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -292,6 +293,7 @@ class MyAppWebViewClient extends WebViewClient {
      * @return  corresponding site url
      */
     String getSiteUrlFromAppLink(Uri appLinkData) {
+        String scheme = appLinkData.getScheme();
         String host = appLinkData.getEncodedAuthority();
         String path = appLinkData.getEncodedPath();
         if (path.isEmpty()) {
@@ -300,7 +302,52 @@ class MyAppWebViewClient extends WebViewClient {
         if (!path.contains("/")) {
             path += "/";
         }
-        Log.d("AppLink", "Path: " + host + path);
+        if (scheme.equals(activity.getString(R.string.link_scheme))) {
+            Log.d("AppLink", "Path: " + host + path);
+        } else if (host.equals(activity.getString(R.string.link_host))) {
+            File f = new File(path);
+            String canonicalPath = "";
+            try {
+                canonicalPath = f.getCanonicalPath();
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Failed to resolve canonical path for " + path);
+            }
+            // check for missing trailing / if index.html is not specified
+            if (canonicalPath.length() > 1 && canonicalPath.indexOf("/", 1) < 0) {
+                canonicalPath += "/";
+            }
+            if (canonicalPath.startsWith(activity.getString(R.string.link_prefix))) {
+                Log.d("AppLink", "Link: " + host + path);
+                host = "link";
+                path = activity.getString(R.string.link_uri) + canonicalPath.substring(activity.getString(R.string.link_prefix).length());
+            } else {
+                Log.e("AppLink", "Link: " + host + path + "!=" + canonicalPath);
+                return domainUrl + "assets/local/404.jsp?link=" + host + path;
+            }
+        } else if (host.equals(activity.getString(R.string.link2_host))) {
+            File f = new File(path);
+            String canonicalPath = "";
+            try {
+                canonicalPath = f.getCanonicalPath();
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Failed to resolve canonical path for " + path);
+            }
+            // check for missing trailing / if index.html is not specified
+            if (canonicalPath.length() > 1 && canonicalPath.indexOf("/", 1) < 0) {
+                canonicalPath += "/";
+            }
+            if (canonicalPath.startsWith(activity.getString(R.string.link2_prefix))) {
+                Log.d("AppLink", "Link2: " + host + path);
+                host = "link2";
+                path = activity.getString(R.string.link2_uri) + canonicalPath.substring(activity.getString(R.string.link2_prefix).length());
+            } else {
+                Log.e("AppLink", "Link2: " + host + path + "!=" + canonicalPath);
+                return domainUrl + "assets/local/404.jsp?link=" + host + path;
+            }
+        } else {
+            // TODO: map other links to assets
+            Log.d("AppLink", "Site: " + host + path);
+        }
         //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
         //final List<String> linkList = Arrays.asList(linkNames);
         String myUrl;
@@ -331,6 +378,12 @@ class MyAppWebViewClient extends WebViewClient {
             //case "root":
             //    myUrl = domainUrl + "assets" + path;
             //    break;
+            // link_scheme://link_host + link_prefix + path
+            case "link":
+            case "link2":
+                myUrl = domainUrl + path;
+                break;
+            case "other":
             default:
                 myUrl = domainUrl + "assets/local/404.jsp?link=" + host + path;
         }

@@ -3,6 +3,10 @@
     <string name="app_host">appassets.androidplatform.net</string>
     <string name="link_host">owncloud.mikespub.net</string>
     <string name="link_prefix">/mywebview/</string>
+    <string name="link_uri">assets/web/</string>
+    <string name="link2_host">github.mikespub.net</string>
+    <string name="link2_prefix">/android-webview/</string>
+    <string name="link2_uri">files/</string>
     <string name="link_scheme">mywebview</string>
     <string name="start_uri">assets/web/index.html</string>
     <string-array name="url_match">

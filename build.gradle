@@ -43,8 +43,8 @@ ext {
     buildToolsVersion = '31.0.0'
     minSdkVersion = 25
     targetSdkVersion = 31
-    versionCode = 26
-    versionName = "1.25"
+    versionCode = 27
+    versionName = "1.26"
     appCompatVersion = '1.5.1'
 }
 

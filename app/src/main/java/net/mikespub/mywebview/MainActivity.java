@@ -290,7 +290,7 @@ public class MainActivity extends AppCompatActivity {
             if (appLinkAction.equals(Intent.ACTION_VIEW)) {
                 Uri appLinkData = appLinkIntent.getData();
                 Log.d("Intent", "Action: " + appLinkAction + " - Data: " + appLinkData);
-                if (appLinkData != null && appLinkData.getScheme().equals(getString(R.string.link_scheme))) {
+                if (appLinkData != null) {
                     String myUrl = myWebViewClient.getSiteUrlFromAppLink(appLinkData);
                     myWebView.loadUrl(myUrl);
                     return;
