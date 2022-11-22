@@ -145,6 +145,7 @@ class MyRequestHandler {
         }
         return this.assetLoader.shouldInterceptRequest(uri);
     }
+
     WebResourceResponse handleAssetFileRequest(Uri uri) {
         String fileName = uri.getPath().substring("/assets/".length());
         return handleFileRequest(null, fileName);

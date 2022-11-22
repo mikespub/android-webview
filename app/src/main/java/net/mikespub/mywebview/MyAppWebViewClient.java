@@ -16,7 +16,6 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
-import androidx.webkit.WebViewAssetLoader;
 
 import net.mikespub.myutils.MyAssetUtility;
 import net.mikespub.myutils.MyReflectUtility;
@@ -42,7 +41,7 @@ class MyAppWebViewClient extends WebViewClient {
 
     // http://tutorials.jenkov.com/android/android-web-apps-using-android-webview.html
     final MainActivity activity;
-    private WebViewAssetLoader assetLoader;
+    //private WebViewAssetLoader assetLoader;
     private String[][] myMatchCompare;
     private String[][] mySkipCompare;
     // SavedStateViewModel see https://github.com/googlecodelabs/android-lifecycles/blob/master/app/src/main/java/com/example/android/lifecycles/step6_solution/SavedStateActivity.java
@@ -292,7 +291,7 @@ class MyAppWebViewClient extends WebViewClient {
      * @param appLinkData the app link received via Intent
      * @return  corresponding site url
      */
-    String getSiteUrlFromAppLink(Uri appLinkData) {
+    String getSiteUrlFromAppLink(Uri appLinkData, Boolean getNotFound) {
         String scheme = appLinkData.getScheme();
         String host = appLinkData.getEncodedAuthority();
         String path = appLinkData.getEncodedPath();
@@ -306,7 +305,7 @@ class MyAppWebViewClient extends WebViewClient {
             Log.d("AppLink", "Path: " + host + path);
         } else if (host.equals(activity.getString(R.string.link_host))) {
             File f = new File(path);
-            String canonicalPath = "";
+            String canonicalPath;
             try {
                 canonicalPath = f.getCanonicalPath();
             } catch (IOException e) {
@@ -322,11 +321,14 @@ class MyAppWebViewClient extends WebViewClient {
                 path = activity.getString(R.string.link_uri) + canonicalPath.substring(activity.getString(R.string.link_prefix).length());
             } else {
                 Log.e("AppLink", "Link: " + host + path + "!=" + canonicalPath);
-                return domainUrl + "assets/local/404.jsp?link=" + host + path;
+                if (getNotFound) {
+                    return domainUrl + "assets/local/404.jsp?link=" + host + path;
+                }
+                return "";
             }
         } else if (host.equals(activity.getString(R.string.link2_host))) {
             File f = new File(path);
-            String canonicalPath = "";
+            String canonicalPath;
             try {
                 canonicalPath = f.getCanonicalPath();
             } catch (IOException e) {
@@ -342,11 +344,17 @@ class MyAppWebViewClient extends WebViewClient {
                 path = activity.getString(R.string.link2_uri) + canonicalPath.substring(activity.getString(R.string.link2_prefix).length());
             } else {
                 Log.e("AppLink", "Link2: " + host + path + "!=" + canonicalPath);
-                return domainUrl + "assets/local/404.jsp?link=" + host + path;
+                if (getNotFound) {
+                    return domainUrl + "assets/local/404.jsp?link=" + host + path;
+                }
+                return "";
             }
         } else {
-            // TODO: map other links to assets
             Log.d("AppLink", "Site: " + host + path);
+            if (getNotFound) {
+                return domainUrl + "assets/local/404.jsp?link=" + host + path;
+            }
+            return "";
         }
         //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
         //final List<String> linkList = Arrays.asList(linkNames);
@@ -385,7 +393,10 @@ class MyAppWebViewClient extends WebViewClient {
                 break;
             case "other":
             default:
-                myUrl = domainUrl + "assets/local/404.jsp?link=" + host + path;
+                if (getNotFound) {
+                    return domainUrl + "assets/local/404.jsp?link=" + host + path;
+                }
+                return "";
         }
         return myUrl;
     }
@@ -439,10 +450,10 @@ class MyAppWebViewClient extends WebViewClient {
             return false;
         }
         // if we put deep links in web, local or sites pages, reload here with site link to avoid CORS et al.
-        if (url.startsWith(activity.getString(R.string.link_scheme) + "://")) {
-            url = getSiteUrlFromAppLink(Uri.parse(url));
-            Log.d("Web Override", "Reload with site link " + url);
-            view.loadUrl(url);
+        String myUrl = getSiteUrlFromAppLink(Uri.parse(url), false);
+        if (!myUrl.isEmpty()) {
+            Log.d("Web Override", "Reload with site link " + myUrl);
+            view.loadUrl(myUrl);
             return true;
         }
         final Uri uri = Uri.parse(url);
@@ -565,9 +576,9 @@ class MyAppWebViewClient extends WebViewClient {
     private WebResourceResponse testInterceptRequest(WebView view, String url) {
         Log.d("Web Intercept", url);
         // if we put deep links in web, local or sites pages and don't reload above, we'll have CORS issues et al. here
-        if (url.startsWith(activity.getString(R.string.link_scheme) + "://")) {
-            url = getSiteUrlFromAppLink(Uri.parse(url));
-        }
+        //if (url.startsWith(activity.getString(R.string.link_scheme) + "://")) {
+        //    url = getSiteUrlFromAppLink(Uri.parse(url));
+        //}
         if(!url.startsWith(domainUrl) && !url.startsWith("http://localhost/")) {
             return null;
         }
