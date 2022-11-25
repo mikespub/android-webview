@@ -291,8 +291,7 @@ public class MainActivity extends AppCompatActivity {
                 Uri appLinkData = appLinkIntent.getData();
                 Log.d("Intent", "Action: " + appLinkAction + " - Data: " + appLinkData);
                 if (appLinkData != null) {
-                    String myUrl = myWebViewClient.getSiteUrlFromAppLink(appLinkData, true);
-                    myWebView.loadUrl(myUrl);
+                    myWebViewClient.loadAppLink(myWebView, appLinkData, true);
                     return;
                 }
             }
@@ -300,8 +299,7 @@ public class MainActivity extends AppCompatActivity {
         // https://stackoverflow.com/questions/36987144/preventing-webview-reload-on-rotate-android-studio/46849736#46849736
         if (savedInstanceState == null) {
             // myWebView.loadUrl("http://beta.html5test.com/");
-            String myUrl = myWebViewClient.domainUrl + getString(R.string.start_uri);
-            myWebView.loadUrl(myUrl);
+            myWebViewClient.loadHomePage(myWebView);
         } else {
             // Bundle bundle = savedInstanceState.getBundle("webViewState");
             // Log.d("Web Create", bundle.toString());
@@ -503,8 +501,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         String contentName = returnUri.toString().substring("content://".length());
-        String myUrl = myWebViewClient.domainUrl + "document/" + contentName;
-        myWebView.loadUrl(myUrl);
+        myWebViewClient.loadDocument(myWebView, contentName);
     }
 
     private boolean showDocumentUri(Uri returnUri) {
@@ -518,8 +515,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         String contentName = returnUri.toString().substring("content://".length());
-        String myUrl = myWebViewClient.domainUrl + "document/" + contentName;
-        myWebView.loadUrl(myUrl);
+        myWebViewClient.loadDocument(myWebView, contentName);
         return true;
     }
 
@@ -537,8 +533,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         String contentName = returnUri.toString().substring("content://".length());
-        String myUrl = myWebViewClient.domainUrl + "content/" + contentName;
-        myWebView.loadUrl(myUrl);
+        myWebViewClient.loadContent(myWebView, contentName);
         return true;
     }
 

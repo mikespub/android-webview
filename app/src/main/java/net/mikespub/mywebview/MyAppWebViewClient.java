@@ -286,12 +286,76 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     /**
+     * Load home page
+     *
+     * @param view  current WebView context
+     */
+    void loadHomePage(WebView view) {
+        String myUrl = domainUrl + activity.getResources().getString(R.string.start_uri);
+        view.loadUrl(myUrl);
+    }
+
+    /**
+     * Load document
+     *
+     * @param view  current WebView context
+     * @param contentName the document to load
+     */
+    void loadDocument(WebView view, String contentName) {
+        String myUrl = domainUrl + "document/" + contentName;
+        view.loadUrl(myUrl);
+    }
+
+    /**
+     * Load generic content
+     *
+     * @param view  current WebView context
+     * @param contentName the content to load
+     */
+    void loadContent(WebView view, String contentName) {
+        String myUrl = domainUrl + "content/" + contentName;
+        view.loadUrl(myUrl);
+    }
+
+    /**
+     * Load app link
+     *
+     * @param view  current WebView context
+     * @param appLinkData the app link to load
+     * @param getNotFound get not found link if not a valid app link
+     * @return      true if loading valid app link, false if not
+     */
+    boolean loadAppLink(WebView view, Uri appLinkData, Boolean getNotFound) {
+        String myUrl = getSiteUrlFromAppLink(appLinkData);
+        if (myUrl.isEmpty()) {
+            if (getNotFound) {
+                myUrl = domainUrl + "assets/local/404.jsp?link=" + appLinkData.getEncodedAuthority() + appLinkData.getEncodedPath();
+                view.loadUrl(myUrl);
+            }
+            return false;
+        }
+        view.loadUrl(myUrl);
+        return true;
+    }
+
+    /**
+     * Load 404 Not Found
+     *
+     * @param view  current WebView context
+     * @param contentName the content not found
+     */
+    void loadNotFound(WebView view, String contentName) {
+        String myUrl = domainUrl + "assets/local/404.jsp?link=" + contentName;
+        view.loadUrl(myUrl);
+    }
+
+    /**
      * Get the site url corresponding to an app link
      *
      * @param appLinkData the app link received via Intent
-     * @return  corresponding site url
+     * @return  corresponding site url or empty
      */
-    String getSiteUrlFromAppLink(Uri appLinkData, Boolean getNotFound) {
+    String getSiteUrlFromAppLink(Uri appLinkData) {
         String scheme = appLinkData.getScheme();
         String host = appLinkData.getEncodedAuthority();
         String path = appLinkData.getEncodedPath();
@@ -321,9 +385,6 @@ class MyAppWebViewClient extends WebViewClient {
                 path = activity.getString(R.string.link_uri) + canonicalPath.substring(activity.getString(R.string.link_prefix).length());
             } else {
                 Log.e("AppLink", "Link: " + host + path + "!=" + canonicalPath);
-                if (getNotFound) {
-                    return domainUrl + "assets/local/404.jsp?link=" + host + path;
-                }
                 return "";
             }
         } else if (host.equals(activity.getString(R.string.link2_host))) {
@@ -344,16 +405,10 @@ class MyAppWebViewClient extends WebViewClient {
                 path = activity.getString(R.string.link2_uri) + canonicalPath.substring(activity.getString(R.string.link2_prefix).length());
             } else {
                 Log.e("AppLink", "Link2: " + host + path + "!=" + canonicalPath);
-                if (getNotFound) {
-                    return domainUrl + "assets/local/404.jsp?link=" + host + path;
-                }
                 return "";
             }
         } else {
             Log.d("AppLink", "Site: " + host + path);
-            if (getNotFound) {
-                return domainUrl + "assets/local/404.jsp?link=" + host + path;
-            }
             return "";
         }
         //https://stackoverflow.com/questions/1128723/how-do-i-determine-whether-an-array-contains-a-particular-value-in-java
@@ -393,9 +448,6 @@ class MyAppWebViewClient extends WebViewClient {
                 break;
             case "other":
             default:
-                if (getNotFound) {
-                    return domainUrl + "assets/local/404.jsp?link=" + host + path;
-                }
                 return "";
         }
         return myUrl;
@@ -450,7 +502,7 @@ class MyAppWebViewClient extends WebViewClient {
             return false;
         }
         // if we put deep links in web, local or sites pages, reload here with site link to avoid CORS et al.
-        String myUrl = getSiteUrlFromAppLink(Uri.parse(url), false);
+        String myUrl = getSiteUrlFromAppLink(Uri.parse(url));
         if (!myUrl.isEmpty()) {
             Log.d("Web Override", "Reload with site link " + myUrl);
             view.loadUrl(myUrl);

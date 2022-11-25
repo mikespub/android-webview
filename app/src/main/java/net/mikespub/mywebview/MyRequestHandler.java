@@ -36,6 +36,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -105,6 +106,8 @@ class MyRequestHandler {
             return handleUpdateSettings(uri);
         } else if (path.equals("/assets/local/get_config.jsp")) {
             return handleGetLocalConfig(uri);
+        } else if (path.equals("/assets/local/update.jsp")) {
+            return handleSetLocalConfig(uri);
         } else if (path.equals("/assets/local/download.jsp")) {
             return handleDownloadBundle(uri);
         } else if (path.equals("/assets/local/extract.jsp")) {
@@ -303,6 +306,7 @@ class MyRequestHandler {
                             extras.putString("path", file.getPath());
                             extras.putLong("length", file.length());
                             extras.putLong("lastModified", file.lastModified());
+                            extras.putString("timestamp", Instant.ofEpochMilli(file.lastModified()).toString());
                             cursorInfo.put("[extras]", extras);
                             contentItems.set(i, cursorInfo);
                         }
@@ -856,6 +860,28 @@ class MyRequestHandler {
                 localConfig.put("sites", localSites);
             }
             localConfig.put("bundles", MyLocalConfigRepository.findAvailableBundles(activity));
+            message = MyJsonUtility.toJsonString(localConfig);
+        } catch (Exception e) {
+            Log.e(TAG, "Local Config", e);
+            message = e.toString();
+        }
+        ByteArrayInputStream targetStream = new ByteArrayInputStream(message.getBytes());
+        return new WebResourceResponse("application/json", "UTF-8", targetStream);
+    }
+
+    WebResourceResponse handleSetLocalConfig(Uri uri) {
+        String message;
+        try {
+            //Map<String, Object> localConfig = webViewClient.getLocalConfig();
+            HashMap<String, Object> localConfig = MyLocalConfigRepository.parseQueryParameters(uri);
+            HashMap<String, String> localSites = (HashMap<String, String>) localConfig.get("sites");
+            if (MyLocalConfigRepository.updateLocalSites(activity, localSites)) {
+                localConfig.put("sites", localSites);
+            }
+            localConfig.put("bundles", MyLocalConfigRepository.findAvailableBundles(activity));
+            localConfig.put("prefix", domainUrl + "sites/");
+            MyLocalConfigRepository.saveConfiguration(activity, localConfig);
+            webViewClient.mySavedStateModel.setValue("local_config", localConfig);
             message = MyJsonUtility.toJsonString(localConfig);
         } catch (Exception e) {
             Log.e(TAG, "Local Config", e);
