@@ -45,7 +45,7 @@ ext {
     targetSdkVersion = 31
     versionCode = 27
     versionName = "1.26"
-    appCompatVersion = '1.5.1'
+    appCompatVersion = '1.6.1'
 }
 
 // Because the components are created only during the afterEvaluate phase, you must
