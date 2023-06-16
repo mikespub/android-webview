@@ -8,7 +8,7 @@ buildscript {
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.1'
+        classpath 'com.android.tools.build:gradle:8.0.2'
         
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -39,13 +39,13 @@ task clean(type: Delete) {
 // This block encapsulates custom properties and makes them available to all
 // modules in the project.
 ext {
-    compileSdkVersion = 32
-    buildToolsVersion = '31.0.0'
-    minSdkVersion = 26
+    compileSdkVersion = 33
+    buildToolsVersion = '34.0.0'
+    minSdkVersion = 27
     targetSdkVersion = 31
     versionCode = 27
     versionName = "1.26"
-    appCompatVersion = '1.5.1'
+    appCompatVersion = '1.6.1'
 }
 
 // Because the components are created only during the afterEvaluate phase, you must

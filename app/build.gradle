@@ -59,7 +59,7 @@ android {
 
 dependencies {
     //def appCompatVersion = "1.5.1"
-    def lifeCycleVersion = '2.5.1'
+    def lifeCycleVersion = '2.6.1'
     //def arch_version = '2.1.0'
 
     // https://developer.android.com/studio/projects/android-library
@@ -74,7 +74,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     // To use constraintlayout in compose
     //implementation "androidx.constraintlayout:constraintlayout-compose:1.0.0"
-    implementation "androidx.webkit:webkit:1.5.0"
+    implementation "androidx.webkit:webkit:1.7.0"
     // https://developer.android.com/jetpack/androidx/releases/lifecycle
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel:${lifeCycleVersion}"
@@ -97,8 +97,8 @@ dependencies {
     // optional - Test helpers for LiveData
     //testImplementation "androidx.arch.core:core-testing:$arch_version"
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.4'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'androidx.documentfile:documentfile:1.0.1'
 }
 
