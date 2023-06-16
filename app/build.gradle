@@ -100,6 +100,10 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'androidx.documentfile:documentfile:1.0.1'
+    constraints{
+        implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0'
+        implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0'
+    }
 }
 
 // based on https://gist.github.com/delor/f70560f14674b322dcd2

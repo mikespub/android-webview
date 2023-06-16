@@ -9,7 +9,6 @@ import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
-import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
@@ -375,7 +374,8 @@ public class MyAssetUtility {
             // https://stackoverflow.com/questions/44447056/convert-adaptiveicondrawable-to-bitmap-in-android-o-preview/46018816#46018816
             if (icon instanceof BitmapDrawable) {
                 bitmap = ((BitmapDrawable) icon).getBitmap();
-            } else if (Build.VERSION.SDK_INT >= 26) {
+            //} else if (Build.VERSION.SDK_INT >= 26) {
+            } else {
                 Drawable backgroundDr = ((AdaptiveIconDrawable) icon).getBackground();
                 Drawable foregroundDr = ((AdaptiveIconDrawable) icon).getForeground();
 

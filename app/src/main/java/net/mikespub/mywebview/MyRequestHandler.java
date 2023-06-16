@@ -416,7 +416,7 @@ class MyRequestHandler {
             contentItems = MyContentUtility.getContentItems(activity, mediaUri);
         } catch (Exception e) {
             Log.e(TAG, "Media Uri: " + mediaUri, e);
-            if (Build.VERSION.SDK_INT >= 26) {
+            //if (Build.VERSION.SDK_INT >= 26) {
                 try {
                     // if we already opened this media via OPEN_DOCUMENT before...
                     Uri documentUri = MediaStore.getDocumentUri(activity, mediaUri);
@@ -438,7 +438,7 @@ class MyRequestHandler {
                 } catch (Exception f) {
                     Log.e(TAG, "Document Uri Failed", f);
                 }
-            }
+            //}
             // use template file for response here
             return createResultResponse("local/result.html", "Uri: " + mediaUri + "\nException: " + e);
         }

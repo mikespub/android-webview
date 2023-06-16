@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 import android.webkit.WebResourceRequest;
@@ -14,8 +13,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-
-import androidx.annotation.RequiresApi;
 
 import net.mikespub.myutils.MyAssetUtility;
 import net.mikespub.myutils.MyReflectUtility;
@@ -461,7 +458,7 @@ class MyAppWebViewClient extends WebViewClient {
      * @return      decision to override or not
      */
     // https://stackoverflow.com/questions/41972463/android-web-view-shouldoverrideurlloading-deprecated-alternative/41973017
-    @RequiresApi(Build.VERSION_CODES.N)
+    //@RequiresApi(Build.VERSION_CODES.N)
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
         String url = request.getUrl().toString();
@@ -476,7 +473,7 @@ class MyAppWebViewClient extends WebViewClient {
      * @return      decision to override or not
      */
     // https://stackoverflow.com/questions/41972463/android-web-view-shouldoverrideurlloading-deprecated-alternative/41973017
-    /*
+    /**
     @SuppressWarnings("deprecation")
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -575,7 +572,7 @@ class MyAppWebViewClient extends WebViewClient {
     }
 
     // https://stackoverflow.com/questions/8938119/changing-html-in-a-webview-programmatically/8938191#8938191
-    /*
+    /**
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
@@ -609,7 +606,7 @@ class MyAppWebViewClient extends WebViewClient {
      * @return      WebResourceResponse or null
      */
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
-    /*
+    /**
     @SuppressWarnings("deprecation")
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
