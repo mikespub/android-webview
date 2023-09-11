@@ -74,7 +74,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     // To use constraintlayout in compose
     //implementation "androidx.constraintlayout:constraintlayout-compose:1.0.0"
-    implementation "androidx.webkit:webkit:1.7.0"
+    implementation "androidx.webkit:webkit:1.8.0"
     // https://developer.android.com/jetpack/androidx/releases/lifecycle
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel:${lifeCycleVersion}"
