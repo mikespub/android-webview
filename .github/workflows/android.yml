@@ -19,7 +19,7 @@ jobs:
     - name: Build with Gradle
       run: sudo ./gradlew build
     - name: Archive lint results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: lint-results
         path: /home/runner/work/android-webview/android-webview/app/build/reports/lint-results-debug.html
