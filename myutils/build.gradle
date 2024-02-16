@@ -19,6 +19,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        //testInstrumentationRunner "org.junit.runners.JUnit4" // Use JUnit 4 for instrumentation tests
+        //testInstrumentationRunnerArgument("runnerBuilder", "de.mannodermaus.junit5.AndroidJUnit5Builder") // Use JUnit 5 for local unit tests
         consumerProguardFiles 'consumer-rules.pro'
     }
 
@@ -33,12 +35,15 @@ android {
 }
 
 dependencies {
-    //def appCompatVersion = "1.4.1"
+    //def appCompatVersion = "1.6.1"
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
     testImplementation 'junit:junit:4.13.2'
+    //testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
+    //testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+    //testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.7.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'androidx.documentfile:documentfile:1.0.1'

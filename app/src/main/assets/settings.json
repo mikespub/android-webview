@@ -5,7 +5,7 @@
       "title": "README on Github"
     },
     {
-      "url": "http://beta.html5test.com/",
+      "url": "https://html5test.co/",
       "title": "HTML5 Test Site"
     },
     {
@@ -16,7 +16,7 @@
   "other": "http://192.168.2.127/",
   "match": [
     ["host", "equals", "github.com"],
-    ["host", "endsWith", "html5test.com"],
+    ["host", "endsWith", "html5test.co"],
     ["host", "equals", "192.168.2.127"]
   ],
   "skip": [
@@ -34,5 +34,5 @@
     "JavaScriptEnabled": true
   },
   "source": "assets",
-  "timestamp": "2020-02-12T14:01:00Z"
+  "timestamp": "2024-02-16T14:01:00Z"
 }

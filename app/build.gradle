@@ -20,6 +20,8 @@ android {
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        //testInstrumentationRunner "org.junit.runners.JUnit4" // Use JUnit 4 for instrumentation tests
+        //testInstrumentationRunnerArgument("runnerBuilder", "de.mannodermaus.junit5.AndroidJUnit5Builder") // Use JUnit 5 for local unit tests
         // https://stackoverflow.com/questions/9206117/how-to-workaround-autoomitting-fiiles-folders-starting-with-underscore-in
         // https://github.com/ionic-team/capacitor/issues/1750
         //aaptOptions {
@@ -58,9 +60,9 @@ android {
 }
 
 dependencies {
-    //def appCompatVersion = "1.5.1"
-    def lifeCycleVersion = '2.6.1'
-    //def arch_version = '2.1.0'
+    //def appCompatVersion = "1.6.1"
+    def lifeCycleVersion = '2.7.0'
+    //def arch_version = '2.2.0'
 
     // https://developer.android.com/studio/projects/android-library
     implementation project(":myutils")
@@ -74,7 +76,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     // To use constraintlayout in compose
     //implementation "androidx.constraintlayout:constraintlayout-compose:1.0.0"
-    implementation "androidx.webkit:webkit:1.7.0"
+    implementation "androidx.webkit:webkit:1.10.0"
     // https://developer.android.com/jetpack/androidx/releases/lifecycle
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel:${lifeCycleVersion}"
@@ -97,11 +99,14 @@ dependencies {
     // optional - Test helpers for LiveData
     //testImplementation "androidx.arch.core:core-testing:$arch_version"
     testImplementation 'junit:junit:4.13.2'
+    //testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
+    //testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+    //testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.7.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'androidx.documentfile:documentfile:1.0.1'
     constraints{
-        implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0'
+        //implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0'
         implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0'
     }
 }
