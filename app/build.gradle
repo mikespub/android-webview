@@ -7,14 +7,15 @@ apply plugin: 'com.android.application'
 android {
     //compileSdkVersion 31
     //buildToolsVersion "31.0.0"
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    //compileSdkVersion compileSdkVersion
+    //buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
         applicationId "net.mikespub.mywebview"
         //minSdkVersion 23
         //targetSdkVersion 30
         //versionCode 21
         //versionName '1.20'
+        compileSdk rootProject.ext.compileSdkVersion
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.versionCode
@@ -107,7 +108,7 @@ dependencies {
     implementation 'androidx.documentfile:documentfile:1.0.1'
     constraints{
         //implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0'
-        implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0'
+        implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.23'
     }
 }
 
