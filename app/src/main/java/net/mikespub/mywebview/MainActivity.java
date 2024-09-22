@@ -3,6 +3,7 @@ package net.mikespub.mywebview;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -388,7 +389,7 @@ public class MainActivity extends AppCompatActivity {
         stopDownloadReceiver();
         onDownloadComplete = mReceiver;
         Log.d("Web Create", "register receiver");
-        registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_NOT_EXPORTED);
     }
 
     /**
